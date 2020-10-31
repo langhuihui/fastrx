@@ -1,0 +1,31 @@
+{
+    "name": "fastrx",
+    "version": "1.3.2",
+    "description": "fast rxjs implemention",
+    "main": "index.js",
+    "scripts": {
+        "build": "rollup -c"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/langhuihui/fastrx.git"
+    },
+    "keywords": [
+        "rxjs",
+        "fast"
+    ],
+    "typings": "./index.d.ts",
+    "author": "langhuihui",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/langhuihui/fastrx/issues"
+    },
+    "homepage": "https://github.com/langhuihui/fastrx#readme",
+    "devDependencies": {
+        "@babel/core": "^7.12.3",
+        "@babel/preset-env": "^7.12.1",
+        "rollup": "^2.32.1",
+        "rollup-plugin-babel": "^4.4.0",
+        "rollup-plugin-uglify": "^6.0.4"
+    }
+}
