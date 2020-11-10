@@ -204,6 +204,33 @@ const defaultAuditConfig = {
 }
 exports.audit = durationSelector => exports.throttle(durationSelector, defaultAuditConfig)
 
+class DebounceTime extends Sink {
+    init(period) {
+        this.period = period
+        this.timerId = null
+    }
+    next(data) {
+        this.buffer = data
+        if (this.timerId) {
+            clearTimeout(this.timerId)
+        }
+        this.timerId = setTimeout(() => {
+            this.sink.next(data)
+            this.timerId = null
+        }, this.period)
+    }
+    complete(error) {
+        if (this.timerId) {
+            clearTimeout(this.timerId)
+            if (!error && this.hasOwnProperty("buffer")) {
+                this.sink.next(this.buffer)
+            }
+        }
+        super.complete(error)
+    }
+}
+
+exports.debounceTime = deliver(DebounceTime)
 class ElementAt extends Sink {
     init(count, defaultValue) {
         this.count = count

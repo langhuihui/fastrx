@@ -14,6 +14,7 @@ declare namespace Rx {
         shareReplay(bufferSize: number): (source?: Observable) => Observable
         startWith(...xs: Array<any>): Observable
         throttle(durationSelector: (d: any) => Observable, config?: object): Observable
+        debounceTime(period: number): Observable
         elementAt(count: number, defaultValue?: any): Observable
         find(f: (d: any) => Boolean): Observable
         findIndex(f: (d: any) => Boolean): Observable
@@ -46,6 +47,7 @@ declare namespace Rx {
         fromPromise(source: Promise): Observable
         fromAnimationFrame(): Observable
         fromFetch(input: RequestInfo, init?: RequestInit): Observable
+        fromNextTick(vm: any): Observable
         eventHandler(once?: boolean): Observable | { handler: () => void }
         range(start: Number, count: Number): Observable
         interval(period: Number): Observable
@@ -95,6 +97,7 @@ export function fromLifeHook(hook: () => void, once?: boolean): Observable
 export function fromPromise(source: Promise): Observable
 export function fromAnimationFrame(): Observable
 export function fromFetch(input: RequestInfo, init?: RequestInit): Observable
+export function fromNextTick(vm: any): Observable
 export function eventHandler(once?: boolean): Observable | { handler: () => void }
 export function range(start: Number, count: Number): Observable
 export function interval(period: Number): Observable
@@ -127,6 +130,7 @@ export function share(source?: Observable): Observable
 export function shareReplay(bufferSize: number): (source?: Observable) => Observable
 export function startWith(...xs: Array<any>): Observable
 export function throttle(durationSelector: (d: any) => Observable, config?: object): Observable
+export function debounceTime(period: number): Observable
 export function elementAt(count: number, defaultValue?: any): Observable
 export function find(f: (d: any) => Boolean): Observable
 export function findIndex(f: (d: any) => Boolean): Observable

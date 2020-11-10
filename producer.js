@@ -84,6 +84,12 @@ exports.fromFetch = (url, opt) => sink => {
         sink.complete()
     }).catch(err => sink.complete(err))
 }
+exports.fromNextTick = vm => sink => {
+    vm.$nextTick(() => {
+        sink.next(vm)
+        sink.complete()
+    })
+}
 exports.range = (start, count) => (sink, pos = start, end = count + start) => {
     while (pos < end && !sink.disposed) sink.next(pos++)
     sink.complete()
