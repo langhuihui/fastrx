@@ -194,6 +194,7 @@ class Throttle extends Sink {
             super.complete(err)
         } else {
             this._throttle && this._throttle.complete()
+            super.complete()
         }
     }
 }
@@ -231,6 +232,43 @@ class DebounceTime extends Sink {
 }
 
 exports.debounceTime = deliver(DebounceTime)
+
+class _Debounce extends Sink {
+    next() {
+        this.complete()
+    }
+    complete(err) {
+        this.defer()
+        this.sink.next(this.last)
+        this.isComplete = true
+    }
+}
+class Debounce extends Sink {
+    init(durationSelector) {
+        this.durationSelector = durationSelector
+    }
+    next(data) {
+        if (!this._debounce) {
+            this._debounce = new _Debounce(this.sink)
+            this.defer(this._debounce)
+        } else if (this._debounce.isComplete) {
+            this._debounce.isComplete = false
+        }
+        this.durationSelector(data)(this._debounce)
+        this._debounce.last = data
+    }
+    complete(err) {
+        if (err) {
+            this._debounce && this._debounce.dispose()
+            super.complete(err)
+        } else {
+            this._debounce && this._debounce.complete()
+            super.complete()
+        }
+    }
+}
+
+exports.debounce = deliver(Debounce)
 class ElementAt extends Sink {
     init(count, defaultValue) {
         this.count = count
