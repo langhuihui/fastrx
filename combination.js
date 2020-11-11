@@ -1,6 +1,5 @@
 const {
-    Sink,
-    deliver
+    Sink
 } = require('./common')
 class Share extends Sink {
     init(source) {
