@@ -13,8 +13,11 @@ declare namespace Rx {
         share(source?: Observable): Observable
         shareReplay(bufferSize: number): (source?: Observable) => Observable
         startWith(...xs: Array<any>): Observable
-        throttle(durationSelector: (d: any) => Observable, config?: object): Observable
+        throttle(durationSelector: (d: any) => Observable, config?: { leading: true, trailing: false }): Observable
+        throttleTime(period: Number, config?: { leading: true, trailing: false }): Observable
+        debounce(durationSelector: (d: any) => Observable): Observable
         debounceTime(period: number): Observable
+        withLatestFrom(...sources: Observable): Observable
         elementAt(count: number, defaultValue?: any): Observable
         find(f: (d: any) => Boolean): Observable
         findIndex(f: (d: any) => Boolean): Observable
@@ -129,8 +132,11 @@ export function filter(f: (d: any) => Boolean): Observable
 export function share(source?: Observable): Observable
 export function shareReplay(bufferSize: number): (source?: Observable) => Observable
 export function startWith(...xs: Array<any>): Observable
-export function throttle(durationSelector: (d: any) => Observable, config?: object): Observable
+export function throttle(durationSelector: (d: any) => Observable, config?: { leading: true, trailing: false }): Observable
+export function throttleTime(period: Number, config?: { leading: true, trailing: false }): Observable
+export function debounce(durationSelector: (d: any) => Observable): Observable
 export function debounceTime(period: number): Observable
+export function withLatestFrom(...sources: Observable): Observable
 export function elementAt(count: number, defaultValue?: any): Observable
 export function find(f: (d: any) => Boolean): Observable
 export function findIndex(f: (d: any) => Boolean): Observable

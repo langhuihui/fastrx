@@ -145,7 +145,9 @@ function _get(target, property, receiver) {
 var _this = undefined;
 
 var _require = require('./common'),
-    Sink = _require.Sink;
+    Sink = _require.Sink,
+    deliver = _require.deliver,
+    noop = _require.noop;
 
 var Share = /*#__PURE__*/function (_Sink) {
   _inherits(Share, _Sink);
@@ -447,15 +449,63 @@ exports.combineLatest = function () {
   };
 };
 
-var Zip = /*#__PURE__*/function (_Sink6) {
-  _inherits(Zip, _Sink6);
+var WithLatestFrom = /*#__PURE__*/function (_Sink6) {
+  _inherits(WithLatestFrom, _Sink6);
 
-  var _super6 = _createSuper(Zip);
+  var _super6 = _createSuper(WithLatestFrom);
+
+  function WithLatestFrom() {
+    _classCallCheck(this, WithLatestFrom);
+
+    return _super6.apply(this, arguments);
+  }
+
+  _createClass(WithLatestFrom, [{
+    key: "init",
+    value: function init() {
+      var _this2 = this,
+          _exports;
+
+      this._withLatestFrom = new Sink(this.sink);
+
+      this._withLatestFrom.next = function (data) {
+        return _this2.buffer = data;
+      };
+
+      this._withLatestFrom.complete = noop;
+
+      (_exports = exports).combineLatest.apply(_exports, arguments)(this._withLatestFrom);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (this.buffer) {
+        this.sink.next([data].concat(this.buffer));
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      this._withLatestFrom.dispose();
+
+      _get(_getPrototypeOf(WithLatestFrom.prototype), "complete", this).call(this, err);
+    }
+  }]);
+
+  return WithLatestFrom;
+}(Sink);
+
+exports.withLatestFrom = deliver(WithLatestFrom);
+
+var Zip = /*#__PURE__*/function (_Sink7) {
+  _inherits(Zip, _Sink7);
+
+  var _super7 = _createSuper(Zip);
 
   function Zip() {
     _classCallCheck(this, Zip);
 
-    return _super6.apply(this, arguments);
+    return _super7.apply(this, arguments);
   }
 
   _createClass(Zip, [{

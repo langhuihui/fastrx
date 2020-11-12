@@ -213,50 +213,30 @@ var Take = /*#__PURE__*/function (_Sink2) {
 
 exports.take = deliver(Take);
 
-var _TakeUntil = /*#__PURE__*/function (_Sink3) {
-  _inherits(_TakeUntil, _Sink3);
+var TakeUntil = /*#__PURE__*/function (_Sink3) {
+  _inherits(TakeUntil, _Sink3);
 
-  var _super3 = _createSuper(_TakeUntil);
-
-  function _TakeUntil() {
-    _classCallCheck(this, _TakeUntil);
-
-    return _super3.apply(this, arguments);
-  }
-
-  _createClass(_TakeUntil, [{
-    key: "init",
-    value: function init(sourceSink) {
-      this.sourceSink = sourceSink;
-    }
-  }, {
-    key: "next",
-    value: function next() {
-      //收到事件，终结两个sink
-      this.sourceSink.complete();
-    }
-  }]);
-
-  return _TakeUntil;
-}(Sink);
-
-var TakeUntil = /*#__PURE__*/function (_Sink4) {
-  _inherits(TakeUntil, _Sink4);
-
-  var _super4 = _createSuper(TakeUntil);
+  var _super3 = _createSuper(TakeUntil);
 
   function TakeUntil() {
     _classCallCheck(this, TakeUntil);
 
-    return _super4.apply(this, arguments);
+    return _super3.apply(this, arguments);
   }
 
   _createClass(TakeUntil, [{
     key: "init",
     value: function init(sSrc) {
-      this._takeUntil = new _TakeUntil(null, this).subscribe(sSrc); //将开关事件sink纳入销毁链
+      var _this = this;
 
-      this.defer(this._takeUntil);
+      this._takeUntil = new Sink(this.sink);
+
+      this._takeUntil.next = function () {
+        return _this.complete();
+      };
+
+      this._takeUntil.complete = noop;
+      sSrc(this._takeUntil);
     }
   }, {
     key: "complete",
@@ -273,15 +253,15 @@ var TakeUntil = /*#__PURE__*/function (_Sink4) {
 
 exports.takeUntil = deliver(TakeUntil);
 
-var TakeWhile = /*#__PURE__*/function (_Sink5) {
-  _inherits(TakeWhile, _Sink5);
+var TakeWhile = /*#__PURE__*/function (_Sink4) {
+  _inherits(TakeWhile, _Sink4);
 
-  var _super5 = _createSuper(TakeWhile);
+  var _super4 = _createSuper(TakeWhile);
 
   function TakeWhile() {
     _classCallCheck(this, TakeWhile);
 
-    return _super5.apply(this, arguments);
+    return _super4.apply(this, arguments);
   }
 
   _createClass(TakeWhile, [{
@@ -316,15 +296,15 @@ exports.takeLast = function (count) {
   }, []);
 };
 
-var Skip = /*#__PURE__*/function (_Sink6) {
-  _inherits(Skip, _Sink6);
+var Skip = /*#__PURE__*/function (_Sink5) {
+  _inherits(Skip, _Sink5);
 
-  var _super6 = _createSuper(Skip);
+  var _super5 = _createSuper(Skip);
 
   function Skip() {
     _classCallCheck(this, Skip);
 
-    return _super6.apply(this, arguments);
+    return _super5.apply(this, arguments);
   }
 
   _createClass(Skip, [{
@@ -346,15 +326,15 @@ var Skip = /*#__PURE__*/function (_Sink6) {
 
 exports.skip = deliver(Skip);
 
-var _SkipUntil = /*#__PURE__*/function (_Sink7) {
-  _inherits(_SkipUntil, _Sink7);
+var _SkipUntil = /*#__PURE__*/function (_Sink6) {
+  _inherits(_SkipUntil, _Sink6);
 
-  var _super7 = _createSuper(_SkipUntil);
+  var _super6 = _createSuper(_SkipUntil);
 
   function _SkipUntil() {
     _classCallCheck(this, _SkipUntil);
 
-    return _super7.apply(this, arguments);
+    return _super6.apply(this, arguments);
   }
 
   _createClass(_SkipUntil, [{
@@ -373,15 +353,15 @@ var _SkipUntil = /*#__PURE__*/function (_Sink7) {
   return _SkipUntil;
 }(Sink);
 
-var SkipUntil = /*#__PURE__*/function (_Sink8) {
-  _inherits(SkipUntil, _Sink8);
+var SkipUntil = /*#__PURE__*/function (_Sink7) {
+  _inherits(SkipUntil, _Sink7);
 
-  var _super8 = _createSuper(SkipUntil);
+  var _super7 = _createSuper(SkipUntil);
 
   function SkipUntil() {
     _classCallCheck(this, SkipUntil);
 
-    return _super8.apply(this, arguments);
+    return _super7.apply(this, arguments);
   }
 
   _createClass(SkipUntil, [{
@@ -405,15 +385,15 @@ var SkipUntil = /*#__PURE__*/function (_Sink8) {
 
 exports.skipUntil = deliver(SkipUntil);
 
-var SkipWhile = /*#__PURE__*/function (_Sink9) {
-  _inherits(SkipWhile, _Sink9);
+var SkipWhile = /*#__PURE__*/function (_Sink8) {
+  _inherits(SkipWhile, _Sink8);
 
-  var _super9 = _createSuper(SkipWhile);
+  var _super8 = _createSuper(SkipWhile);
 
   function SkipWhile() {
     _classCallCheck(this, SkipWhile);
 
-    return _super9.apply(this, arguments);
+    return _super8.apply(this, arguments);
   }
 
   _createClass(SkipWhile, [{
@@ -442,15 +422,15 @@ var defaultThrottleConfig = {
   trailing: false
 };
 
-var _Throttle = /*#__PURE__*/function (_Sink10) {
-  _inherits(_Throttle, _Sink10);
+var _Throttle = /*#__PURE__*/function (_Sink9) {
+  _inherits(_Throttle, _Sink9);
 
-  var _super10 = _createSuper(_Throttle);
+  var _super9 = _createSuper(_Throttle);
 
   function _Throttle() {
     _classCallCheck(this, _Throttle);
 
-    return _super10.apply(this, arguments);
+    return _super9.apply(this, arguments);
   }
 
   _createClass(_Throttle, [{
@@ -492,15 +472,15 @@ var _Throttle = /*#__PURE__*/function (_Sink10) {
   return _Throttle;
 }(Sink);
 
-var Throttle = /*#__PURE__*/function (_Sink11) {
-  _inherits(Throttle, _Sink11);
+var Throttle = /*#__PURE__*/function (_Sink10) {
+  _inherits(Throttle, _Sink10);
 
-  var _super11 = _createSuper(Throttle);
+  var _super10 = _createSuper(Throttle);
 
   function Throttle() {
     _classCallCheck(this, Throttle);
 
-    return _super11.apply(this, arguments);
+    return _super10.apply(this, arguments);
   }
 
   _createClass(Throttle, [{
@@ -569,6 +549,68 @@ exports.audit = function (durationSelector) {
   return exports.throttle(durationSelector, defaultAuditConfig);
 };
 
+var ThrottleTime = /*#__PURE__*/function (_Sink11) {
+  _inherits(ThrottleTime, _Sink11);
+
+  var _super11 = _createSuper(ThrottleTime);
+
+  function ThrottleTime() {
+    _classCallCheck(this, ThrottleTime);
+
+    return _super11.apply(this, arguments);
+  }
+
+  _createClass(ThrottleTime, [{
+    key: "init",
+    value: function init(period) {
+      var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : defaultThrottleConfig;
+      this.config = config;
+      this.period = period;
+      this.timerId = null;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var _this2 = this;
+
+      if (this.timerId) {
+        this.last = data;
+        this.hasValue = true;
+      } else {
+        this.timerId = setTimeout(function () {
+          _this2.timerId = null;
+
+          if (_this2.config.trailing && _this2.hasValue) {
+            _this2.sink.next(_this2.last);
+          }
+        }, this.period);
+
+        if (this.config.leading) {
+          this.sink.next(data);
+        } else {
+          this.last = data;
+          this.hasValue = true;
+        }
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (!err) {
+        if (this.config.trailing && this.hasValue) {
+          this.sink.next(this.last);
+        }
+      }
+
+      _get(_getPrototypeOf(ThrottleTime.prototype), "complete", this).call(this, err);
+    }
+  }]);
+
+  return ThrottleTime;
+}(Sink);
+
+exports.throttleTime = deliver(ThrottleTime);
+
 var DebounceTime = /*#__PURE__*/function (_Sink12) {
   _inherits(DebounceTime, _Sink12);
 
@@ -589,7 +631,7 @@ var DebounceTime = /*#__PURE__*/function (_Sink12) {
   }, {
     key: "next",
     value: function next(data) {
-      var _this = this;
+      var _this3 = this;
 
       this.buffer = data;
 
@@ -598,9 +640,9 @@ var DebounceTime = /*#__PURE__*/function (_Sink12) {
       }
 
       this.timerId = setTimeout(function () {
-        _this.sink.next(data);
+        _this3.sink.next(data);
 
-        _this.timerId = null;
+        _this3.timerId = null;
       }, this.period);
     }
   }, {
@@ -675,6 +717,8 @@ var Debounce = /*#__PURE__*/function (_Sink14) {
         this.defer(this._debounce);
       } else if (this._debounce.isComplete) {
         this._debounce.isComplete = false;
+      } else {
+        this._debounce.defer();
       }
 
       this.durationSelector(data)(this._debounce);

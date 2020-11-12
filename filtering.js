@@ -30,20 +30,12 @@ class Take extends Sink {
 }
 exports.take = deliver(Take)
 
-class _TakeUntil extends Sink {
-    init(sourceSink) {
-        this.sourceSink = sourceSink
-    }
-    next() {
-        //收到事件，终结两个sink
-        this.sourceSink.complete()
-    }
-}
 class TakeUntil extends Sink {
     init(sSrc) {
-        this._takeUntil = new _TakeUntil(null, this).subscribe(sSrc)
-        //将开关事件sink纳入销毁链
-        this.defer(this._takeUntil)
+        this._takeUntil = new Sink(this.sink)
+        this._takeUntil.next = () => this.complete()
+        this._takeUntil.complete = noop
+        sSrc(this._takeUntil)
     }
     complete(err) {
         //完成事件，单方面终结开关sink
@@ -204,7 +196,41 @@ const defaultAuditConfig = {
     trailing: true
 }
 exports.audit = durationSelector => exports.throttle(durationSelector, defaultAuditConfig)
-
+class ThrottleTime extends Sink {
+    init(period, config = defaultThrottleConfig) {
+        this.config = config
+        this.period = period
+        this.timerId = null
+    }
+    next(data) {
+        if (this.timerId) {
+            this.last = data
+            this.hasValue = true
+        } else {
+            this.timerId = setTimeout(() => {
+                this.timerId = null
+                if (this.config.trailing && this.hasValue) {
+                    this.sink.next(this.last)
+                }
+            }, this.period)
+            if (this.config.leading) {
+                this.sink.next(data)
+            } else {
+                this.last = data
+                this.hasValue = true
+            }
+        }
+    }
+    complete(err) {
+        if (!err) {
+            if (this.config.trailing && this.hasValue) {
+                this.sink.next(this.last)
+            }
+        }
+        super.complete(err)
+    }
+}
+exports.throttleTime = deliver(ThrottleTime)
 class DebounceTime extends Sink {
     init(period) {
         this.period = period
@@ -253,6 +279,8 @@ class Debounce extends Sink {
             this.defer(this._debounce)
         } else if (this._debounce.isComplete) {
             this._debounce.isComplete = false
+        } else {
+            this._debounce.defer()
         }
         this.durationSelector(data)(this._debounce)
         this._debounce.last = data

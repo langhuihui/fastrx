@@ -1,5 +1,5 @@
 const {
-    Sink
+    Sink, deliver, noop
 } = require('./common')
 class Share extends Sink {
     init(source) {
@@ -132,6 +132,24 @@ exports.combineLatest = (...sources) => sink => {
     // for (let i = 0; i < nTotal; ++i) defers[i] = sources[i](new CombineLatest(sink, i, array, context))
     sources.forEach((source, i) => source(new CombineLatest(sink, i, array, context)))
 }
+class WithLatestFrom extends Sink {
+    init(...sources) {
+        this._withLatestFrom = new Sink(this.sink)
+        this._withLatestFrom.next = data => this.buffer = data
+        this._withLatestFrom.complete = noop
+        exports.combineLatest(...sources)(this._withLatestFrom)
+    }
+    next(data) {
+        if (this.buffer) {
+            this.sink.next([data].concat(this.buffer))
+        }
+    }
+    complete(err) {
+        this._withLatestFrom.dispose()
+        super.complete(err)
+    }
+}
+exports.withLatestFrom = deliver(WithLatestFrom)
 class Zip extends Sink {
     init(index, array, context) {
         this.index = index
