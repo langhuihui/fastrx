@@ -17,12 +17,12 @@ declare namespace Rx {
         throttleTime(period: Number, config?: { leading: true, trailing: false }): Observable
         debounce(durationSelector: (d: any) => Observable): Observable
         debounceTime(period: number): Observable
-        withLatestFrom(...sources: Observable): Observable
+        withLatestFrom(...sources: Array<Observable>): Observable
         elementAt(count: number, defaultValue?: any): Observable
         find(f: (d: any) => Boolean): Observable
         findIndex(f: (d: any) => Boolean): Observable
-        First(f?: (d: any) => Boolean, defaultValue?: any): Observable
-        Last(f?: (d: any) => Boolean, defaultValue?: any): Observable
+        first(f?: (d: any) => Boolean, defaultValue?: any): Observable
+        last(f?: (d: any) => Boolean, defaultValue?: any): Observable
         delay(period: number): Observable
         scan(f: (d: any) => any, seed?: any): Observable
         repeat(count: number): Observable
@@ -39,7 +39,7 @@ declare namespace Rx {
         (f: (sink: Sink) => void): Observable
         subject(source?: Observable): Observable
         of(...args: Array<any>): Observable
-        from(source: Array<any> | Promise | any): Observable
+        from<T>(source: Array<any> | Promise<T> | T): Observable
         fromArray(array: Array<any>): Observable
         fromEventPattern(add: (h: Function) => any, remove: (h: Function) => any): Observable
         fromEvent(target: any, name: string): Observable
@@ -47,7 +47,7 @@ declare namespace Rx {
         fromVueEventOnce(target: any, name: string): Observable
         fromLifeHook(hook: () => void, once?: boolean): Observable
         fromEventSource(href: string, opt?: any): Observable
-        fromPromise(source: Promise): Observable
+        fromPromise<T>(source: Promise<T>): Observable
         fromAnimationFrame(): Observable
         fromFetch(input: RequestInfo, init?: RequestInit): Observable
         fromNextTick(vm: any): Observable
@@ -89,7 +89,7 @@ declare type Deliver = (...args: Array<any>) => Observable
 export function pipe<T>(...args: Array<Observable | Observer<T>>): Observable | T
 export function deliver(Class: Function): Deliver;
 export function subject(source?: Observable): Observable
-export function from(source: Array<any> | Promise | any): Observable
+export function from<T>(source: Array<any> | Promise<T> | T): Observable
 export function fromArray(array: Array<any>): Observable
 export function fromEventPattern(add: (h: Function) => any, remove: (h: Function) => any): Observable
 export function fromEvent(target: any, name: string): Observable
@@ -97,7 +97,7 @@ export function fromVueEvent(target: any, name: string): Observable
 export function fromVueEventOnce(target: any, name: string): Observable
 export function fromEventSource(href: string, opt?: any): Observable
 export function fromLifeHook(hook: () => void, once?: boolean): Observable
-export function fromPromise(source: Promise): Observable
+export function fromPromise<T>(source: Promise<T>): Observable
 export function fromAnimationFrame(): Observable
 export function fromFetch(input: RequestInfo, init?: RequestInit): Observable
 export function fromNextTick(vm: any): Observable
@@ -136,12 +136,12 @@ export function throttle(durationSelector: (d: any) => Observable, config?: { le
 export function throttleTime(period: Number, config?: { leading: true, trailing: false }): Observable
 export function debounce(durationSelector: (d: any) => Observable): Observable
 export function debounceTime(period: number): Observable
-export function withLatestFrom(...sources: Observable): Observable
+export function withLatestFrom(...sources: Array<Observable>): Observable
 export function elementAt(count: number, defaultValue?: any): Observable
 export function find(f: (d: any) => Boolean): Observable
 export function findIndex(f: (d: any) => Boolean): Observable
-export function First(f?: (d: any) => Boolean, defaultValue?: any): Observable
-export function Last(f?: (d: any) => Boolean, defaultValue?: any): Observable
+export function first(f?: (d: any) => Boolean, defaultValue?: any): Observable
+export function last(f?: (d: any) => Boolean, defaultValue?: any): Observable
 export function delay(period: number): Observable
 export function scan(f: (d: any) => any, seed?: any): Observable
 export function repeat(count: number): Observable
