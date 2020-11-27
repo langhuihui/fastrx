@@ -232,7 +232,9 @@ var TakeUntil = /*#__PURE__*/function (_Sink3) {
       this._takeUntil = new Sink(this.sink);
 
       this._takeUntil.next = function () {
-        return _this.complete();
+        _this.defer();
+
+        _this.complete();
       };
 
       this._takeUntil.complete = noop;

@@ -33,7 +33,10 @@ exports.take = deliver(Take)
 class TakeUntil extends Sink {
     init(sSrc) {
         this._takeUntil = new Sink(this.sink)
-        this._takeUntil.next = () => this.complete()
+        this._takeUntil.next = () => {
+            this.defer()
+            this.complete()
+        }
         this._takeUntil.complete = noop
         sSrc(this._takeUntil)
     }
