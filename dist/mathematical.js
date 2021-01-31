@@ -1,7 +1,7 @@
 'use strict';
 
-require('core-js/modules/es.array.concat');
-require('core-js/modules/es.array.reduce');
+require('core-js/modules/es.array.concat.js');
+require('core-js/modules/es.array.reduce.js');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
