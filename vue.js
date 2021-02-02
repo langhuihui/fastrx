@@ -35,11 +35,11 @@ function getRxComputedMixin(opt) {
                 const keys = key.split(',')
                 const setFunc = keys.length > 1 ? data => keys.forEach(k => this[k] = data[k]) : data => this[key] = data
                 if (typeof item == 'function') {
-                    const ob = item(this)
+                    const ob = item.call(this)
                     this.$data._rxComputed.push(ob.subscribe(setFunc))
                 } else {
                     const subject = this.$data._rxSubjects[key]
-                    this.$data._rxComputed.push(item.get(subject).subscribe(item.call ? data => this[key](data) : setFunc))
+                    this.$data._rxComputed.push(item.get.call(this,subject).subscribe(item.call ? data => this[key](data) : setFunc))
                     if ('watch' in item) {
                         if (typeof item.watch == 'object') {
                             for (const name in item.watch) {

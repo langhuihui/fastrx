@@ -102,7 +102,7 @@ Vue.use(RxComputed);
 import {rx} from 'fastrx'
 export default {
    rxComputed:{
-       test0:_this=>rx.interval(1000).take(10),//简单的订阅
+       test0:()=>rx.interval(1000).take(10),//简单的订阅
        test_watch:{//使用watch触发Observable发射数据
            get:ob=>ob.switchMapTo(rx.interval(1000)).map(x=>10-x)
            watch:"test1"
