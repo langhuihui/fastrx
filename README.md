@@ -93,7 +93,7 @@ Vue.use(RxComputed);
 ```
 ```html
 <template>
-    <div @click="onClick1" :style="{top:x+'px',left:y+'px'}">
+    <div @click="onClick1" :style="{top:y+'px',left:x+'px'}">
         <span>{{test1}}</span>
         <span>{{test0}}</span>
     </div>
@@ -118,7 +118,8 @@ export default {
        },
        "x,y":{//采用解构，将结果对象中的x,y属性分别写入vue实例中的x和y属性
             get:ob=>ob.switchMap(e=>rx.timer(1000).map(()=>({x:e.screenX,y:e.screenY}))),
-           handler:"onClick1"
+           handler:"onClick1",
+           default:{x:0,y:0}//设置默认值
         }
    },
    methods:{

@@ -1,6 +1,6 @@
 {
     "name": "fastrx",
-    "version": "1.4.2",
+    "version": "1.4.3",
     "description": "fast rxjs implemention",
     "main": "dist/cjs.js",
     "scripts": {

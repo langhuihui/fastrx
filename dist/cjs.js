@@ -1,10 +1,10 @@
 'use strict';
 
-require('core-js/modules/es.array.reduce');
-require('core-js/modules/es.object.assign');
-require('core-js/modules/es.object.set-prototype-of');
-require('core-js/modules/es.object.to-string');
-require('core-js/modules/es.promise');
+require('core-js/modules/es.array.reduce.js');
+require('core-js/modules/es.object.assign.js');
+require('core-js/modules/es.object.set-prototype-of.js');
+require('core-js/modules/es.object.to-string.js');
+require('core-js/modules/es.promise.js');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {

@@ -5,7 +5,7 @@ module.exports = {
             .optionMergeStrategies
             .rxComputed = Vue.config.optionMergeStrategies.computed
 
-        Vue.mixin(getRxComputedMixin(opt))
+        Vue.mixin(getRxComputedMixin(opt||{}))
     }
 }
 function getRxComputedMixin(opt) {
@@ -76,13 +76,23 @@ function initDataWithRxComputed(options, pluginOptions) {
             // }
             const keys = key.split(',')
             if (keys.length > 1) keys.forEach(k => data[k] = value[k])
-            else
-                data[key] = value
+            else if('call' in item){
+                if ('default' in item) {
+                    this[key](value)
+                }
+            }
+            else data[key] = value
+                
             if (typeof item == 'object') {
                 if (!data._rxSubjects[key]) data._rxSubjects[key] = rx.subject()
-                if ('handler' in item && !data[item.handler]) {
-                    data[item.handler] = function (e) {
-                        data._rxSubjects[key].next(e)
+                if ('handler' in item) {
+                    if (data[item.handler]){
+                        data._rxSubjects[key] = data._rxSubjects[data[item.handler].key]
+                    }else{
+                        data[item.handler] = function (e) {
+                            data._rxSubjects[key].next(e)
+                        }
+                        data[item.handler].key = key
                     }
                 }
             }
