@@ -1,8 +1,8 @@
 'use strict';
 
-require('core-js/modules/es.array.concat.js');
-require('core-js/modules/es.array.map.js');
-require('core-js/modules/es.string.repeat.js');
+require('core-js/modules/es.array.concat');
+require('core-js/modules/es.array.map');
+require('core-js/modules/es.string.repeat');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {

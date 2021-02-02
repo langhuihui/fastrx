@@ -1,9 +1,9 @@
 'use strict';
 
-require('core-js/modules/es.array.filter.js');
-require('core-js/modules/es.array.find.js');
-require('core-js/modules/es.array.find-index.js');
-require('core-js/modules/es.array.reduce.js');
+require('core-js/modules/es.array.filter');
+require('core-js/modules/es.array.find');
+require('core-js/modules/es.array.find-index');
+require('core-js/modules/es.array.reduce');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {

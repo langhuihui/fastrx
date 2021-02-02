@@ -1,7 +1,7 @@
 'use strict';
 
-require('core-js/modules/es.function.name.js');
-require('regenerator-runtime/runtime.js');
+require('core-js/modules/es.function.name');
+require('regenerator-runtime/runtime');
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
   try {

@@ -32,14 +32,15 @@ function getRxComputedMixin(opt) {
             const rxComputed = this.$options.rxComputed || {}
             for (const key in rxComputed) {
                 const item = rxComputed[key]
+                const keys = key.split(',')
+                const setFunc = keys.length > 1 ? data => keys.forEach(k => this[k] = data[k]) : data => this[key] = data
                 if (typeof item == 'function') {
                     const ob = item(this)
-                    this.$data._rxComputed.push(ob.subscribe(data => this[key] = data))
+                    this.$data._rxComputed.push(ob.subscribe(setFunc))
                 } else {
                     const subject = this.$data._rxSubjects[key]
-                    this.$data._rxComputed.push(item.get(subject).subscribe(data => this[key] = data))
+                    this.$data._rxComputed.push(item.get(subject).subscribe(item.call ? data => this[key](data) : setFunc))
                     if ('watch' in item) {
-                        this.$data._rxComputed.push(item.get(subject).subscribe(data => this[key] = data))
                         if (typeof item.watch == 'object') {
                             for (const name in item.watch) {
                                 this.$watch(name, v => subject.next(v), item.watch[name])

@@ -1,17 +1,17 @@
 'use strict';
 
-require('core-js/modules/es.symbol.js');
-require('core-js/modules/es.symbol.description.js');
-require('core-js/modules/es.array.concat.js');
-require('core-js/modules/es.array.for-each.js');
-require('core-js/modules/es.array.iterator.js');
-require('core-js/modules/es.array.slice.js');
-require('core-js/modules/es.object.to-string.js');
-require('core-js/modules/es.promise.js');
-require('core-js/modules/es.set.js');
-require('core-js/modules/es.string.iterator.js');
-require('core-js/modules/web.dom-collections.for-each.js');
-require('core-js/modules/web.dom-collections.iterator.js');
+require('core-js/modules/es.symbol');
+require('core-js/modules/es.symbol.description');
+require('core-js/modules/es.array.concat');
+require('core-js/modules/es.array.for-each');
+require('core-js/modules/es.array.iterator');
+require('core-js/modules/es.array.slice');
+require('core-js/modules/es.object.to-string');
+require('core-js/modules/es.promise');
+require('core-js/modules/es.set');
+require('core-js/modules/es.string.iterator');
+require('core-js/modules/web.dom-collections.for-each');
+require('core-js/modules/web.dom-collections.iterator');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
