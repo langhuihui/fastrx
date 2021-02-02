@@ -87,30 +87,45 @@ pipe(myObservable('something'), subscribe(console.log))
 ## vue2.0 usage
 ```js
 import { rx } from "fastrx";
-import { vueHookEvent } from "fastrx/extention";
-Vue.use(vueHookEvent);
+import RxComputed from "fastrx/vue";
+Vue.use(RxComputed);
 
-Vue.prototype.$rx = rx;
-
-//in vue
-this.$rx.interval(1000).takeUntil(this.$fromEvent("destroyed")).subscribe(()=>{})
 ```
 ```html
 <template>
-<div @click.native="handler"></div>
+    <div @click="onClick1" :style="{top:x+'px',left:y+'px'}">
+        <span>{{test1}}</span>
+        <span>{{test0}}</span>
+    </div>
 </template>
 <script>
 import {rx} from 'fastrx'
-const ob = rx.eventHandler()
 export default {
-    data(){
-        return {handler:ob.handler}
-    },
-    mounted(){
-        ob.subscribe(()=>{
-            
-        })
-    }
+   rxComputed:{
+       test0:_this=>rx.interval(1000).take(10),//简单的订阅
+       test_watch:{//使用watch触发Observable发射数据
+           get:ob=>ob.switchMapTo(rx.interval(1000)).map(x=>10-x)
+           watch:"test1"
+       },
+       test1:{//使用设置方法的方式触发，可以提供给事件回调
+           get:ob=>ob.switchMap(rx.timer(1000)),
+           handler:"onClick1"
+       },
+       test2:{
+           call:true,//调用test2方法而不是设置属性
+           get:ob=>ob.switchMap(e=>rx.timer(1000).map(()=>e)),
+           handler:"onClick1"
+       },
+       "x,y":{//采用解构，将结果对象中的x,y属性分别写入vue实例中的x和y属性
+            get:ob=>ob.switchMap(e=>rx.timer(1000).map(()=>({x:e.screenX,y:e.screenY}))),
+           handler:"onClick1"
+        }
+   },
+   methods:{
+       test2(e){
+           console.log(e)
+       }
+   }
 }
 </script>
 ```
@@ -118,7 +133,7 @@ export default {
 ## vue3.0 usage
 ```html
 <template>
-<div @click.native="handler"></div>
+    <div @click="handler"></div>
 </template>
 <script>
 import {rx} from 'fastrx'

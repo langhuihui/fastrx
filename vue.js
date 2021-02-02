@@ -74,10 +74,13 @@ function initDataWithRxComputed(options, pluginOptions) {
             // } else {
             //     data[key] = value
             // }
-            data[key] = value
+            const keys = key.split(',')
+            if (keys.length > 1) keys.forEach(k => data[k] = value[k])
+            else
+                data[key] = value
             if (typeof item == 'object') {
-                data._rxSubjects[key] = rx.subject()
-                if ('handler' in item) {
+                if (!data._rxSubjects[key]) data._rxSubjects[key] = rx.subject()
+                if ('handler' in item && !data[item.handler]) {
                     data[item.handler] = function (e) {
                         data._rxSubjects[key].next(e)
                     }
