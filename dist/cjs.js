@@ -321,8 +321,19 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
   };
 }
 
-function noop$1() {}
-var Sink$1 = /*#__PURE__*/function () {
+function noop() {}
+var stop = Symbol('stop'); //第一次调用有效
+
+var once = function once(f) {
+  return function () {
+    if (f) {
+      var r = f.apply(void 0, arguments);
+      f = null;
+      return r;
+    }
+  };
+};
+var Sink = /*#__PURE__*/function () {
   function Sink(sink) {
     _classCallCheck(this, Sink);
 
@@ -361,10 +372,10 @@ var Sink$1 = /*#__PURE__*/function () {
     value: function dispose() {
       var defer = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
       this.disposed = true;
-      this.complete = noop$1;
-      this.next = noop$1;
-      this.dispose = noop$1;
-      this.subscribes = this.subscribe = noop$1;
+      this.complete = noop;
+      this.next = noop;
+      this.dispose = noop;
+      this.subscribes = this.subscribe = noop;
       defer && this.defer(); //销毁时终止事件源
     }
   }, {
@@ -467,7 +478,13 @@ var Asap = /*#__PURE__*/function () {
 }();
 
 var _asap = new Asap();
-var deliver$1 = function deliver(Class) {
+
+function asap(task, defer) {
+  _asap.run(task);
+
+  return defer;
+}
+var deliver = function deliver(Class) {
   return function () {
     for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       args[_key2] = arguments[_key2];
@@ -534,7 +551,7 @@ var Share = /*#__PURE__*/function (_Sink) {
   }]);
 
   return Share;
-}(Sink$1);
+}(Sink);
 
 var share = function share() {
   return function (source) {
@@ -609,7 +626,7 @@ var Race = /*#__PURE__*/function (_Sink2) {
   }]);
 
   return Race;
-}(Sink$1);
+}(Sink);
 
 var race = function race() {
   for (var _len = arguments.length, sources = new Array(_len), _key = 0; _key < _len; _key++) {
@@ -653,7 +670,7 @@ var Concat = /*#__PURE__*/function (_Sink3) {
   }]);
 
   return Concat;
-}(Sink$1);
+}(Sink);
 
 var concat = function concat() {
   for (var _len2 = arguments.length, sources = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
@@ -689,7 +706,7 @@ var Merge = /*#__PURE__*/function (_Sink4) {
   }]);
 
   return Merge;
-}(Sink$1);
+}(Sink);
 
 var mergeArray = function mergeArray(sources) {
   return function (sink) {
@@ -755,7 +772,7 @@ var CombineLatest = /*#__PURE__*/function (_Sink5) {
   }]);
 
   return CombineLatest;
-}(Sink$1);
+}(Sink);
 
 var combineLatest = function combineLatest() {
   for (var _len4 = arguments.length, sources = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
@@ -795,13 +812,13 @@ var WithLatestFrom = /*#__PURE__*/function (_Sink6) {
       var _this = this,
           _exports;
 
-      this._withLatestFrom = new Sink$1(this.sink);
+      this._withLatestFrom = new Sink(this.sink);
 
       this._withLatestFrom.next = function (data) {
         return _this.buffer = data;
       };
 
-      this._withLatestFrom.complete = noop$1;
+      this._withLatestFrom.complete = noop;
 
       (_exports = exports).combineLatest.apply(_exports, arguments)(this._withLatestFrom);
     }
@@ -822,9 +839,9 @@ var WithLatestFrom = /*#__PURE__*/function (_Sink6) {
   }]);
 
   return WithLatestFrom;
-}(Sink$1);
+}(Sink);
 
-var withLatestFrom = deliver$1(WithLatestFrom);
+var withLatestFrom = deliver(WithLatestFrom);
 
 var Zip = /*#__PURE__*/function (_Sink7) {
   _inherits(Zip, _Sink7);
@@ -867,7 +884,7 @@ var Zip = /*#__PURE__*/function (_Sink7) {
   }]);
 
   return Zip;
-}(Sink$1);
+}(Sink);
 
 var zip = function zip() {
   for (var _len5 = arguments.length, sources = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
@@ -963,7 +980,7 @@ var Reduce = /*#__PURE__*/function (_Sink) {
   }]);
 
   return Reduce;
-}(Sink$1);
+}(Sink);
 
 var reduce = function reduce() {
   for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
@@ -977,12 +994,12 @@ var reduce = function reduce() {
   };
 };
 var count = function count(f) {
-  return exports.reduce(function (aac, c) {
+  return reduce(function (aac, c) {
     return f(c) ? aac + 1 : aac;
   }, 0);
 };
-var max = exports.reduce(Math.max);
-var min = exports.reduce(Math.min);
+var max = reduce(Math.max);
+var min = reduce(Math.min);
 
 var mathematical = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -1017,7 +1034,7 @@ var Ignore = /*#__PURE__*/function (_Sink) {
   }]);
 
   return Ignore;
-}(Sink$1);
+}(Sink);
 
 var ignoreElements = function ignoreElements(source) {
   return function (sink) {
@@ -1054,9 +1071,9 @@ var Take = /*#__PURE__*/function (_Sink2) {
   }]);
 
   return Take;
-}(Sink$1);
+}(Sink);
 
-var take = deliver$1(Take);
+var take = deliver(Take);
 
 var TakeUntil = /*#__PURE__*/function (_Sink3) {
   _inherits(TakeUntil, _Sink3);
@@ -1074,7 +1091,7 @@ var TakeUntil = /*#__PURE__*/function (_Sink3) {
     value: function init(sSrc) {
       var _this = this;
 
-      this._takeUntil = new Sink$1(this.sink);
+      this._takeUntil = new Sink(this.sink);
 
       this._takeUntil.next = function () {
         _this.defer();
@@ -1096,9 +1113,9 @@ var TakeUntil = /*#__PURE__*/function (_Sink3) {
   }]);
 
   return TakeUntil;
-}(Sink$1);
+}(Sink);
 
-var takeUntil = deliver$1(TakeUntil);
+var takeUntil = deliver(TakeUntil);
 
 var TakeWhile = /*#__PURE__*/function (_Sink4) {
   _inherits(TakeWhile, _Sink4);
@@ -1131,9 +1148,9 @@ var TakeWhile = /*#__PURE__*/function (_Sink4) {
   }]);
 
   return TakeWhile;
-}(Sink$1);
+}(Sink);
 
-var takeWhile = deliver$1(TakeWhile);
+var takeWhile = deliver(TakeWhile);
 var takeLast = function takeLast(count) {
   return reduce(function (buffer, d) {
     buffer.push(d);
@@ -1168,9 +1185,9 @@ var Skip = /*#__PURE__*/function (_Sink5) {
   }]);
 
   return Skip;
-}(Sink$1);
+}(Sink);
 
-var skip = deliver$1(Skip);
+var skip = deliver(Skip);
 
 var _SkipUntil = /*#__PURE__*/function (_Sink6) {
   _inherits(_SkipUntil, _Sink6);
@@ -1197,7 +1214,7 @@ var _SkipUntil = /*#__PURE__*/function (_Sink6) {
   }]);
 
   return _SkipUntil;
-}(Sink$1);
+}(Sink);
 
 var SkipUntil = /*#__PURE__*/function (_Sink7) {
   _inherits(SkipUntil, _Sink7);
@@ -1227,9 +1244,9 @@ var SkipUntil = /*#__PURE__*/function (_Sink7) {
   }]);
 
   return SkipUntil;
-}(Sink$1);
+}(Sink);
 
-var skipUntil = deliver$1(SkipUntil);
+var skipUntil = deliver(SkipUntil);
 
 var SkipWhile = /*#__PURE__*/function (_Sink8) {
   _inherits(SkipWhile, _Sink8);
@@ -1260,9 +1277,9 @@ var SkipWhile = /*#__PURE__*/function (_Sink8) {
   }]);
 
   return SkipWhile;
-}(Sink$1);
+}(Sink);
 
-var skipWhile = deliver$1(SkipWhile);
+var skipWhile = deliver(SkipWhile);
 var defaultThrottleConfig = {
   leading: true,
   trailing: false
@@ -1316,7 +1333,7 @@ var _Throttle = /*#__PURE__*/function (_Sink9) {
   }]);
 
   return _Throttle;
-}(Sink$1);
+}(Sink);
 
 var Throttle = /*#__PURE__*/function (_Sink10) {
   _inherits(Throttle, _Sink10);
@@ -1383,9 +1400,9 @@ var Throttle = /*#__PURE__*/function (_Sink10) {
   }]);
 
   return Throttle;
-}(Sink$1);
+}(Sink);
 
-var throttle = deliver$1(Throttle);
+var throttle = deliver(Throttle);
 var defaultAuditConfig = {
   leading: false,
   trailing: true
@@ -1452,9 +1469,9 @@ var ThrottleTime = /*#__PURE__*/function (_Sink11) {
   }]);
 
   return ThrottleTime;
-}(Sink$1);
+}(Sink);
 
-var throttleTime = deliver$1(ThrottleTime);
+var throttleTime = deliver(ThrottleTime);
 
 var DebounceTime = /*#__PURE__*/function (_Sink12) {
   _inherits(DebounceTime, _Sink12);
@@ -1506,9 +1523,9 @@ var DebounceTime = /*#__PURE__*/function (_Sink12) {
   }]);
 
   return DebounceTime;
-}(Sink$1);
+}(Sink);
 
-var debounceTime = deliver$1(DebounceTime);
+var debounceTime = deliver(DebounceTime);
 
 var _Debounce = /*#__PURE__*/function (_Sink13) {
   _inherits(_Debounce, _Sink13);
@@ -1536,7 +1553,7 @@ var _Debounce = /*#__PURE__*/function (_Sink13) {
   }]);
 
   return _Debounce;
-}(Sink$1);
+}(Sink);
 
 var Debounce = /*#__PURE__*/function (_Sink14) {
   _inherits(Debounce, _Sink14);
@@ -1585,9 +1602,9 @@ var Debounce = /*#__PURE__*/function (_Sink14) {
   }]);
 
   return Debounce;
-}(Sink$1);
+}(Sink);
 
-var debounce = deliver$1(Debounce);
+var debounce = deliver(Debounce);
 
 var ElementAt = /*#__PURE__*/function (_Sink15) {
   _inherits(ElementAt, _Sink15);
@@ -1628,9 +1645,9 @@ var ElementAt = /*#__PURE__*/function (_Sink15) {
   }]);
 
   return ElementAt;
-}(Sink$1);
+}(Sink);
 
-var elementAt = deliver$1(ElementAt);
+var elementAt = deliver(ElementAt);
 var find = function find(f) {
   return function (source) {
     return take(1)(skipWhile(function (d) {
@@ -1672,9 +1689,9 @@ var FindIndex = /*#__PURE__*/function (_Sink16) {
   }]);
 
   return FindIndex;
-}(Sink$1);
+}(Sink);
 
-var findIndex = deliver$1(FindIndex);
+var findIndex = deliver(FindIndex);
 
 var First = /*#__PURE__*/function (_Sink17) {
   _inherits(First, _Sink17);
@@ -1717,9 +1734,9 @@ var First = /*#__PURE__*/function (_Sink17) {
   }]);
 
   return First;
-}(Sink$1);
+}(Sink);
 
-var first = deliver$1(First);
+var first = deliver(First);
 
 var Last = /*#__PURE__*/function (_Sink18) {
   _inherits(Last, _Sink18);
@@ -1760,9 +1777,9 @@ var Last = /*#__PURE__*/function (_Sink18) {
   }]);
 
   return Last;
-}(Sink$1);
+}(Sink);
 
-var last = deliver$1(Last);
+var last = deliver(Last);
 
 var filtering = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -2033,7 +2050,7 @@ var bindNodeCallback = function bindNodeCallback(call, thisArg) {
   };
 };
 var never = function never() {
-  return noop$1;
+  return noop;
 };
 var throwError = function throwError(e) {
   return function (sink) {
@@ -2115,7 +2132,7 @@ var FilterMapSink = /*#__PURE__*/function (_Sink2) {
   }]);
 
   return FilterMapSink;
-}(Sink$1);
+}(Sink);
 
 var MapSink = /*#__PURE__*/function (_Sink3) {
   _inherits(MapSink, _Sink3);
@@ -2155,7 +2172,7 @@ var MapSink = /*#__PURE__*/function (_Sink3) {
   }]);
 
   return MapSink;
-}(Sink$1);
+}(Sink);
 
 var Scan = /*#__PURE__*/function (_Sink) {
   _inherits(Scan, _Sink);
@@ -2194,7 +2211,7 @@ var Scan = /*#__PURE__*/function (_Sink) {
   }]);
 
   return Scan;
-}(Sink$1);
+}(Sink);
 
 var scan = function scan() {
   for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
@@ -2255,9 +2272,9 @@ var Pairwise = /*#__PURE__*/function (_Sink2) {
   }]);
 
   return Pairwise;
-}(Sink$1);
+}(Sink);
 
-var pairwise = deliver$1(Pairwise);
+var pairwise = deliver(Pairwise);
 
 var Repeat = /*#__PURE__*/function (_Sink3) {
   _inherits(Repeat, _Sink3);
@@ -2298,9 +2315,9 @@ var Repeat = /*#__PURE__*/function (_Sink3) {
   }]);
 
   return Repeat;
-}(Sink$1);
+}(Sink);
 
-var repeat = deliver$1(Repeat);
+var repeat = deliver(Repeat);
 
 var _SwitchMap = /*#__PURE__*/function (_Sink4) {
   _inherits(_SwitchMap, _Sink4);
@@ -2338,7 +2355,7 @@ var _SwitchMap = /*#__PURE__*/function (_Sink4) {
   }]);
 
   return _SwitchMap;
-}(Sink$1);
+}(Sink);
 
 var SwitchMap = /*#__PURE__*/function (_Sink5) {
   _inherits(SwitchMap, _Sink5);
@@ -2378,9 +2395,9 @@ var SwitchMap = /*#__PURE__*/function (_Sink5) {
   }]);
 
   return SwitchMap;
-}(Sink$1);
+}(Sink);
 
-var switchMap = deliver$1(SwitchMap);
+var switchMap = deliver(SwitchMap);
 var switchMapTo = function switchMapTo(innerSource, combineResults) {
   return switchMap(function (d) {
     return innerSource;
@@ -2427,9 +2444,9 @@ var BufferTime = /*#__PURE__*/function (_Sink6) {
   }]);
 
   return BufferTime;
-}(Sink$1);
+}(Sink);
 
-var bufferTime = deliver$1(BufferTime);
+var bufferTime = deliver(BufferTime);
 
 var transformation = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -2444,8 +2461,7 @@ var transformation = /*#__PURE__*/Object.freeze({
   bufferTime: bufferTime
 });
 
-var eventHandler = function eventHandler() {
-  var once = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+var eventHandler = function eventHandler(once) {
   var observers = new Set();
 
   var observable = function observable(sink) {
@@ -2479,39 +2495,44 @@ var fromLifeHook = function fromLifeHook(hook) {
   var once = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
   return hook(eventHandler(once).handler);
 };
-var fromWatch = function fromWatch(target, option) {
+var watch = function watch(target, option) {
   return function (sink) {
     return sink.defer(vue.watch(target, function (value) {
-      sink.next(value);
+      return sink.next(value);
     }, option));
   };
 };
-var toRef = function toRef(source) {
-  return vue.customRef(function (track, trigger) {
-    var sink = new Sink();
-    var value;
+var toRef = function toRef() {
+  return function (source) {
+    return vue.customRef(function (track, trigger) {
+      var sink = new Sink();
+      var value;
 
-    sink.next = function (d) {
-      return value = d, trigger();
-    };
+      sink.next = function (d) {
+        return value = d, trigger();
+      };
 
-    source(sink);
-    return {
-      get: function get() {
-        track();
-        return value;
-      },
-      set: function set(value) {//nothing to do
-      }
-    };
-  });
+      source(sink);
+      vue.onUnmounted(function () {
+        return sink.dispose();
+      });
+      return {
+        get: function get() {
+          track();
+          return value;
+        },
+        set: function set(value) {//nothing to do
+        }
+      };
+    });
+  };
 };
 
 var vue3 = /*#__PURE__*/Object.freeze({
   __proto__: null,
   eventHandler: eventHandler,
   fromLifeHook: fromLifeHook,
-  fromWatch: fromWatch,
+  watch: watch,
   toRef: toRef
 });
 
@@ -2563,20 +2584,22 @@ var reusePipe = function reusePipe() {
 
   return _construct(Reuse, args);
 };
-var toPromise = function toPromise(source) {
-  return new Promise(function (resolve, reject) {
-    var sink = new Sink();
+var toPromise = function toPromise() {
+  return function (source) {
+    return new Promise(function (resolve, reject) {
+      var sink = new Sink();
 
-    sink.next = function (d) {
-      return sink.value = d;
-    };
+      sink.next = function (d) {
+        return sink.value = d;
+      };
 
-    sink.complete = function (err) {
-      return err ? reject(err) : resolve(sink.value);
-    };
+      sink.complete = function (err) {
+        return err ? reject(err) : resolve(sink.value);
+      };
 
-    source(sink);
-  });
+      source(sink);
+    });
+  };
 }; // //SUBSCRIBER
 
 var subscribe = function subscribe(n) {
@@ -2736,12 +2759,12 @@ function createRx() {
   if (typeof Proxy == 'undefined') {
     var prototype = {}; //将一个Observable函数的原型修改为具有所有operator的方法
 
-    var _rx = function _rx(f) {
+    var rx = function rx(f) {
       return Object.setPrototypeOf(f, prototype);
     }; //提供动态添加Obserable以及operator的方法
 
 
-    _rx.set = function (ext) {
+    rx.set = function (ext) {
       var _loop = function _loop(key) {
         var f = ext[key];
 
@@ -2767,11 +2790,11 @@ function createRx() {
 
           default:
             prototype[key] = function () {
-              return _rx(f.apply(void 0, arguments)(this));
+              return rx(f.apply(void 0, arguments)(this));
             };
 
-            _rx[key] = function () {
-              return _rx(f.apply(void 0, arguments));
+            rx[key] = function () {
+              return rx(f.apply(void 0, arguments));
             };
 
         }
@@ -2782,9 +2805,8 @@ function createRx() {
       }
     };
 
-    _rx.set(observables);
-
-    return _rx;
+    rx.set(observables);
+    return rx;
   } else {
     var rxProxy = {
       get: function get(target, prop) {
@@ -2808,9 +2830,10 @@ function createRx() {
   }
 }
 
-var rx = createRx();
+var index = createRx();
 
-exports.Sink = Sink$1;
+exports.Sink = Sink;
+exports.asap = asap;
 exports.audit = audit;
 exports.bindCallback = bindCallback;
 exports.bindNodeCallback = bindNodeCallback;
@@ -2821,8 +2844,9 @@ exports.concat = concat;
 exports.count = count;
 exports.debounce = debounce;
 exports.debounceTime = debounceTime;
+exports.default = index;
 exports.delay = delay;
-exports.deliver = deliver$1;
+exports.deliver = deliver;
 exports.elementAt = elementAt;
 exports.empty = empty;
 exports.eventHandler = eventHandler;
@@ -2843,7 +2867,6 @@ exports.fromNextTick = fromNextTick;
 exports.fromPromise = fromPromise;
 exports.fromVueEvent = fromVueEvent;
 exports.fromVueEventOnce = fromVueEventOnce;
-exports.fromWatch = fromWatch;
 exports.ignoreElements = ignoreElements;
 exports.iif = iif;
 exports.interval = interval;
@@ -2855,8 +2878,9 @@ exports.merge = merge;
 exports.mergeArray = mergeArray;
 exports.min = min;
 exports.never = never;
-exports.noop = noop$1;
+exports.noop = noop;
 exports.of = of;
+exports.once = once;
 exports.pairwise = pairwise;
 exports.pipe = pipe;
 exports.pluck = pluck;
@@ -2865,7 +2889,6 @@ exports.range = range;
 exports.reduce = reduce;
 exports.repeat = repeat;
 exports.reusePipe = reusePipe;
-exports.rx = rx;
 exports.scan = scan;
 exports.share = share;
 exports.shareReplay = shareReplay;
@@ -2873,6 +2896,7 @@ exports.skip = skip;
 exports.skipUntil = skipUntil;
 exports.skipWhile = skipWhile;
 exports.startWith = startWith;
+exports.stop = stop;
 exports.subject = subject;
 exports.subscribe = subscribe;
 exports.switchMap = switchMap;
@@ -2888,6 +2912,7 @@ exports.throwError = throwError;
 exports.timer = timer;
 exports.toPromise = toPromise;
 exports.toRef = toRef;
+exports.watch = watch;
 exports.withLatestFrom = withLatestFrom;
 exports.zip = zip;
 //# sourceMappingURL=cjs.js.map
