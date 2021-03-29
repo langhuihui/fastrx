@@ -1,6 +1,6 @@
-const { Sink } = require('./common')
-const { rx, fromEventSource } = require('./index.js')
-exports.koaEventStream = async function (ctx, next) {
+import { Sink } from './common'
+import { rx, fromEventSource } from './index.js'
+export const koaEventStream = async function (ctx, next) {
     const sink = new Sink
     const { res, req } = ctx;
     res.writeHead(200, {
@@ -17,44 +17,44 @@ exports.koaEventStream = async function (ctx, next) {
     req.on("close", () => sink.dispose())
 }
 
-exports.vueHookEvent = {
-    install(Vue, opt) {
-        Vue.prototype.$fromEvent = function (name) {
-            switch (name) {
-                case "updated":
-                case "beforeUpdate":
-                    return rx.fromVueEvent(this, "hook:" + name)
-                case "beforeCreate":
-                case "created":
-                case "beforeMount":
-                case "mounted":
-                case "beforeDestroy":
-                case "destroyed":
-                    return rx.fromVueEventOnce(this, "hook:" + name)
-                default:
-                    return rx.fromVueEvent(this, name)
-            }
-        }
-    }
-}
-exports.vueDirective = {
-    install(Vue, opt) {
-        Vue.directive('rx', {
-            bind: function (el, binding, vnode) {
-                const name = binding.arg
-                for (let eventName in binding.modifiers) {
-                    binding.value[name + eventName] = rx.fromEvent(el, eventName)
-                }
-            }
-        })
-    }
-}
+// export const vueHookEvent = {
+//     install(Vue, opt) {
+//         Vue.prototype.$fromEvent = function (name) {
+//             switch (name) {
+//                 case "updated":
+//                 case "beforeUpdate":
+//                     return rx.fromVueEvent(this, "hook:" + name)
+//                 case "beforeCreate":
+//                 case "created":
+//                 case "beforeMount":
+//                 case "mounted":
+//                 case "beforeDestroy":
+//                 case "destroyed":
+//                     return rx.fromVueEventOnce(this, "hook:" + name)
+//                 default:
+//                     return rx.fromVueEvent(this, name)
+//             }
+//         }
+//     }
+// }
+// export const vueDirective = {
+//     install(Vue, opt) {
+//         Vue.directive('rx', {
+//             bind: function (el, binding, vnode) {
+//                 const name = binding.arg
+//                 for (let eventName in binding.modifiers) {
+//                     binding.value[name + eventName] = rx.fromEvent(el, eventName)
+//                 }
+//             }
+//         })
+//     }
+// }
 
 /**
  * VUE EventSource Component
  * @description auto connect and close EventSource
  */
-exports.vueEventSource = {
+export const vueEventSource = {
     install(Vue, opt = {}) {
         Vue.component(opt.id || 'EventSource', {
             name: opt.name || "EventSource",

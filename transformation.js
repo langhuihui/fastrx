@@ -1,10 +1,5 @@
-const {
-    Sink,
-    deliver
-} = require('./common')
-const {
-    MapSink
-} = require('./fusion')
+import { Sink, deliver } from './common'
+import { MapSink } from './fusion'
 class Scan extends Sink {
     init(hasSeed, f, seed) {
         this.f = f
@@ -22,11 +17,11 @@ class Scan extends Sink {
         this.sink.next(this.aac)
     }
 }
-exports.scan = (...args) => source => sink => source(new Scan(sink, args.length == 2, ...args))
+export const scan = (...args) => source => sink => source(new Scan(sink, args.length == 2, ...args))
 
-exports.map = f => source => sink => source(sink.fusionMap ? sink.fusionMap(f) : new MapSink(sink, f))
-exports.mapTo = target => exports.map(x => target)
-exports.pluck = s => exports.map(d => d[s])
+export const map = f => source => sink => source(sink.fusionMap ? sink.fusionMap(f) : new MapSink(sink, f))
+export const mapTo = target => map(x => target)
+export const pluck = s => map(d => d[s])
 
 class Pairwise extends Sink {
     init() {
@@ -41,7 +36,7 @@ class Pairwise extends Sink {
         this.last = data
     }
 }
-exports.pairwise = deliver(Pairwise)
+export const pairwise = deliver(Pairwise)
 
 class Repeat extends Sink {
     init(count) {
@@ -65,7 +60,7 @@ class Repeat extends Sink {
     }
 }
 
-exports.repeat = deliver(Repeat)
+export const repeat = deliver(Repeat)
 class _SwitchMap extends Sink {
     init(data, context) {
         this.data = data
@@ -104,9 +99,9 @@ class SwitchMap extends Sink {
     }
 }
 
-exports.switchMap = deliver(SwitchMap)
+export const switchMap = deliver(SwitchMap)
 
-exports.switchMapTo = (innerSource, combineResults) => exports.switchMap(d => innerSource, combineResults)
+export const switchMapTo = (innerSource, combineResults) => switchMap(d => innerSource, combineResults)
 
 class BufferTime extends Sink {
     init(miniseconds) {
@@ -127,4 +122,4 @@ class BufferTime extends Sink {
     }
 }
 
-exports.bufferTime = deliver(BufferTime)
+export const bufferTime = deliver(BufferTime)

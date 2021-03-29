@@ -1,7 +1,4 @@
-const {
-    Sink
-} = require('./common')
-
+import { Sink } from './common'
 class Reduce extends Sink {
     init(hasSeed, f, seed) {
         this.f = f
@@ -22,7 +19,7 @@ class Reduce extends Sink {
         super.complete(err)
     }
 }
-exports.reduce = (...args) => source => sink => source(new Reduce(sink, args.length === 2, ...args))
-exports.count = f => exports.reduce((aac, c) => f(c) ? aac + 1 : aac, 0)
-exports.max = exports.reduce(Math.max)
-exports.min = exports.reduce(Math.min)
+export const reduce = (...args) => source => sink => source(new Reduce(sink, args.length === 2, ...args))
+export const count = f => reduce((aac, c) => f(c) ? aac + 1 : aac, 0)
+export const max = reduce(Math.max)
+export const min = reduce(Math.min)

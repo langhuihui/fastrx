@@ -3,6 +3,7 @@
     "version": "1.4.4",
     "description": "fast rxjs implemention",
     "main": "dist/cjs.js",
+    "module": "./index.js",
     "scripts": {
         "build": "rollup -c"
     },
@@ -31,6 +32,7 @@
         "rollup-plugin-uglify": "^6.0.4"
     },
     "dependencies": {
-        "core-js": "^3.7.0"
+        "core-js": "^3.7.0",
+        "vue": "^3.0.7"
     }
 }

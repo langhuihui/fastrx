@@ -1,6 +1,4 @@
-const {
-    Sink, deliver, noop
-} = require('./common')
+import { Sink, deliver, noop } from './common'
 class Share extends Sink {
     init(source) {
         this.source = source
@@ -26,14 +24,14 @@ class Share extends Sink {
         this.sinks.clear()
     }
 }
-exports.share = () => source => {
+export const share = () => source => {
     const share = new Share(null, source)
     return sink => {
         sink.defer([share.remove, share, sink])
         share.add(sink);
     }
 }
-exports.shareReplay = bufferSize => source => {
+export const shareReplay = bufferSize => source => {
     const share = new Share(null, source)
     const buffer = []
     share.next = function (data) {
@@ -44,12 +42,12 @@ exports.shareReplay = bufferSize => source => {
         this.sinks.forEach(s => s.next(data))
     }
     return sink => {
-        sink.defer([share.remove, share, this])
+        sink.defer([share.remove, share, sink])
         buffer.forEach(cache => sink.next(cache))
         share.add(sink);
     }
 }
-exports.iif = (condition, trueS, falseS) => sink => condition() ? trueS(sink) : falseS(sink)
+export const iif = (condition, trueS, falseS) => sink => condition() ? trueS(sink) : falseS(sink)
 class Race extends Sink {
     init(nLife) {
         this.nLife = nLife;
@@ -63,7 +61,7 @@ class Race extends Sink {
         if (--this.nLife === 0) super.complete(err)
     }
 }
-exports.race = (...sources) => sink => new Race(sink, sources.length).subscribes(sources)
+export const race = (...sources) => sink => new Race(sink, sources.length).subscribes(sources)
 class Concat extends Sink {
     init(sources) {
         this.sources = sources
@@ -79,7 +77,7 @@ class Concat extends Sink {
         else super.complete()
     }
 }
-exports.concat = (...sources) => sink => new Concat(sink, sources).complete()
+export const concat = (...sources) => sink => new Concat(sink, sources).complete()
 
 class Merge extends Sink {
     init(nLife) {
@@ -89,8 +87,8 @@ class Merge extends Sink {
         if (--this.nLife === 0) super.complete()
     }
 }
-exports.mergeArray = sources => sink => new Merge(sink, sources.length).subscribes(sources)
-exports.merge = (...sources) => sink => new Merge(sink, sources.length).subscribes(sources)
+export const mergeArray = sources => sink => new Merge(sink, sources.length).subscribes(sources)
+export const merge = (...sources) => sink => new Merge(sink, sources.length).subscribes(sources)
 class CombineLatest extends Sink {
     init(index, array, context) {
         this.index = index
@@ -120,7 +118,7 @@ class CombineLatest extends Sink {
         if (err || (--this.context.nLife) === 0) super.complete(err)
     }
 }
-exports.combineLatest = (...sources) => sink => {
+export const combineLatest = (...sources) => sink => {
     const nTotal = sources.length;
     const context = {
         nTotal,
@@ -149,7 +147,7 @@ class WithLatestFrom extends Sink {
         super.complete(err)
     }
 }
-exports.withLatestFrom = deliver(WithLatestFrom)
+export const withLatestFrom = deliver(WithLatestFrom)
 class Zip extends Sink {
     init(index, array, context) {
         this.index = index
@@ -168,7 +166,7 @@ class Zip extends Sink {
         if (err || (--this.context.nLife) === 0) super.complete(err)
     }
 }
-exports.zip = (...sources) => sink => {
+export const zip = (...sources) => sink => {
     const nTotal = sources.length;
     const context = {
         nTotal,
@@ -178,7 +176,7 @@ exports.zip = (...sources) => sink => {
     sources.forEach((source, i) => source(new Zip(sink, i, array, context)))
 }
 
-exports.startWith = (...xs) => inputSource => (sink, pos = 0, l = xs.length) => {
+export const startWith = (...xs) => inputSource => (sink, pos = 0, l = xs.length) => {
     while (pos < l) {
         if (sink.disposed) return
         sink.next(xs[pos++])

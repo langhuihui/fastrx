@@ -1,4 +1,6 @@
-exports.eventHandler = (once = true) => {
+import { watch as _watch, customRef, onUnmounted } from 'vue'
+import { Sink } from './common'
+export const eventHandler = (once) => {
     const observers = new Set()
     const observable = sink => {
         observers.add(sink)
@@ -19,4 +21,21 @@ exports.eventHandler = (once = true) => {
         }
     return observable
 }
-exports.fromLifeHook = (hook, once = true) => hook(exports.eventHandler(once).handler)
+export const fromLifeHook = (hook, once = true) => hook(eventHandler(once).handler)
+export const watch = (target, option) => sink => sink.defer(_watch(target, (value) => sink.next(value), option))
+export const toRef = () => source => customRef((track, trigger) => {
+    const sink = new Sink()
+    let value;
+    sink.next = d => (value = d, trigger())
+    source(sink)
+    onUnmounted(() => sink.dispose())
+    return {
+        get() {
+            track()
+            return value
+        },
+        set(value) {
+            //nothing to do
+        }
+    }
+})

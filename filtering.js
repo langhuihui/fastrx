@@ -1,20 +1,11 @@
-const {
-    Sink,
-    deliver,
-    noop
-} = require('./common')
-const {
-    Filter
-} = require('./fusion')
-const {
-    reduce
-} = require('./mathematical')
-exports.filter = f => source => sink => source(sink.fusionFilter ? sink.fusionFilter(f) : new Filter(sink, f))
+import { Sink, deliver } from './common'
+import { reduce } from './mathematical'
+export const filter = f => source => sink => source(sink.fusionFilter ? sink.fusionFilter(f) : new Filter(sink, f))
 
 class Ignore extends Sink {
     next() { }
 }
-exports.ignoreElements = source => sink => source(new Ignore(sink))
+export const ignoreElements = source => sink => source(new Ignore(sink))
 
 class Take extends Sink {
     init(count) {
@@ -28,7 +19,7 @@ class Take extends Sink {
         }
     }
 }
-exports.take = deliver(Take)
+export const take = deliver(Take)
 
 class TakeUntil extends Sink {
     init(sSrc) {
@@ -47,7 +38,7 @@ class TakeUntil extends Sink {
     }
 }
 
-exports.takeUntil = deliver(TakeUntil)
+export const takeUntil = deliver(TakeUntil)
 
 class TakeWhile extends Sink {
     init(f) {
@@ -63,9 +54,9 @@ class TakeWhile extends Sink {
         }
     }
 }
-exports.takeWhile = deliver(TakeWhile)
+export const takeWhile = deliver(TakeWhile)
 
-exports.takeLast = count => reduce((buffer, d) => {
+export const takeLast = count => reduce((buffer, d) => {
     buffer.push(d)
     if (buffer.length > count) buffer.shift()
     return buffer
@@ -81,7 +72,7 @@ class Skip extends Sink {
         }
     }
 }
-exports.skip = deliver(Skip)
+export const skip = deliver(Skip)
 
 class _SkipUntil extends Sink {
     next() {
@@ -104,7 +95,7 @@ class SkipUntil extends Sink {
         super.complete(err)
     }
 }
-exports.skipUntil = deliver(SkipUntil)
+export const skipUntil = deliver(SkipUntil)
 
 class SkipWhile extends Sink {
     init(f) {
@@ -118,7 +109,7 @@ class SkipWhile extends Sink {
         }
     }
 }
-exports.skipWhile = deliver(SkipWhile)
+export const skipWhile = deliver(SkipWhile)
 
 const defaultThrottleConfig = {
     leading: true,
@@ -193,12 +184,12 @@ class Throttle extends Sink {
         }
     }
 }
-exports.throttle = deliver(Throttle)
+export const throttle = deliver(Throttle)
 const defaultAuditConfig = {
     leading: false,
     trailing: true
 }
-exports.audit = durationSelector => exports.throttle(durationSelector, defaultAuditConfig)
+export const audit = durationSelector => throttle(durationSelector, defaultAuditConfig)
 class ThrottleTime extends Sink {
     init(period, config = defaultThrottleConfig) {
         this.config = config
@@ -233,7 +224,7 @@ class ThrottleTime extends Sink {
         super.complete(err)
     }
 }
-exports.throttleTime = deliver(ThrottleTime)
+export const throttleTime = deliver(ThrottleTime)
 class DebounceTime extends Sink {
     init(period) {
         this.period = period
@@ -260,7 +251,7 @@ class DebounceTime extends Sink {
     }
 }
 
-exports.debounceTime = deliver(DebounceTime)
+export const debounceTime = deliver(DebounceTime)
 
 class _Debounce extends Sink {
     next() {
@@ -299,7 +290,7 @@ class Debounce extends Sink {
     }
 }
 
-exports.debounce = deliver(Debounce)
+export const debounce = deliver(Debounce)
 class ElementAt extends Sink {
     init(count, defaultValue) {
         this.count = count
@@ -321,8 +312,8 @@ class ElementAt extends Sink {
     }
 }
 
-exports.elementAt = deliver(ElementAt)
-exports.find = f => source => exports.take(1)(exports.skipWhile(d => !f(d))(source))
+export const elementAt = deliver(ElementAt)
+export const find = f => source => take(1)(skipWhile(d => !f(d))(source))
 
 class FindIndex extends Sink {
     init(f) {
@@ -341,7 +332,7 @@ class FindIndex extends Sink {
     }
 }
 
-exports.findIndex = deliver(FindIndex)
+export const findIndex = deliver(FindIndex)
 
 class First extends Sink {
     init(f, defaultValue) {
@@ -366,7 +357,7 @@ class First extends Sink {
     }
 }
 
-exports.first = deliver(First)
+export const first = deliver(First)
 
 class Last extends Sink {
     init(f, defaultValue) {
@@ -389,4 +380,4 @@ class Last extends Sink {
     }
 }
 
-exports.last = deliver(Last)
+export const last = deliver(Last)

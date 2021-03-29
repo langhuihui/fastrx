@@ -1,8 +1,8 @@
-function noop() {}
-exports.noop = noop
-exports.stop = Symbol('stop')
+export function noop() { }
+
+export const stop = Symbol('stop')
     //第一次调用有效
-exports.once = f => (...args) => {
+export const once = f => (...args) => {
     if (f) {
         let r = f(...args)
         f = null
@@ -10,7 +10,7 @@ exports.once = f => (...args) => {
     }
 }
 
-class Sink {
+export class Sink {
     constructor(sink, ...args) {
         this.defers = new Set()
         this.sink = sink
@@ -75,7 +75,6 @@ class Sink {
         sources.forEach(source => source(this))
     }
 }
-exports.Sink = Sink
 class Asap {
     constructor() {
         this.asaps = []
@@ -107,10 +106,9 @@ class Asap {
 
 const _asap = new Asap
 
-function asap(task, defer) {
+export function asap(task, defer) {
     _asap.run(task)
     return defer
 }
-exports.asap = asap;
 
-exports.deliver = Class => (...args) => source => sink => source(new Class(sink, ...args))
+export const deliver = Class => (...args) => source => sink => source(new Class(sink, ...args))

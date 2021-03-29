@@ -1,11 +1,6 @@
-const {
-    Sink,
-    deliver,
-    noop
-} = require('./common')
-exports.Sink = Sink
-exports.pipe = (first, ...cbs) => cbs.reduce((aac, c) => c(aac), first);
-
+import { Sink, deliver, noop } from './common'
+export * from './common'
+export const pipe = (first, ...cbs) => cbs.reduce((aac, c) => c(aac), first);
 class Reuse {
     constructor(subscribe, ...args) {
         this.subscribe = subscribe
@@ -19,25 +14,25 @@ class Reuse {
     }
 }
 
-//在pipe的基础上增加了start和stop方法，方便反复调用
-exports.reusePipe = (...args) => new Reuse(...args)
+// //在pipe的基础上增加了start和stop方法，方便反复调用
+export const reusePipe = (...args) => new Reuse(...args)
 
-exports.toPromise = source => new Promise((resolve, reject) => {
+export const toPromise = () => source => new Promise((resolve, reject) => {
     const sink = new Sink()
     sink.next = d => sink.value = d
     sink.complete = err => err ? reject(err) : resolve(sink.value)
     source(sink)
 })
 
-//SUBSCRIBER
-exports.subscribe = (n, e = noop, c = noop) => source => {
+// //SUBSCRIBER
+export const subscribe = (n, e = noop, c = noop) => source => {
     const sink = new Sink()
     sink.next = n
     sink.complete = err => err ? e(err) : c()
     source(sink)
     return sink
 }
-// UTILITY 
+// // UTILITY 
 class Tap extends Sink {
     init(f) {
         this.f = f
@@ -49,7 +44,7 @@ class Tap extends Sink {
     }
 }
 
-exports.tap = deliver(Tap)
+export const tap = deliver(Tap)
 
 class Delay extends Sink {
     init(delay) {
@@ -81,7 +76,7 @@ class Delay extends Sink {
         }
     }
 }
-exports.delay = deliver(Delay)
+export const delay = deliver(Delay)
 class CatchError extends Sink {
     init(selector) {
         this.selector = selector
@@ -94,43 +89,56 @@ class CatchError extends Sink {
         }
     }
 }
-exports.catchError = deliver(CatchError)
-Object.assign(exports, require('./combination'), require('./filtering'), require('./mathematical'), require('./producer'), require('./transformation'), require('./vue3'))
-
-if (typeof Proxy == 'undefined') {
-    const prototype = {};
-    //将一个Observable函数的原型修改为具有所有operator的方法
-    const rx = f => Object.setPrototypeOf(f, prototype);
-    //提供动态添加Obserable以及operator的方法
-    rx.set = ext => {
-        for (let key in ext) {
-            const f = ext[key]
-            switch (key) {
-                case 'Sink':
-                case 'pipe':
-                case 'reusePipe':
-                    break
-                case 'subscribe':
-                    prototype[key] = function (...args) { return f(...args)(this) }
-                    break
-                case 'toPromise':
-                    prototype[key] = function () { return f(this) }
-                    break
-                default:
-                    prototype[key] = function (...args) { return rx(f(...args)(this)) }
-                    rx[key] = (...args) => rx(f(...args))
+export const catchError = deliver(CatchError)
+import * as combination from './combination'
+import * as filtering from './filtering'
+import * as mathematical from './mathematical'
+import * as producer from './producer'
+import * as transformation from './transformation'
+import * as vue3 from './vue3'
+export * from './combination'
+export * from './filtering'
+export * from './mathematical'
+export * from './producer'
+export * from './transformation'
+export * from './vue3'
+const observables = { delay, tap, toPromise, subscribe, catchError, ...combination, ...filtering, ...mathematical, ...producer, ...transformation, ...vue3 }
+function createRx() {
+    if (typeof Proxy == 'undefined') {
+        const prototype = {};
+        //将一个Observable函数的原型修改为具有所有operator的方法
+        const rx = f => Object.setPrototypeOf(f, prototype);
+        //提供动态添加Obserable以及operator的方法
+        rx.set = ext => {
+            for (let key in ext) {
+                const f = ext[key]
+                switch (key) {
+                    case 'Sink':
+                    case 'pipe':
+                    case 'reusePipe':
+                        break
+                    case 'subscribe':
+                        prototype[key] = function (...args) { return f(...args)(this) }
+                        break
+                    case 'toPromise':
+                        prototype[key] = function () { return f(this) }
+                        break
+                    default:
+                        prototype[key] = function (...args) { return rx(f(...args)(this)) }
+                        rx[key] = (...args) => rx(f(...args))
+                }
             }
         }
+        rx.set(observables)
+        return rx
+    } else {
+        const rxProxy = {
+            get: (target, prop) => target[prop] || ((...args) => new Proxy(observables[prop](...args)(target), rxProxy))
+        }
+        return new Proxy(f => new Proxy(f, rxProxy), {
+            get: (target, prop) => (...args) => new Proxy(observables[prop](...args), rxProxy),
+            set: (target, prop, value) => observables[prop] = value
+        })
     }
-    rx.set(exports)
-    exports.rx = rx
-} else {
-    //该代理可以实现将pipe模式转成链式编程
-    const rxProxy = {
-        get: (target, prop) => target[prop] || ((...args) => new Proxy(exports[prop](...args)(target), rxProxy))
-    }
-    exports.rx = new Proxy(f => new Proxy(f, rxProxy), {
-        get: (target, prop) => (...args) => new Proxy(exports[prop](...args), rxProxy),
-        set: (target, prop, value) => exports[prop] = value
-    })
 }
+export default createRx()

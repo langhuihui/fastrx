@@ -1,6 +1,4 @@
-const {
-    Sink
-} = require('./common')
+import { Sink } from './common'
 
 function compose(g, f) {
     return x => g(f(x))
@@ -9,7 +7,7 @@ function compose(g, f) {
 function and(a, b) {
     return x => a(x) && b(x)
 }
-class Filter extends Sink {
+export class Filter extends Sink {
     init(f) {
         this.f = f
     }
@@ -23,8 +21,6 @@ class Filter extends Sink {
         // return new Filter(this.sink, this.and(f, this.f))
     }
 }
-exports.Filter = Filter
-
 class FilterMapSink extends Sink {
     init(f, m) {
         this.f = f
@@ -41,7 +37,7 @@ class FilterMapSink extends Sink {
         // return new Filter(this, f)
     }
 }
-class MapSink extends Sink {
+export class MapSink extends Sink {
     init(f) {
         this.f = f
     }
@@ -60,4 +56,3 @@ class MapSink extends Sink {
         // return new MapSink(this.sink, this.compose(this.f, f))
     }
 }
-exports.MapSink = MapSink
