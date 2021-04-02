@@ -1,3 +1,6 @@
+import { Ref } from "@vue/reactivity"
+import { WatchOptions, WatchSource } from "@vue/runtime-core"
+
 declare namespace Rx {
     interface Observable {
         take(count: number): Observable
@@ -31,7 +34,8 @@ declare namespace Rx {
         switchMapTo(source: Observable): Observable
         bufferTime(miniseconds: number): Observable
         catchError(selector: (e: Error | any) => Observable): Observable
-
+        watch(target: WatchSource, opt: WatchOptions): Observable
+        toRef(): Ref
         toPromise(): Promise<any>
         subscribe(n: (d: any) => void, e: (d: Error) => void, c: () => void): Sink
     }
@@ -150,7 +154,9 @@ export function switchMap(source: (d: any) => Observable, combineResults?: (outt
 export function switchMapTo(source: Observable): Observable
 export function bufferTime(miniseconds: number): Observable
 export function catchError(selector: (e: Error | any) => Observable): Observable
-export const toPromise: Observer<Sink>
+export function watch(target: WatchSource, opt: WatchOptions): Observable
+export function toRef(): Ref
+export function toPromise(): Observer<Sink>
 export function subscribe(n: (d: any) => void, e: (d: Error) => void, c: () => void): Observer<Sink>
 
 export const rx: Rx.Creator

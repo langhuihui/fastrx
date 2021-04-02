@@ -1,0 +1,19 @@
+{
+    "description": "fastrx debugging tools",
+    "manifest_version": 2,
+    "name": "fastrx",
+    "version": "1.0",
+    "author": "dexter",
+    "icons": {
+        "100": "icons/Rx_Logo_S.png"
+    },
+    "background": {
+        "scripts": [
+            "background_scripts/background.js"
+        ]
+    },
+    "permissions": [
+        "<all_urls>"
+    ],
+    "devtools_page": "devtools/devtools-page.html"
+}

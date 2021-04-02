@@ -10,7 +10,7 @@ npm i fastrx
 #usage
 
 ```js
-import { rx } from 'fastrx';
+import rx from 'fastrx';
 
 rx.of(1,2,3).filter(x=>x<2).subscribe(console.log)
 ```
@@ -41,7 +41,7 @@ dataflow for 1000000 source events
 ## Observable.create way
 
 ```js
-import { rx } from 'fastrx';
+import rx from 'fastrx';
 const myObservable = rx(sink=>{
     sink.next('data')
     sink.complete()
@@ -61,7 +61,7 @@ pipe(myObservable(), subscribe(console.log))
 
 ## add to library
 ```js
-import { rx } from 'fastrx';
+import rx from 'fastrx';
 rx.myObservable = (args) => sink => {
     const id = setTimeout(()=>{
         sink.next(args)
@@ -74,7 +74,7 @@ rx.myObservable = (args) => sink => {
 then you can use your observable anywhere
 
 ```js
-import { rx} from 'fastrx';
+import rx from 'fastrx';
 rx.myObservable('something').subscribe(console.log)
 ```
 or
@@ -86,7 +86,7 @@ pipe(myObservable('something'), subscribe(console.log))
 
 ## vue2.0 usage
 ```js
-import { rx } from "fastrx";
+import rx from "fastrx";
 import RxComputed from "fastrx/vue";
 Vue.use(RxComputed);
 
@@ -99,7 +99,7 @@ Vue.use(RxComputed);
     </div>
 </template>
 <script>
-import {rx} from 'fastrx'
+import rx from 'fastrx'
 export default {
    rxComputed:{
        test0:()=>rx.interval(1000).take(10),//简单的订阅
@@ -135,17 +135,17 @@ export default {
 ```html
 <template>
     <div @click="handler"></div>
+    <div>{{count}}</div>
+    <div>{{count2}}</div>
 </template>
 <script>
-import {rx} from 'fastrx'
-import {onUnmounted} from 'vue'
+import rx from 'fastrx'
 export default {
     setup(){
         const ob = rx.eventHandler()
-        ob.switchMapTo(rx.interval(1000)).takeUntil(rx.fromLifeHook(onUnmounted)).subscribe(()=>{
-            
-        })
-        return {handler:ob.handler}
+        const count =  ob.switchMapTo(rx.interval(1000)).toRef()
+        const count2 = rx.watch(count).map(x=>x*2).toRef()
+        return {handler:ob.handler,count,count2}
     }
 }
 </script>
