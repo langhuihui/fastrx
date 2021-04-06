@@ -4,11 +4,11 @@ In here, we can create our panel.
 */
 
 function handleShown() {
-  console.log("panel is being shown");
+  chrome.devtools.inspectedWindow.eval("window.__FASTRX_DEVTOOLS__ = true")
 }
 
 function handleHidden() {
-  console.log("panel is being hidden");
+  chrome.devtools.inspectedWindow.eval("window.__FASTRX_DEVTOOLS__ = false")
 }
 
 /**

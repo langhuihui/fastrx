@@ -13,7 +13,19 @@
         ]
     },
     "permissions": [
+        "tabs",
         "<all_urls>"
     ],
-    "devtools_page": "devtools/devtools-page.html"
+    "devtools_page": "devtools/devtools-page.html",
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content-script.js"
+            ],
+            "run_at": "document_start"
+        }
+    ]
 }

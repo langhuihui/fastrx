@@ -96,17 +96,14 @@ import * as mathematical from './mathematical'
 import * as producer from './producer'
 import * as transformation from './transformation'
 import * as vue3 from './vue3'
-import { reactive } from '@vue/reactivity';
 export * from './combination'
 export * from './filtering'
 export * from './mathematical'
 export * from './producer'
 export * from './transformation'
 export * from './vue3'
-import { Node } from './devtools'
+import { Node, Events } from './devtools'
 const observables = { delay, tap, toPromise, subscribe, catchError, ...combination, ...filtering, ...mathematical, ...producer, ...transformation, ...vue3 }
-export const rxInstances = reactive([])
-if (window) window.__FASTRX_DEVTOOLS_GLOBAL_HOOK__ = { rxInstances }
 let dev_obs = {}
 for (let key in observables) {
     dev_obs[key] = (...arg) => (new Node(key, arg)).pipe()
@@ -150,6 +147,6 @@ function createRx() {
     }
 }
 function inspect() {
-    return window?.__FASTRX_DEVTOOLS_GLOBAL_HOOK__?.inspect
+    return window?.__FASTRX_DEVTOOLS__
 }
 export default createRx()
