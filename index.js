@@ -149,4 +149,25 @@ function createRx() {
 function inspect() {
     return window?.__FASTRX_DEVTOOLS__
 }
+function send(event, payload) {
+    window.postMessage({ source: "fastrx-devtools-backend", payload: { event, payload } })
+}
+Events.next = (who, streamId, data) => {
+    send("next", { id: who.id, streamId, data: data.toString() })
+}
+Events.complete = (who, streamId, err) => {
+    send("complete", { id: who.id, streamId, err: err ? err.toString() : null })
+}
+Events.defer = (who, streamId) => {
+    send("defer", { id: who.id, streamId })
+}
+Events.addSource = (who, source) => {
+    send("addSource", { id: who.id, name: who.toString(), source: { id: source.id, name: source.toString() } })
+}
+Events.pipe = (who) => {
+    send("pipe", { name: who.toString(), id: who.id, source: { id: who.source.id, name: who.source.toString() } })
+}
+Events.subscribe = ({ id, end }, sink) => {
+    send("subscribe", { id, end, sink: { nodeId: sink?.nodeId, streamId: sink?.streamId } })
+}
 export default createRx()

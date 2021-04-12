@@ -1,13 +1,13 @@
-window.addEventListener("message", function (e) {
-    console.log("abc")
-    console.log(e.data);
-}, false);
-chrome.runtime.onConnect.addListener(function (port) {
-    console.log(port);
-    if (port.name == 'test-connect') {
-        port.onMessage.addListener(function (msg) {
-            console.log('收到长连接消息：', msg);
-            if (msg.question == '你是谁啊？') port.postMessage({ answer: '我是你爸！' });
-        });
+if (document instanceof HTMLDocument) {
+    const source = ';window.__FASTRX_DEVTOOLS__=true'
+
+    if (typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Firefox') > -1) {
+        // eslint-disable-next-line no-eval
+        window.eval(source) // in Firefox, this evaluates on the content window
+    } else {
+        const script = document.createElement('script')
+        script.textContent = source
+        document.documentElement.appendChild(script)
+        script.parentNode.removeChild(script)
     }
-});
+}

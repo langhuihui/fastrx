@@ -6,6 +6,7 @@ require('core-js/modules/es.array.reduce');
 require('core-js/modules/es.object.set-prototype-of');
 require('core-js/modules/es.object.to-string');
 require('core-js/modules/es.promise');
+require('core-js/modules/es.regexp.to-string');
 require('core-js/modules/es.symbol');
 require('core-js/modules/es.symbol.description');
 require('core-js/modules/es.array.concat');
@@ -21,6 +22,111 @@ require('core-js/modules/es.array.map');
 require('core-js/modules/es.symbol.iterator');
 require('core-js/modules/es.array.find');
 var vue = require('vue');
+require('core-js/modules/es.array.join');
+require('core-js/modules/es.function.name');
+
+var fastrx = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  get pipe () { return pipe; },
+  get reusePipe () { return reusePipe; },
+  get toPromise () { return toPromise; },
+  get subscribe () { return subscribe; },
+  get tap () { return tap; },
+  get delay () { return delay; },
+  get catchError () { return catchError; },
+  get default () { return index; },
+  get noop () { return noop; },
+  get stop () { return stop; },
+  get once () { return once; },
+  get Sink () { return Sink; },
+  get asap () { return asap; },
+  get deliver () { return deliver; },
+  get share () { return share; },
+  get shareReplay () { return shareReplay; },
+  get iif () { return iif; },
+  get race () { return race; },
+  get concat () { return concat; },
+  get mergeArray () { return mergeArray; },
+  get merge () { return merge; },
+  get combineLatest () { return combineLatest; },
+  get withLatestFrom () { return withLatestFrom; },
+  get zip () { return zip; },
+  get startWith () { return startWith; },
+  get filter () { return filter; },
+  get ignoreElements () { return ignoreElements; },
+  get take () { return take; },
+  get takeUntil () { return takeUntil; },
+  get takeWhile () { return takeWhile; },
+  get takeLast () { return takeLast; },
+  get skip () { return skip; },
+  get skipUntil () { return skipUntil; },
+  get skipWhile () { return skipWhile; },
+  get throttle () { return throttle; },
+  get audit () { return audit; },
+  get throttleTime () { return throttleTime; },
+  get debounceTime () { return debounceTime; },
+  get debounce () { return debounce; },
+  get elementAt () { return elementAt; },
+  get find () { return find; },
+  get findIndex () { return findIndex; },
+  get first () { return first; },
+  get last () { return last; },
+  get reduce () { return reduce; },
+  get count () { return count; },
+  get max () { return max; },
+  get min () { return min; },
+  get subject () { return subject; },
+  get fromArray () { return fromArray; },
+  get of () { return of; },
+  get interval () { return interval; },
+  get timer () { return timer; },
+  get fromAnimationFrame () { return fromAnimationFrame; },
+  get fromEventPattern () { return fromEventPattern; },
+  get fromEvent () { return fromEvent; },
+  get fromVueEvent () { return fromVueEvent; },
+  get fromVueEventOnce () { return fromVueEventOnce; },
+  get fromEventSource () { return fromEventSource; },
+  get fromFetch () { return fromFetch; },
+  get fromNextTick () { return fromNextTick; },
+  get range () { return range; },
+  get fromPromise () { return fromPromise; },
+  get fromIterable () { return fromIterable; },
+  get from () { return from; },
+  get bindCallback () { return bindCallback; },
+  get bindNodeCallback () { return bindNodeCallback; },
+  get never () { return never; },
+  get throwError () { return throwError; },
+  get empty () { return empty; },
+  get scan () { return scan; },
+  get map () { return map; },
+  get mapTo () { return mapTo; },
+  get pluck () { return pluck; },
+  get pairwise () { return pairwise; },
+  get repeat () { return repeat; },
+  get switchMap () { return switchMap; },
+  get switchMapTo () { return switchMapTo; },
+  get bufferTime () { return bufferTime; },
+  get eventHandler () { return eventHandler; },
+  get fromLifeHook () { return fromLifeHook; },
+  get watch () { return watch; },
+  get toRef () { return toRef; }
+});
+
+function _typeof(obj) {
+  "@babel/helpers - typeof";
+
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
+}
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -2536,6 +2642,184 @@ var vue3 = /*#__PURE__*/Object.freeze({
   toRef: toRef
 });
 
+var noop$1 = Function.prototype;
+var Sink$1 = Sink;
+var COUNT = 0;
+var Events = {
+  addSource: noop$1,
+  subscribe: noop$1,
+  next: noop$1,
+  complete: noop$1,
+  defer: noop$1,
+  pipe: noop$1
+};
+var Node = /*#__PURE__*/function () {
+  function Node() {
+    var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
+    var arg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+    _classCallCheck(this, Node);
+
+    this.name = name;
+    this.arg = arg;
+    this.source = null;
+    this.id = COUNT++;
+
+    switch (name) {
+      case "subscribe":
+      case "toPromise":
+      case "toRef":
+        this.end = true;
+        break;
+
+      default:
+        this.end = false;
+    }
+
+    if (arg.length) {
+      this.args = arg;
+    }
+  }
+
+  _createClass(Node, [{
+    key: "toString",
+    value: function toString() {
+      return "".concat(this.name, "(").concat(this.arg.map(function (x) {
+        return _typeof(x) == 'object' || typeof x == 'function' ? '...' : x;
+      }).join(','), ")");
+    }
+  }, {
+    key: "checkSubNode",
+    //是否属于子流
+    value: function checkSubNode(x) {
+      if (_typeof(x) != 'object' || x == null) return x;
+      var isNode = x.unProxy;
+
+      if (isNode) {
+        Events.addSource(this, isNode);
+        return function (s) {
+          return isNode.subscribe(s);
+        };
+      }
+
+      return x;
+    } //过滤子事件流，放入sources数组中，就能显示
+
+  }, {
+    key: "pipe",
+    // 通过返回proxy产生链式调用
+    value: function pipe() {
+      if (this.end) {
+        return this.subscribe();
+      }
+
+      return new Proxy(this, {
+        get: function get(target, prop) {
+          if (prop != "subscribe" && (target[prop] || target.hasOwnProperty(prop))) return target[prop];
+          var sink = target.createSink(prop);
+          return function () {
+            for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+              args[_key] = arguments[_key];
+            }
+
+            sink.args = args;
+            return sink.pipe();
+          };
+        }
+      });
+    }
+  }, {
+    key: "createSink",
+    value: function createSink(name) {
+      var sink = new Node(name);
+      sink.source = this;
+      Events.pipe(sink);
+      return sink;
+    }
+  }, {
+    key: "subscribe",
+    value: function subscribe(sink) {
+      var source = this.source,
+          name = this.name,
+          arg = this.arg;
+      var realrx = fastrx[name].apply(fastrx, _toConsumableArray(arg));
+      var f = source && !this.end ? realrx(function (s) {
+        return source.subscribe(s);
+      }) : realrx;
+      var streamCount = 0;
+
+      this.subscribe = function (sink) {
+        var _this = this;
+
+        var streamId = streamCount++;
+
+        if (this.end) {
+          return f(function (s) {
+            var oNext = s.next;
+            var oComplete = s.complete;
+
+            s.next = function (data) {
+              Events.next(_this, streamId, data);
+              oNext(data);
+            };
+
+            s.complete = function (err) {
+              Events.complete(_this, streamId, err);
+              oComplete(err);
+            };
+
+            s.streamId = streamId;
+            s.nodeId = _this.id;
+            Events.subscribe(_this, s);
+            source.subscribe(s);
+          });
+        }
+
+        Events.subscribe(this, sink);
+        var newSink = new Sink$1(sink);
+        newSink.streamId = streamId;
+        newSink.nodeId = this.id;
+
+        newSink.next = function (data) {
+          Events.next(_this, streamId, data);
+          sink.next(data);
+        };
+
+        newSink.complete = function (err) {
+          Events.complete(_this, streamId, err);
+          sink.complete(err);
+        };
+
+        newSink.defer(function () {
+          Events.defer(_this, streamId);
+        });
+        f(newSink);
+        return newSink;
+      };
+
+      return this.subscribe(sink);
+    }
+  }, {
+    key: "unProxy",
+    get: function get() {
+      return this;
+    }
+  }, {
+    key: "args",
+    set: function set(value) {
+      var _this2 = this;
+
+      this.arg = value.map(function (x) {
+        return typeof x == "function" ? function () {
+          return _this2.checkSubNode(x.apply(void 0, arguments));
+        } : _this2.checkSubNode(x);
+      });
+    }
+  }]);
+
+  return Node;
+}();
+
 var pipe = function pipe(first) {
   for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
     cbs[_key - 1] = arguments[_key];
@@ -2755,6 +3039,22 @@ var observables = _objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2(_o
   catchError: catchError
 }, combination), filtering), mathematical), producer), transformation), vue3);
 
+var dev_obs = {};
+
+var _loop = function _loop(key) {
+  dev_obs[key] = function () {
+    for (var _len4 = arguments.length, arg = new Array(_len4), _key5 = 0; _key5 < _len4; _key5++) {
+      arg[_key5] = arguments[_key5];
+    }
+
+    return new Node(key, arg).pipe();
+  };
+};
+
+for (var key in observables) {
+  _loop(key);
+}
+
 function createRx() {
   if (typeof Proxy == 'undefined') {
     var prototype = {}; //将一个Observable函数的原型修改为具有所有operator的方法
@@ -2765,43 +3065,43 @@ function createRx() {
 
 
     rx.set = function (ext) {
-      var _loop = function _loop(key) {
-        var f = ext[key];
+      var _loop2 = function _loop2(_key4) {
+        var f = ext[_key4];
 
-        switch (key) {
+        switch (_key4) {
           case 'Sink':
           case 'pipe':
           case 'reusePipe':
             break;
 
           case 'subscribe':
-            prototype[key] = function () {
+            prototype[_key4] = function () {
               return f.apply(void 0, arguments)(this);
             };
 
             break;
 
           case 'toPromise':
-            prototype[key] = function () {
+            prototype[_key4] = function () {
               return f(this);
             };
 
             break;
 
           default:
-            prototype[key] = function () {
+            prototype[_key4] = function () {
               return rx(f.apply(void 0, arguments)(this));
             };
 
-            rx[key] = function () {
+            rx[_key4] = function () {
               return rx(f.apply(void 0, arguments));
             };
 
         }
       };
 
-      for (var key in ext) {
-        _loop(key);
+      for (var _key4 in ext) {
+        _loop2(_key4);
       }
     };
 
@@ -2819,7 +3119,7 @@ function createRx() {
       return new Proxy(f, rxProxy);
     }, {
       get: function get(target, prop) {
-        return function () {
+        return inspect() ? dev_obs[prop] : function () {
           return new Proxy(observables[prop].apply(observables, arguments), rxProxy);
         };
       },
@@ -2829,6 +3129,80 @@ function createRx() {
     });
   }
 }
+
+function inspect() {
+  var _window;
+
+  return (_window = window) === null || _window === void 0 ? void 0 : _window.__FASTRX_DEVTOOLS__;
+}
+
+function send(event, payload) {
+  window.postMessage({
+    source: "fastrx-devtools-backend",
+    payload: {
+      event: event,
+      payload: payload
+    }
+  });
+}
+
+Events.next = function (who, streamId, data) {
+  send("next", {
+    id: who.id,
+    streamId: streamId,
+    data: data.toString()
+  });
+};
+
+Events.complete = function (who, streamId, err) {
+  send("complete", {
+    id: who.id,
+    streamId: streamId,
+    err: err ? err.toString() : null
+  });
+};
+
+Events.defer = function (who, streamId) {
+  send("defer", {
+    id: who.id,
+    streamId: streamId
+  });
+};
+
+Events.addSource = function (who, source) {
+  send("addSource", {
+    id: who.id,
+    name: who.toString(),
+    source: {
+      id: source.id,
+      name: source.toString()
+    }
+  });
+};
+
+Events.pipe = function (who) {
+  send("pipe", {
+    name: who.toString(),
+    id: who.id,
+    source: {
+      id: who.source.id,
+      name: who.source.toString()
+    }
+  });
+};
+
+Events.subscribe = function (_ref, _ref2) {
+  var id = _ref.id,
+      end = _ref.end;
+  var streamId = _ref2.streamId,
+      nodeId = _ref2.nodeId;
+  send("subscribe", {
+    id: id,
+    end: end,
+    nodeId: nodeId,
+    streamId: streamId
+  });
+};
 
 var index = createRx();
 

@@ -4,12 +4,54 @@ Errors may come from evaluating the JavaScript itself
 or from the devtools framework.
 See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/devtools.inspectedWindow/eval#Return_value
 */
-// var port = chrome.runtime.connect({ name: 'test-connect' });
-var port = chrome.tabs.connect(chrome.devtools.inspectedWindow.tabId, { name: 'test-connect' });
-port.postMessage({ question: '你是谁啊？' });
-port.onMessage.addListener(function (msg) {
-  alert('收到消息：' + msg.answer);
-  if (msg.answer && msg.answer.startsWith('我是')) {
-    port.postMessage({ question: '哦，原来是你啊！' });
+import { initDevTools } from '@front'
+import Bridge from '../../bridge'
+
+initDevTools({
+
+  /**
+   * Inject backend, connect to background, and send back the bridge.
+   *
+   * @param {Function} cb
+   */
+
+  connect (cb) {
+    // 1. inject backend code into page
+    injectScript(chrome.runtime.getURL('build/backend.js'), () => {
+      // 2. connect to background to setup proxy
+      const port = chrome.runtime.connect({
+        name: '' + chrome.devtools.inspectedWindow.tabId
+      })
+      let disconnected = false
+      port.onDisconnect.addListener(() => {
+        disconnected = true
+      })
+
+      const bridge = new Bridge({
+        listen (fn) {
+          port.onMessage.addListener(fn)
+        },
+        send (data) {
+          if (!disconnected) {
+            // if (process.env.NODE_ENV !== 'production') {
+            //   console.log('[chrome] devtools -> backend', data)
+            // }
+            port.postMessage(data)
+          }
+        }
+      })
+      // 3. send a proxy API to the panel
+      cb(bridge)
+    })
+  },
+
+  /**
+   * Register a function to reload the devtools app.
+   *
+   * @param {Function} reloadFn
+   */
+
+  onReload (reloadFn) {
+    chrome.devtools.network.onNavigated.addListener(reloadFn)
   }
-});
+})

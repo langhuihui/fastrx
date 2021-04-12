@@ -32,10 +32,15 @@ export class Node {
     }
     //是否属于子流
     checkSubNode(x) {
+        if (typeof x != 'object' || x == null) return x
         const isNode = x.unProxy
         if (isNode) {
             Events.addSource(this, isNode)
-            return s => isNode.subscribe(s)
+            return s => {
+                s.nodeId = this.id
+                s.streamId = 0
+                isNode.subscribe(s)
+            }
         }
         return x
     }
@@ -50,7 +55,7 @@ export class Node {
         }
         return new Proxy(this, {
             get(target, prop) {
-                if (target[prop] || target.hasOwnProperty(prop)) return target[prop]
+                if (prop != "subscribe" && (target[prop] || target.hasOwnProperty(prop))) return target[prop]
                 const sink = target.createSink(prop)
                 return (...args) => {
                     sink.args = args
@@ -60,6 +65,7 @@ export class Node {
         })
     }
     createSink(name) {
+        console.log('createSink', name)
         const sink = new Node(name)
         sink.source = this
         Events.pipe(sink)
@@ -68,14 +74,33 @@ export class Node {
     subscribe(sink) {
         const { source, name, arg } = this
         const realrx = fastrx[name](...arg)
-        let f = source && !this.end ? realrx(s => source.subscribe(s)) : realrx
+        let f = streamId => source && !this.end ? realrx(s => {
+            s.streamId = streamId
+            s.nodeId = this.id
+            source.subscribe(s)
+        }) : realrx
         let streamCount = 0
         this.subscribe = function (sink) {
             const streamId = streamCount++
-            Events.subscribe(this, sink)
             if (this.end) {
-                return f(s => source.subscribe(s))
+                return f(streamId)(s => {
+                    const oNext = s.next
+                    const oComplete = s.complete
+                    s.next = data => {
+                        Events.next(this, streamId, data)
+                        oNext(data);
+                    }
+                    s.complete = err => {
+                        Events.complete(this, streamId, err)
+                        oComplete(err)
+                    }
+                    s.streamId = streamId
+                    s.nodeId = this.id
+                    Events.subscribe(this)
+                    source.subscribe(s)
+                })
             }
+
             const newSink = new Sink(sink)
             newSink.next = data => {
                 Events.next(this, streamId, data)
@@ -88,8 +113,9 @@ export class Node {
             newSink.defer(() => {
                 Events.defer(this, streamId)
             })
-            f(stream)
-            return stream
+            Events.subscribe(this, sink)
+            f(streamId)(newSink)
+            return newSink
         };
         return this.subscribe(sink)
     }
