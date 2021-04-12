@@ -56,8 +56,9 @@ export class Node {
         return new Proxy(this, {
             get(target, prop) {
                 if (prop != "subscribe" && (target[prop] || target.hasOwnProperty(prop))) return target[prop]
+                if (prop == "subscribe" && target.subscribeSink) return target.subscribeSink
                 const sink = target.createSink(prop)
-                return (...args) => {
+                return target.subscribeSink = (...args) => {
                     sink.args = args
                     return sink.pipe()
                 }
@@ -65,7 +66,6 @@ export class Node {
         })
     }
     createSink(name) {
-        console.log('createSink', name)
         const sink = new Node(name)
         sink.source = this
         Events.pipe(sink)
@@ -74,8 +74,8 @@ export class Node {
     subscribe(sink) {
         const { source, name, arg } = this
         const realrx = fastrx[name](...arg)
-        let f = streamId => source && !this.end ? realrx(s => {
-            s.streamId = streamId
+        let f = source && !this.end ? realrx(s => {
+            s.streamId = streamCount-1
             s.nodeId = this.id
             source.subscribe(s)
         }) : realrx
@@ -83,7 +83,7 @@ export class Node {
         this.subscribe = function (sink) {
             const streamId = streamCount++
             if (this.end) {
-                return f(streamId)(s => {
+                return f(s => {
                     const oNext = s.next
                     const oComplete = s.complete
                     s.next = data => {
@@ -114,7 +114,7 @@ export class Node {
                 Events.defer(this, streamId)
             })
             Events.subscribe(this, sink)
-            f(streamId)(newSink)
+            f(newSink)
             return newSink
         };
         return this.subscribe(sink)
