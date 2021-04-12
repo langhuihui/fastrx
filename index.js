@@ -167,6 +167,9 @@ Events.addSource = (who, source) => {
 Events.pipe = (who) => {
     send("pipe", { name: who.toString(), id: who.id, source: { id: who.source.id, name: who.source.toString() } })
 }
+Events.update = who => {
+    send('update', { id: who.id, name: who.toString() })
+}
 Events.subscribe = ({ id, end }, sink) => {
     send("subscribe", { id, end, sink: { nodeId: sink?.nodeId, streamId: sink?.streamId } })
 }

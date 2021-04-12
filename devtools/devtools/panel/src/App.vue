@@ -103,6 +103,11 @@ export default {
               nodes[payload.id] = sink;
               sink.source = nodes[payload.source.id];
               break;
+            case "update":
+              if (nodes[payload.id]) {
+                nodes[payload.id].name = payload.name;
+              }
+              break;
             case "subscribe":
               let node = nodes[payload.id];
               if (!node) break;

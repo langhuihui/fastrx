@@ -3,7 +3,7 @@ import * as fastrx from './index'
 const Sink = fastrx.Sink
 let COUNT = 0
 export const Events = {
-    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop
+    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop,update:noop
 }
 export class Node {
     constructor(name = "", arg = []) {
@@ -60,6 +60,7 @@ export class Node {
                 const sink = target.createSink(prop)
                 return target.subscribeSink = (...args) => {
                     sink.args = args
+                    Events.update(sink)
                     return sink.pipe()
                 }
             }

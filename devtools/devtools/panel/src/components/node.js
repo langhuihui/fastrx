@@ -38,7 +38,6 @@ export class Node {
         this.cdSub = CoolDown(0)
         this.source = null
         this.stopCoolDown = true
-        console.log("createNode", name)
     }
     pickColor() {
         return this.color ?? 'rgba(255,255,255,.5)'
