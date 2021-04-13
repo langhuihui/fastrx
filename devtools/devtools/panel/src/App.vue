@@ -89,9 +89,9 @@ export default {
               break;
             case "addSource":
               if (nodes[payload.id]) {
-                const ob = new Node(payload.source.name);
-                nodes[payload.source.id] = ob;
-                nodes[payload.id].sources.push(ob);
+                // const ob = new Node(payload.source.name);
+                // nodes[payload.source.id] = ob;
+                nodes[payload.id].sources.push(nodes[payload.source.id]);
               }
               break;
             case "pipe":
@@ -112,7 +112,7 @@ export default {
               let node = nodes[payload.id];
               if (!node) break;
               if (payload.end) {
-                pipelines.push(node);
+                pipelines.unshift(node);
 
                 // const pipeline = [node];
                 // while (node.source) {

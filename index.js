@@ -104,10 +104,7 @@ export * from './transformation'
 export * from './vue3'
 import { Node, Events } from './devtools'
 const observables = { delay, tap, toPromise, subscribe, catchError, ...combination, ...filtering, ...mathematical, ...producer, ...transformation, ...vue3 }
-let dev_obs = {}
-for (let key in observables) {
-    dev_obs[key] = (...arg) => (new Node(key, arg)).pipe()
-}
+
 function createRx() {
     if (typeof Proxy == 'undefined') {
         const prototype = {};
@@ -140,8 +137,8 @@ function createRx() {
         const rxProxy = {
             get: (target, prop) => target[prop] || ((...args) => new Proxy(observables[prop](...args)(target), rxProxy))
         }
-        return new Proxy(f => new Proxy(f, rxProxy), {
-            get: (target, prop) => inspect() ? dev_obs[prop] : (...args) => new Proxy(observables[prop](...args), rxProxy),
+        return new Proxy(f => inspect() ? (new Node(f)).pipe():new Proxy(f, rxProxy), {
+            get: (target, prop) => inspect() ? (...arg) => (new Node(prop, arg)).pipe() : (...args) => new Proxy(observables[prop](...args), rxProxy),
             set: (target, prop, value) => observables[prop] = value
         })
     }

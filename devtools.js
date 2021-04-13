@@ -3,7 +3,7 @@ import * as fastrx from './index'
 const Sink = fastrx.Sink
 let COUNT = 0
 export const Events = {
-    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop,update:noop
+    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop, update: noop
 }
 export class Node {
     constructor(name = "", arg = []) {
@@ -74,9 +74,9 @@ export class Node {
     }
     subscribe(sink) {
         const { source, name, arg } = this
-        const realrx = fastrx[name](...arg)
+        const realrx = typeof name == 'string' ? fastrx[name](...arg) : name
         let f = source && !this.end ? realrx(s => {
-            s.streamId = streamCount-1
+            s.streamId = streamCount - 1
             s.nodeId = this.id
             source.subscribe(s)
         }) : realrx
