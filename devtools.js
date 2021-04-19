@@ -32,29 +32,33 @@ export class Node {
     }
     //是否属于子流
     checkSubNode(x) {
-        if (typeof x != 'object' || x == null) return x
-        const isNode = x.unProxy
-        if (isNode) {
-            Events.addSource(this, isNode)
-            return s => {
-                s.nodeId = this.id
-                s.streamId = 0
-                isNode.subscribe(s)
+        if (typeof x == 'function') {
+            const isNode = x.unProxy
+            if (isNode) {
+                Events.addSource(this, isNode)
+                return s => {
+                    s.nodeId = this.id
+                    s.streamId = 0
+                    isNode.subscribe(s)
+                }
+            } else {
+                return (...arg) => this.checkSubNode(x(...arg))
             }
         }
         return x
     }
     //过滤子事件流，放入sources数组中，就能显示
     set args(value) {
-        this.arg = value.map(x => typeof x == "function" ? (...arg) => this.checkSubNode(x(...arg)) : this.checkSubNode(x))
+        this.arg = value.map(x => this.checkSubNode(x))
     }
     // 通过返回proxy产生链式调用
     pipe() {
         if (this.end) {
             return this.subscribe()
         }
-        return new Proxy(this, {
-            get(target, prop) {
+        const target = this
+        return new Proxy(sink => this.subscribe(sink), {
+            get(_, prop) {
                 if (prop != "subscribe" && (target[prop] || target.hasOwnProperty(prop))) return target[prop]
                 if (prop == "subscribe" && target.subscribeSink) return target.subscribeSink
                 const sink = target.createSink(prop)

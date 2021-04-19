@@ -1,5 +1,6 @@
 import { Sink, deliver, noop } from './common'
 import { reduce } from './mathematical'
+import { Filter } from './fusion'
 export const filter = f => source => sink => source(sink.fusionFilter ? sink.fusionFilter(f) : new Filter(sink, f))
 
 class Ignore extends Sink {

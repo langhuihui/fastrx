@@ -69,14 +69,15 @@ export default {
         const port = chrome.runtime.connect({
           name: "" + chrome.devtools.inspectedWindow.tabId,
         });
-        document.body.style.backgroundColor = "lightgray"
+        document.body.style.backgroundColor = "lightgray";
         port.onDisconnect.addListener(() => {
           pipelines.length = 0;
           nodes = {};
           setTimeout(connect, 0);
-          document.body.style.backgroundColor = "gray"
+          document.body.style.backgroundColor = "gray";
         });
         port.onMessage.addListener(({ event, payload }) => {
+          console.log(event,payload)
           switch (event) {
             case "next":
               if (nodes[payload.id])
