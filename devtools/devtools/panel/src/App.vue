@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { nextTick, ref, watch, shallowRef, reactive } from "vue";
+import { reactive } from "vue";
 import pipeline from "./components/pipeline.jsx";
 import { Node } from "./components/node";
 export default {
@@ -69,10 +69,12 @@ export default {
         const port = chrome.runtime.connect({
           name: "" + chrome.devtools.inspectedWindow.tabId,
         });
+        document.body.style.backgroundColor = "lightgray"
         port.onDisconnect.addListener(() => {
           pipelines.length = 0;
           nodes = {};
           setTimeout(connect, 0);
+          document.body.style.backgroundColor = "gray"
         });
         port.onMessage.addListener(({ event, payload }) => {
           switch (event) {

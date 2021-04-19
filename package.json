@@ -1,11 +1,12 @@
 {
-    "name": "fastrx",
+    "name": "@vivo/fastrx",
     "version": "1.4.4",
     "description": "fast rxjs implemention",
     "main": "dist/cjs.js",
     "module": "./index.js",
     "scripts": {
-        "build": "rollup -c"
+        "build": "rollup -c",
+        "build:devtools":"cd devtools/devtools/panel && npm run build"
     },
     "repository": {
         "type": "git",

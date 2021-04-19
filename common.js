@@ -1,6 +1,5 @@
 export function noop() { }
 
-export const stop = Symbol('stop')
     //第一次调用有效
 export const once = f => (...args) => {
     if (f) {

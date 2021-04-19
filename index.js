@@ -137,14 +137,14 @@ function createRx() {
         const rxProxy = {
             get: (target, prop) => target[prop] || ((...args) => new Proxy(observables[prop](...args)(target), rxProxy))
         }
-        return new Proxy(f => inspect() ? (new Node(f)).pipe():new Proxy(f, rxProxy), {
+        return new Proxy(f => inspect() ? (new Node(f)).pipe() : new Proxy(f, rxProxy), {
             get: (target, prop) => inspect() ? (...arg) => (new Node(prop, arg)).pipe() : (...args) => new Proxy(observables[prop](...args), rxProxy),
             set: (target, prop, value) => observables[prop] = value
         })
     }
 }
 function inspect() {
-    return window?.__FASTRX_DEVTOOLS__
+    return window && window.__FASTRX_DEVTOOLS__
 }
 function send(event, payload) {
     window.postMessage({ source: "fastrx-devtools-backend", payload: { event, payload } })
@@ -168,6 +168,6 @@ Events.update = who => {
     send('update', { id: who.id, name: who.toString() })
 }
 Events.subscribe = ({ id, end }, sink) => {
-    send("subscribe", { id, end, sink: { nodeId: sink?.nodeId, streamId: sink?.streamId } })
+    send("subscribe", { id, end, sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId } })
 }
 export default createRx()

@@ -17,38 +17,38 @@ export const koaEventStream = async function (ctx, next) {
     req.on("close", () => sink.dispose())
 }
 
-// export const vueHookEvent = {
-//     install(Vue, opt) {
-//         Vue.prototype.$fromEvent = function (name) {
-//             switch (name) {
-//                 case "updated":
-//                 case "beforeUpdate":
-//                     return rx.fromVueEvent(this, "hook:" + name)
-//                 case "beforeCreate":
-//                 case "created":
-//                 case "beforeMount":
-//                 case "mounted":
-//                 case "beforeDestroy":
-//                 case "destroyed":
-//                     return rx.fromVueEventOnce(this, "hook:" + name)
-//                 default:
-//                     return rx.fromVueEvent(this, name)
-//             }
-//         }
-//     }
-// }
-// export const vueDirective = {
-//     install(Vue, opt) {
-//         Vue.directive('rx', {
-//             bind: function (el, binding, vnode) {
-//                 const name = binding.arg
-//                 for (let eventName in binding.modifiers) {
-//                     binding.value[name + eventName] = rx.fromEvent(el, eventName)
-//                 }
-//             }
-//         })
-//     }
-// }
+export const vueHookEvent = {
+    install(Vue, opt) {
+        Vue.prototype.$fromEvent = function (name) {
+            switch (name) {
+                case "updated":
+                case "beforeUpdate":
+                    return rx.fromVueEvent(this, "hook:" + name)
+                case "beforeCreate":
+                case "created":
+                case "beforeMount":
+                case "mounted":
+                case "beforeDestroy":
+                case "destroyed":
+                    return rx.fromVueEventOnce(this, "hook:" + name)
+                default:
+                    return rx.fromVueEvent(this, name)
+            }
+        }
+    }
+}
+export const vueDirective = {
+    install(Vue, opt) {
+        Vue.directive('rx', {
+            bind: function (el, binding, vnode) {
+                const name = binding.arg
+                for (let eventName in binding.modifiers) {
+                    binding.value[name + eventName] = rx.fromEvent(el, eventName)
+                }
+            }
+        })
+    }
+}
 
 /**
  * VUE EventSource Component
