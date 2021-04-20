@@ -77,8 +77,13 @@ export default {
           document.body.style.backgroundColor = "gray";
         });
         port.onMessage.addListener(({ event, payload }) => {
-          console.log(event,payload)
           switch (event) {
+            case "create":
+              if (!nodes[payload.id]) {
+                const ob = new Node(payload.name);
+                nodes[payload.id] = ob;
+              }
+              break;
             case "next":
               if (nodes[payload.id])
                 nodes[payload.id].next(payload.streamId, payload.data);

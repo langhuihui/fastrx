@@ -3,7 +3,7 @@ import * as fastrx from './index'
 const Sink = fastrx.Sink
 let COUNT = 0
 export const Events = {
-    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop, update: noop
+    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop, update: noop, create: noop
 }
 export class Node {
     constructor(name = "", arg = []) {
@@ -20,12 +20,13 @@ export class Node {
             default:
                 this.end = false
         }
+        Events.create(this)
         if (arg.length) {
             this.args = arg
         }
     }
     toString() {
-        return `${this.name}(${this.arg.map(x => typeof x == 'object' || typeof x == 'function' ? '...' : x).join(',')})`
+        return `${typeof this.name == 'string' ? this.name : this.name.name}(${this.arg.map(x => typeof x == 'object' || typeof x == 'function' ? x.name || '...' : x).join(',')})`
     }
     get unProxy() {
         return this

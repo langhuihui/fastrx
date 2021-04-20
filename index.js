@@ -149,6 +149,9 @@ function inspect() {
 function send(event, payload) {
     window.postMessage({ source: "fastrx-devtools-backend", payload: { event, payload } })
 }
+Events.create = (who) => {
+    send("create", { name: who.toString(), id: who.id })
+}
 Events.next = (who, streamId, data) => {
     send("next", { id: who.id, streamId, data: data && data.toString() })
 }
@@ -159,7 +162,6 @@ Events.defer = (who, streamId) => {
     send("defer", { id: who.id, streamId })
 }
 Events.addSource = (who, source) => {
-    console.log("addSource",who,source)
     send("addSource", { id: who.id, name: who.toString(), source: { id: source.id, name: source.toString() } })
 }
 Events.pipe = (who) => {
