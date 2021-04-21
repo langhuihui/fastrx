@@ -2,28 +2,28 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-require('core-js/modules/es.array.reduce');
-require('core-js/modules/es.object.set-prototype-of');
-require('core-js/modules/es.object.to-string');
-require('core-js/modules/es.promise');
-require('core-js/modules/es.regexp.to-string');
-require('core-js/modules/es.symbol');
-require('core-js/modules/es.symbol.description');
-require('core-js/modules/es.array.concat');
-require('core-js/modules/es.array.for-each');
-require('core-js/modules/es.array.iterator');
-require('core-js/modules/es.array.slice');
-require('core-js/modules/es.set');
-require('core-js/modules/es.string.iterator');
-require('core-js/modules/web.dom-collections.for-each');
-require('core-js/modules/web.dom-collections.iterator');
-require('core-js/modules/es.array.every');
-require('core-js/modules/es.array.map');
-require('core-js/modules/es.symbol.iterator');
-require('core-js/modules/es.array.find');
-var vue = require('vue');
-require('core-js/modules/es.array.join');
-require('core-js/modules/es.function.name');
+require('core-js/modules/es.array.reduce.js');
+require('core-js/modules/es.object.set-prototype-of.js');
+require('core-js/modules/es.object.to-string.js');
+require('core-js/modules/es.promise.js');
+require('core-js/modules/es.regexp.to-string.js');
+require('core-js/modules/es.array.concat.js');
+require('core-js/modules/es.array.for-each.js');
+require('core-js/modules/es.array.iterator.js');
+require('core-js/modules/es.array.slice.js');
+require('core-js/modules/es.set.js');
+require('core-js/modules/es.string.iterator.js');
+require('core-js/modules/web.dom-collections.for-each.js');
+require('core-js/modules/web.dom-collections.iterator.js');
+require('core-js/modules/es.array.every.js');
+require('core-js/modules/es.array.map.js');
+require('core-js/modules/es.symbol.js');
+require('core-js/modules/es.symbol.description.js');
+require('core-js/modules/es.symbol.iterator.js');
+require('core-js/modules/es.array.find.js');
+var compositionApi = require('@vue/composition-api');
+require('core-js/modules/es.array.join.js');
+require('core-js/modules/es.function.name.js');
 
 var fastrx = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -36,7 +36,6 @@ var fastrx = /*#__PURE__*/Object.freeze({
   get catchError () { return catchError; },
   get default () { return index; },
   get noop () { return noop; },
-  get stop () { return stop; },
   get once () { return once; },
   get Sink () { return Sink; },
   get asap () { return asap; },
@@ -427,8 +426,7 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
   };
 }
 
-function noop() {}
-var stop = Symbol('stop'); //第一次调用有效
+function noop() {} //第一次调用有效
 
 var once = function once(f) {
   return function () {
@@ -1114,6 +1112,126 @@ var mathematical = /*#__PURE__*/Object.freeze({
   max: max,
   min: min
 });
+
+function compose(g, f) {
+  return function (x) {
+    return g(f(x));
+  };
+}
+
+function and(a, b) {
+  return function (x) {
+    return a(x) && b(x);
+  };
+}
+
+var Filter = /*#__PURE__*/function (_Sink) {
+  _inherits(Filter, _Sink);
+
+  var _super = _createSuper(Filter);
+
+  function Filter() {
+    _classCallCheck(this, Filter);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(Filter, [{
+    key: "init",
+    value: function init(f) {
+      this.f = f;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      f(data) && this.sink.next(data);
+    }
+  }, {
+    key: "fusionFilter",
+    value: function fusionFilter(f) {
+      this.f = and(f, this.f);
+      return this; // return new Filter(this.sink, this.and(f, this.f))
+    }
+  }]);
+
+  return Filter;
+}(Sink);
+
+var FilterMapSink = /*#__PURE__*/function (_Sink2) {
+  _inherits(FilterMapSink, _Sink2);
+
+  var _super2 = _createSuper(FilterMapSink);
+
+  function FilterMapSink() {
+    _classCallCheck(this, FilterMapSink);
+
+    return _super2.apply(this, arguments);
+  }
+
+  _createClass(FilterMapSink, [{
+    key: "init",
+    value: function init(f, m) {
+      this.f = f;
+      this.m = m;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      var m = this.m;
+      f(data) && this.sink.next(m(data));
+    }
+  }, {
+    key: "fusionFilter",
+    value: function fusionFilter(f) {
+      this.f = and(f, this.f);
+      return this; // return new Filter(this, f)
+    }
+  }]);
+
+  return FilterMapSink;
+}(Sink);
+
+var MapSink = /*#__PURE__*/function (_Sink3) {
+  _inherits(MapSink, _Sink3);
+
+  var _super3 = _createSuper(MapSink);
+
+  function MapSink() {
+    _classCallCheck(this, MapSink);
+
+    return _super3.apply(this, arguments);
+  }
+
+  _createClass(MapSink, [{
+    key: "init",
+    value: function init(f) {
+      this.f = f;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      this.sink.next(f(data));
+    }
+  }, {
+    key: "fusionFilter",
+    value: function fusionFilter(f) {
+      this.disposePass = false;
+      this.dispose(false);
+      return new FilterMapSink(this.sink, f, this.f);
+    }
+  }, {
+    key: "fusionMap",
+    value: function fusionMap(f) {
+      this.f = compose(this.f, f);
+      return this; // return new MapSink(this.sink, this.compose(this.f, f))
+    }
+  }]);
+
+  return MapSink;
+}(Sink);
 
 var filter = function filter(f) {
   return function (source) {
@@ -2193,93 +2311,6 @@ var producer = /*#__PURE__*/Object.freeze({
   empty: empty
 });
 
-function compose(g, f) {
-  return function (x) {
-    return g(f(x));
-  };
-}
-
-function and(a, b) {
-  return function (x) {
-    return a(x) && b(x);
-  };
-}
-
-var FilterMapSink = /*#__PURE__*/function (_Sink2) {
-  _inherits(FilterMapSink, _Sink2);
-
-  var _super2 = _createSuper(FilterMapSink);
-
-  function FilterMapSink() {
-    _classCallCheck(this, FilterMapSink);
-
-    return _super2.apply(this, arguments);
-  }
-
-  _createClass(FilterMapSink, [{
-    key: "init",
-    value: function init(f, m) {
-      this.f = f;
-      this.m = m;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var f = this.f;
-      var m = this.m;
-      f(data) && this.sink.next(m(data));
-    }
-  }, {
-    key: "fusionFilter",
-    value: function fusionFilter(f) {
-      this.f = and(f, this.f);
-      return this; // return new Filter(this, f)
-    }
-  }]);
-
-  return FilterMapSink;
-}(Sink);
-
-var MapSink = /*#__PURE__*/function (_Sink3) {
-  _inherits(MapSink, _Sink3);
-
-  var _super3 = _createSuper(MapSink);
-
-  function MapSink() {
-    _classCallCheck(this, MapSink);
-
-    return _super3.apply(this, arguments);
-  }
-
-  _createClass(MapSink, [{
-    key: "init",
-    value: function init(f) {
-      this.f = f;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var f = this.f;
-      this.sink.next(f(data));
-    }
-  }, {
-    key: "fusionFilter",
-    value: function fusionFilter(f) {
-      this.disposePass = false;
-      this.dispose(false);
-      return new FilterMapSink(this.sink, f, this.f);
-    }
-  }, {
-    key: "fusionMap",
-    value: function fusionMap(f) {
-      this.f = compose(this.f, f);
-      return this; // return new MapSink(this.sink, this.compose(this.f, f))
-    }
-  }]);
-
-  return MapSink;
-}(Sink);
-
 var Scan = /*#__PURE__*/function (_Sink) {
   _inherits(Scan, _Sink);
 
@@ -2603,14 +2634,14 @@ var fromLifeHook = function fromLifeHook(hook) {
 };
 var watch = function watch(target, option) {
   return function (sink) {
-    return sink.defer(vue.watch(target, function (value) {
+    return sink.defer(compositionApi.watch(target, function (value) {
       return sink.next(value);
     }, option));
   };
 };
 var toRef = function toRef() {
   return function (source) {
-    return vue.customRef(function (track, trigger) {
+    return compositionApi.customRef(function (track, trigger) {
       var sink = new Sink();
       var value;
 
@@ -2619,7 +2650,7 @@ var toRef = function toRef() {
       };
 
       source(sink);
-      vue.onUnmounted(function () {
+      compositionApi.onUnmounted(function () {
         return sink.dispose();
       });
       return {
@@ -2651,7 +2682,9 @@ var Events = {
   next: noop$1,
   complete: noop$1,
   defer: noop$1,
-  pipe: noop$1
+  pipe: noop$1,
+  update: noop$1,
+  create: noop$1
 };
 var Node = /*#__PURE__*/function () {
   function Node() {
@@ -2676,6 +2709,8 @@ var Node = /*#__PURE__*/function () {
         this.end = false;
     }
 
+    Events.create(this);
+
     if (arg.length) {
       this.args = arg;
     }
@@ -2684,22 +2719,31 @@ var Node = /*#__PURE__*/function () {
   _createClass(Node, [{
     key: "toString",
     value: function toString() {
-      return "".concat(this.name, "(").concat(this.arg.map(function (x) {
-        return _typeof(x) == 'object' || typeof x == 'function' ? '...' : x;
+      return "".concat(typeof this.name == 'string' ? this.name : this.name.name, "(").concat(this.arg.map(function (x) {
+        return _typeof(x) == 'object' || typeof x == 'function' ? x.name || '...' : x;
       }).join(','), ")");
     }
   }, {
     key: "checkSubNode",
     //是否属于子流
     value: function checkSubNode(x) {
-      if (_typeof(x) != 'object' || x == null) return x;
-      var isNode = x.unProxy;
+      var _this = this;
 
-      if (isNode) {
-        Events.addSource(this, isNode);
-        return function (s) {
-          return isNode.subscribe(s);
-        };
+      if (typeof x == 'function') {
+        var isNode = x.unProxy;
+
+        if (isNode) {
+          Events.addSource(this, isNode);
+          return function (s) {
+            s.nodeId = _this.id;
+            s.streamId = 0;
+            isNode.subscribe(s);
+          };
+        } else {
+          return function () {
+            return _this.checkSubNode(x.apply(void 0, arguments));
+          };
+        }
       }
 
       return x;
@@ -2709,20 +2753,27 @@ var Node = /*#__PURE__*/function () {
     key: "pipe",
     // 通过返回proxy产生链式调用
     value: function pipe() {
+      var _this2 = this;
+
       if (this.end) {
         return this.subscribe();
       }
 
-      return new Proxy(this, {
-        get: function get(target, prop) {
+      var target = this;
+      return new Proxy(function (sink) {
+        return _this2.subscribe(sink);
+      }, {
+        get: function get(_, prop) {
           if (prop != "subscribe" && (target[prop] || target.hasOwnProperty(prop))) return target[prop];
+          if (prop == "subscribe" && target.subscribeSink) return target.subscribeSink;
           var sink = target.createSink(prop);
-          return function () {
+          return target.subscribeSink = function () {
             for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
               args[_key] = arguments[_key];
             }
 
             sink.args = args;
+            Events.update(sink);
             return sink.pipe();
           };
         }
@@ -2739,17 +2790,21 @@ var Node = /*#__PURE__*/function () {
   }, {
     key: "subscribe",
     value: function subscribe(sink) {
+      var _this3 = this;
+
       var source = this.source,
           name = this.name,
           arg = this.arg;
-      var realrx = fastrx[name].apply(fastrx, _toConsumableArray(arg));
+      var realrx = typeof name == 'string' ? fastrx[name].apply(fastrx, _toConsumableArray(arg)) : name;
       var f = source && !this.end ? realrx(function (s) {
-        return source.subscribe(s);
+        s.streamId = streamCount - 1;
+        s.nodeId = _this3.id;
+        source.subscribe(s);
       }) : realrx;
       var streamCount = 0;
 
       this.subscribe = function (sink) {
-        var _this = this;
+        var _this4 = this;
 
         var streamId = streamCount++;
 
@@ -2759,40 +2814,38 @@ var Node = /*#__PURE__*/function () {
             var oComplete = s.complete;
 
             s.next = function (data) {
-              Events.next(_this, streamId, data);
+              Events.next(_this4, streamId, data);
               oNext(data);
             };
 
             s.complete = function (err) {
-              Events.complete(_this, streamId, err);
+              Events.complete(_this4, streamId, err);
               oComplete(err);
             };
 
             s.streamId = streamId;
-            s.nodeId = _this.id;
-            Events.subscribe(_this, s);
+            s.nodeId = _this4.id;
+            Events.subscribe(_this4);
             source.subscribe(s);
           });
         }
 
-        Events.subscribe(this, sink);
         var newSink = new Sink$1(sink);
-        newSink.streamId = streamId;
-        newSink.nodeId = this.id;
 
         newSink.next = function (data) {
-          Events.next(_this, streamId, data);
+          Events.next(_this4, streamId, data);
           sink.next(data);
         };
 
         newSink.complete = function (err) {
-          Events.complete(_this, streamId, err);
+          Events.complete(_this4, streamId, err);
           sink.complete(err);
         };
 
         newSink.defer(function () {
-          Events.defer(_this, streamId);
+          Events.defer(_this4, streamId);
         });
+        Events.subscribe(this, sink);
         f(newSink);
         return newSink;
       };
@@ -2807,12 +2860,10 @@ var Node = /*#__PURE__*/function () {
   }, {
     key: "args",
     set: function set(value) {
-      var _this2 = this;
+      var _this5 = this;
 
       this.arg = value.map(function (x) {
-        return typeof x == "function" ? function () {
-          return _this2.checkSubNode(x.apply(void 0, arguments));
-        } : _this2.checkSubNode(x);
+        return _this5.checkSubNode(x);
       });
     }
   }]);
@@ -3039,22 +3090,6 @@ var observables = _objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2(_o
   catchError: catchError
 }, combination), filtering), mathematical), producer), transformation), vue3);
 
-var dev_obs = {};
-
-var _loop = function _loop(key) {
-  dev_obs[key] = function () {
-    for (var _len4 = arguments.length, arg = new Array(_len4), _key5 = 0; _key5 < _len4; _key5++) {
-      arg[_key5] = arguments[_key5];
-    }
-
-    return new Node(key, arg).pipe();
-  };
-};
-
-for (var key in observables) {
-  _loop(key);
-}
-
 function createRx() {
   if (typeof Proxy == 'undefined') {
     var prototype = {}; //将一个Observable函数的原型修改为具有所有operator的方法
@@ -3065,43 +3100,43 @@ function createRx() {
 
 
     rx.set = function (ext) {
-      var _loop2 = function _loop2(_key4) {
-        var f = ext[_key4];
+      var _loop = function _loop(key) {
+        var f = ext[key];
 
-        switch (_key4) {
+        switch (key) {
           case 'Sink':
           case 'pipe':
           case 'reusePipe':
             break;
 
           case 'subscribe':
-            prototype[_key4] = function () {
+            prototype[key] = function () {
               return f.apply(void 0, arguments)(this);
             };
 
             break;
 
           case 'toPromise':
-            prototype[_key4] = function () {
+            prototype[key] = function () {
               return f(this);
             };
 
             break;
 
           default:
-            prototype[_key4] = function () {
+            prototype[key] = function () {
               return rx(f.apply(void 0, arguments)(this));
             };
 
-            rx[_key4] = function () {
+            rx[key] = function () {
               return rx(f.apply(void 0, arguments));
             };
 
         }
       };
 
-      for (var _key4 in ext) {
-        _loop2(_key4);
+      for (var key in ext) {
+        _loop(key);
       }
     };
 
@@ -3116,10 +3151,16 @@ function createRx() {
       }
     };
     return new Proxy(function (f) {
-      return new Proxy(f, rxProxy);
+      return inspect() ? new Node(f).pipe() : new Proxy(f, rxProxy);
     }, {
       get: function get(target, prop) {
-        return inspect() ? dev_obs[prop] : function () {
+        return inspect() ? function () {
+          for (var _len4 = arguments.length, arg = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+            arg[_key4] = arguments[_key4];
+          }
+
+          return new Node(prop, arg).pipe();
+        } : function () {
           return new Proxy(observables[prop].apply(observables, arguments), rxProxy);
         };
       },
@@ -3131,9 +3172,7 @@ function createRx() {
 }
 
 function inspect() {
-  var _window;
-
-  return (_window = window) === null || _window === void 0 ? void 0 : _window.__FASTRX_DEVTOOLS__;
+  return window && window.__FASTRX_DEVTOOLS__;
 }
 
 function send(event, payload) {
@@ -3146,11 +3185,18 @@ function send(event, payload) {
   });
 }
 
+Events.create = function (who) {
+  send("create", {
+    name: who.toString(),
+    id: who.id
+  });
+};
+
 Events.next = function (who, streamId, data) {
   send("next", {
     id: who.id,
     streamId: streamId,
-    data: data.toString()
+    data: data && data.toString()
   });
 };
 
@@ -3191,16 +3237,23 @@ Events.pipe = function (who) {
   });
 };
 
-Events.subscribe = function (_ref, _ref2) {
+Events.update = function (who) {
+  send('update', {
+    id: who.id,
+    name: who.toString()
+  });
+};
+
+Events.subscribe = function (_ref, sink) {
   var id = _ref.id,
       end = _ref.end;
-  var streamId = _ref2.streamId,
-      nodeId = _ref2.nodeId;
   send("subscribe", {
     id: id,
     end: end,
-    nodeId: nodeId,
-    streamId: streamId
+    sink: {
+      nodeId: sink && sink.nodeId,
+      streamId: sink && sink.streamId
+    }
   });
 };
 
@@ -3270,7 +3323,6 @@ exports.skip = skip;
 exports.skipUntil = skipUntil;
 exports.skipWhile = skipWhile;
 exports.startWith = startWith;
-exports.stop = stop;
 exports.subject = subject;
 exports.subscribe = subscribe;
 exports.switchMap = switchMap;

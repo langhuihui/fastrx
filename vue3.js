@@ -1,4 +1,4 @@
-import { watch as _watch, customRef, onUnmounted } from 'vue'
+import { watch as _watch, customRef, onUnmounted } from '@vue/composition-api'
 import { Sink } from './common'
 export const eventHandler = (once) => {
     const observers = new Set()
