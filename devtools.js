@@ -1,10 +1,5 @@
-const noop = Function.prototype
-import * as fastrx from './index'
-const Sink = fastrx.Sink
+import { observables as fastrx, Events, Sink } from './index'
 let COUNT = 0
-export const Events = {
-    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop, update: noop, create: noop
-}
 export class Node {
     constructor(name = "", arg = []) {
         this.name = name
@@ -26,7 +21,7 @@ export class Node {
         }
     }
     toString() {
-        return `${typeof this.name == 'string' ? this.name : this.name.name}(${this.arg.map(x => typeof x == 'object' || typeof x == 'function' ? x.name || '...' : x).join(',')})`
+        return `${typeof this.name == 'string' ? this.name : this.name.name}(${this.arg.map(x => typeof x == 'object' || typeof x == 'function' ? (typeof x.name == 'function' ? x.name.name : x.name) || '...' : x).join(',')})`
     }
     get unProxy() {
         return this
@@ -35,16 +30,11 @@ export class Node {
     checkSubNode(x) {
         if (typeof x == 'function') {
             const isNode = x.unProxy
-            if (isNode) {
-                Events.addSource(this, isNode)
-                return s => {
-                    s.nodeId = this.id
-                    s.streamId = 0
-                    isNode.subscribe(s)
-                }
-            } else {
-                return (...arg) => this.checkSubNode(x(...arg))
-            }
+            return isNode ? (Events.addSource(this, isNode), s => {
+                s.nodeId = this.id
+                s.streamId = 0
+                isNode.subscribe(s)
+            }) : (...arg) => this.checkSubNode(x(...arg))
         }
         return x
     }

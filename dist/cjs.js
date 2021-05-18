@@ -21,7 +21,6 @@ require('core-js/modules/es.symbol.js');
 require('core-js/modules/es.symbol.description.js');
 require('core-js/modules/es.symbol.iterator.js');
 require('core-js/modules/es.array.find.js');
-var compositionApi = require('@vue/composition-api');
 require('core-js/modules/es.array.join.js');
 require('core-js/modules/es.function.name.js');
 
@@ -33,6 +32,7 @@ var fastrx = /*#__PURE__*/Object.freeze({
   get subscribe () { return subscribe; },
   get tap () { return tap; },
   get delay () { return delay; },
+  get Events () { return Events$1; },
   get catchError () { return catchError; },
   get default () { return index; },
   get noop () { return noop; },
@@ -104,11 +104,7 @@ var fastrx = /*#__PURE__*/Object.freeze({
   get repeat () { return repeat; },
   get switchMap () { return switchMap; },
   get switchMapTo () { return switchMapTo; },
-  get bufferTime () { return bufferTime; },
-  get eventHandler () { return eventHandler; },
-  get fromLifeHook () { return fromLifeHook; },
-  get watch () { return watch; },
-  get toRef () { return toRef; }
+  get bufferTime () { return bufferTime; }
 });
 
 function _typeof(obj) {
@@ -2598,94 +2594,9 @@ var transformation = /*#__PURE__*/Object.freeze({
   bufferTime: bufferTime
 });
 
-var eventHandler = function eventHandler(once) {
-  var observers = new Set();
-
-  var observable = function observable(sink) {
-    observers.add(sink);
-    sink.defer([observers.delete, observers, sink]);
-  };
-
-  if (once) observable.handler = function () {
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    var arg = args.length > 1 ? args : args[0];
-    observers.forEach(function (observer) {
-      observer.next(arg);
-      observer.complete();
-    });
-  };else observable.handler = function () {
-    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-      args[_key2] = arguments[_key2];
-    }
-
-    var arg = args.length > 1 ? args : args[0];
-    observers.forEach(function (observer) {
-      return observer.next(arg);
-    });
-  };
-  return observable;
-};
-var fromLifeHook = function fromLifeHook(hook) {
-  var once = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
-  return hook(eventHandler(once).handler);
-};
-var watch = function watch(target, option) {
-  return function (sink) {
-    return sink.defer(compositionApi.watch(target, function (value) {
-      return sink.next(value);
-    }, option));
-  };
-};
-var toRef = function toRef() {
-  return function (source) {
-    return compositionApi.customRef(function (track, trigger) {
-      var sink = new Sink();
-      var value;
-
-      sink.next = function (d) {
-        return value = d, trigger();
-      };
-
-      source(sink);
-      compositionApi.onUnmounted(function () {
-        return sink.dispose();
-      });
-      return {
-        get: function get() {
-          track();
-          return value;
-        },
-        set: function set(value) {//nothing to do
-        }
-      };
-    });
-  };
-};
-
-var vue3 = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  eventHandler: eventHandler,
-  fromLifeHook: fromLifeHook,
-  watch: watch,
-  toRef: toRef
-});
-
-var noop$1 = Function.prototype;
 var Sink$1 = Sink;
+var Events = Events$1;
 var COUNT = 0;
-var Events = {
-  addSource: noop$1,
-  subscribe: noop$1,
-  next: noop$1,
-  complete: noop$1,
-  defer: noop$1,
-  pipe: noop$1,
-  update: noop$1,
-  create: noop$1
-};
 var Node = /*#__PURE__*/function () {
   function Node() {
     var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
@@ -2720,7 +2631,7 @@ var Node = /*#__PURE__*/function () {
     key: "toString",
     value: function toString() {
       return "".concat(typeof this.name == 'string' ? this.name : this.name.name, "(").concat(this.arg.map(function (x) {
-        return _typeof(x) == 'object' || typeof x == 'function' ? x.name || '...' : x;
+        return _typeof(x) == 'object' || typeof x == 'function' ? (typeof x.name == 'function' ? x.name.name : x.name) || '...' : x;
       }).join(','), ")");
     }
   }, {
@@ -2731,19 +2642,13 @@ var Node = /*#__PURE__*/function () {
 
       if (typeof x == 'function') {
         var isNode = x.unProxy;
-
-        if (isNode) {
-          Events.addSource(this, isNode);
-          return function (s) {
-            s.nodeId = _this.id;
-            s.streamId = 0;
-            isNode.subscribe(s);
-          };
-        } else {
-          return function () {
-            return _this.checkSubNode(x.apply(void 0, arguments));
-          };
-        }
+        return isNode ? (Events.addSource(this, isNode), function (s) {
+          s.nodeId = _this.id;
+          s.streamId = 0;
+          isNode.subscribe(s);
+        }) : function () {
+          return _this.checkSubNode(x.apply(void 0, arguments));
+        };
       }
 
       return x;
@@ -2948,6 +2853,7 @@ var subscribe = function subscribe(n) {
       return err ? e(err) : c();
     };
 
+    sink.then = noop;
     source(sink);
     return sink;
   };
@@ -3080,15 +2986,25 @@ var CatchError = /*#__PURE__*/function (_Sink3) {
   return CatchError;
 }(Sink);
 
+var Events$1 = {
+  addSource: noop,
+  subscribe: noop,
+  next: noop,
+  complete: noop,
+  defer: noop,
+  pipe: noop,
+  update: noop,
+  create: noop
+};
 var catchError = deliver(CatchError);
 
-var observables = _objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2({
+var observables = _objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2({
   delay: delay,
   tap: tap,
   toPromise: toPromise,
   subscribe: subscribe,
   catchError: catchError
-}, combination), filtering), mathematical), producer), transformation), vue3);
+}, combination), filtering), mathematical), producer), transformation);
 
 function createRx() {
   if (typeof Proxy == 'undefined') {
@@ -3145,7 +3061,7 @@ function createRx() {
   } else {
     var rxProxy = {
       get: function get(target, prop) {
-        return target[prop] || function () {
+        return prop in target ? target[prop] : function () {
           return new Proxy(observables[prop].apply(observables, arguments)(target), rxProxy);
         };
       }
@@ -3172,7 +3088,7 @@ function createRx() {
 }
 
 function inspect() {
-  return window && window.__FASTRX_DEVTOOLS__;
+  return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
 }
 
 function send(event, payload) {
@@ -3185,14 +3101,14 @@ function send(event, payload) {
   });
 }
 
-Events.create = function (who) {
+Events$1.create = function (who) {
   send("create", {
     name: who.toString(),
     id: who.id
   });
 };
 
-Events.next = function (who, streamId, data) {
+Events$1.next = function (who, streamId, data) {
   send("next", {
     id: who.id,
     streamId: streamId,
@@ -3200,7 +3116,7 @@ Events.next = function (who, streamId, data) {
   });
 };
 
-Events.complete = function (who, streamId, err) {
+Events$1.complete = function (who, streamId, err) {
   send("complete", {
     id: who.id,
     streamId: streamId,
@@ -3208,14 +3124,14 @@ Events.complete = function (who, streamId, err) {
   });
 };
 
-Events.defer = function (who, streamId) {
+Events$1.defer = function (who, streamId) {
   send("defer", {
     id: who.id,
     streamId: streamId
   });
 };
 
-Events.addSource = function (who, source) {
+Events$1.addSource = function (who, source) {
   send("addSource", {
     id: who.id,
     name: who.toString(),
@@ -3226,7 +3142,7 @@ Events.addSource = function (who, source) {
   });
 };
 
-Events.pipe = function (who) {
+Events$1.pipe = function (who) {
   send("pipe", {
     name: who.toString(),
     id: who.id,
@@ -3237,14 +3153,14 @@ Events.pipe = function (who) {
   });
 };
 
-Events.update = function (who) {
+Events$1.update = function (who) {
   send('update', {
     id: who.id,
     name: who.toString()
   });
 };
 
-Events.subscribe = function (_ref, sink) {
+Events$1.subscribe = function (_ref, sink) {
   var id = _ref.id,
       end = _ref.end;
   send("subscribe", {
@@ -3259,6 +3175,7 @@ Events.subscribe = function (_ref, sink) {
 
 var index = createRx();
 
+exports.Events = Events$1;
 exports.Sink = Sink;
 exports.asap = asap;
 exports.audit = audit;
@@ -3276,7 +3193,6 @@ exports.delay = delay;
 exports.deliver = deliver;
 exports.elementAt = elementAt;
 exports.empty = empty;
-exports.eventHandler = eventHandler;
 exports.filter = filter;
 exports.find = find;
 exports.findIndex = findIndex;
@@ -3289,7 +3205,6 @@ exports.fromEventPattern = fromEventPattern;
 exports.fromEventSource = fromEventSource;
 exports.fromFetch = fromFetch;
 exports.fromIterable = fromIterable;
-exports.fromLifeHook = fromLifeHook;
 exports.fromNextTick = fromNextTick;
 exports.fromPromise = fromPromise;
 exports.fromVueEvent = fromVueEvent;
@@ -3337,8 +3252,6 @@ exports.throttleTime = throttleTime;
 exports.throwError = throwError;
 exports.timer = timer;
 exports.toPromise = toPromise;
-exports.toRef = toRef;
-exports.watch = watch;
 exports.withLatestFrom = withLatestFrom;
 exports.zip = zip;
 //# sourceMappingURL=cjs.js.map

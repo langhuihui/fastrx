@@ -1,3 +1,6 @@
+import { Ref } from "@vue/reactivity"
+import { WatchOptions, WatchSource } from "@vue/runtime-core"
+
 declare namespace Rx {
     interface Observable {
         take(count: number): Observable
@@ -31,6 +34,8 @@ declare namespace Rx {
         switchMapTo(source: Observable): Observable
         bufferTime(miniseconds: number): Observable
         catchError(selector: (e: Error | any) => Observable): Observable
+        watch(target: WatchSource, opt: WatchOptions): Observable
+        toRef(): Ref
         toPromise(): Promise<any>
         subscribe(n: (d: any) => void, e: (d: Error) => void, c: () => void): Sink
     }
@@ -44,6 +49,7 @@ declare namespace Rx {
         fromEvent(target: any, name: string): Observable
         fromVueEvent(target: any, name: string): Observable
         fromVueEventOnce(target: any, name: string): Observable
+        fromLifeHook(hook: () => void, once?: boolean): Observable
         fromEventSource(href: string, opt?: any): Observable
         fromPromise<T>(source: Promise<T>): Observable
         fromAnimationFrame(): Observable
@@ -94,6 +100,7 @@ export function fromEvent(target: any, name: string): Observable
 export function fromVueEvent(target: any, name: string): Observable
 export function fromVueEventOnce(target: any, name: string): Observable
 export function fromEventSource(href: string, opt?: any): Observable
+export function fromLifeHook(hook: () => void, once?: boolean): Observable
 export function fromPromise<T>(source: Promise<T>): Observable
 export function fromAnimationFrame(): Observable
 export function fromFetch(input: RequestInfo, init?: RequestInit): Observable
@@ -147,6 +154,8 @@ export function switchMap(source: (d: any) => Observable, combineResults?: (outt
 export function switchMapTo(source: Observable): Observable
 export function bufferTime(miniseconds: number): Observable
 export function catchError(selector: (e: Error | any) => Observable): Observable
+export function watch(target: WatchSource, opt: WatchOptions): Observable
+export function toRef(): Ref
 export function toPromise(): Observer<Sink>
 export function subscribe(n: (d: any) => void, e: (d: Error) => void, c: () => void): Observer<Sink>
 

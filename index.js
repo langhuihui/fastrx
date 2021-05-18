@@ -29,6 +29,7 @@ export const subscribe = (n, e = noop, c = noop) => source => {
     const sink = new Sink()
     sink.next = n
     sink.complete = err => err ? e(err) : c()
+    sink.then = noop
     source(sink)
     return sink
 }
@@ -89,21 +90,22 @@ class CatchError extends Sink {
         }
     }
 }
+export const Events = {
+    addSource: noop, subscribe: noop, next: noop, complete: noop, defer: noop, pipe: noop, update: noop, create: noop
+}
 export const catchError = deliver(CatchError)
 import * as combination from './combination'
 import * as filtering from './filtering'
 import * as mathematical from './mathematical'
 import * as producer from './producer'
 import * as transformation from './transformation'
-import * as vue3 from './vue3'
 export * from './combination'
 export * from './filtering'
 export * from './mathematical'
 export * from './producer'
 export * from './transformation'
-export * from './vue3'
-import { Node, Events } from './devtools'
-const observables = { delay, tap, toPromise, subscribe, catchError, ...combination, ...filtering, ...mathematical, ...producer, ...transformation, ...vue3 }
+import { Node } from './devtools'
+export const observables = { delay, tap, toPromise, subscribe, catchError, ...combination, ...filtering, ...mathematical, ...producer, ...transformation }
 
 function createRx() {
     if (typeof Proxy == 'undefined') {
@@ -135,7 +137,7 @@ function createRx() {
         return rx
     } else {
         const rxProxy = {
-            get: (target, prop) => target[prop] || ((...args) => new Proxy(observables[prop](...args)(target), rxProxy))
+            get: (target, prop) => prop in target ? target[prop] : ((...args) => new Proxy(observables[prop](...args)(target), rxProxy))
         }
         return new Proxy(f => inspect() ? (new Node(f)).pipe() : new Proxy(f, rxProxy), {
             get: (target, prop) => inspect() ? (...arg) => (new Node(prop, arg)).pipe() : (...args) => new Proxy(observables[prop](...args), rxProxy),
@@ -144,7 +146,7 @@ function createRx() {
     }
 }
 function inspect() {
-    return window && window.__FASTRX_DEVTOOLS__
+    return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__
 }
 function send(event, payload) {
     window.postMessage({ source: "fastrx-devtools-backend", payload: { event, payload } })

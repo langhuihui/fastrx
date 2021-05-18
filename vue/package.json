@@ -1,12 +1,11 @@
 {
-    "name": "fastrx",
-    "version": "2.0.0",
-    "description": "fast rxjs implemention",
+    "name": "fastrx-vue3",
+    "version": "1.0.0",
+    "description": "fast rxjs implemention with vue3 extension",
     "main": "dist/index.js",
     "module": "./index.js",
     "scripts": {
-        "build": "rollup -c",
-        "build:devtools": "cd devtools/devtools/panel && npm run build"
+        "build": "rollup -c"
     },
     "repository": {
         "type": "git",
@@ -33,6 +32,8 @@
         "rollup-plugin-uglify": "^6.0.4"
     },
     "dependencies": {
-        "core-js": "^3.7.0"
+        "core-js": "^3.7.0",
+        "fastrx": "^2.0.0",
+        "vue": "^3.0.11"
     }
 }
