@@ -382,3 +382,29 @@ class Last extends Sink {
 }
 
 export const last = deliver(Last)
+
+class Every extends Sink {
+    init(f) {
+        this.f = f
+        this.ret = void 0
+    }
+    next(data) {
+        const f = this.f
+        if (!f(data)) {
+            this.ret = false
+            this.defer()
+            this.complete()
+        } else {
+            this.ret = true
+        }
+    }
+    complete(err) {
+        if (!err) {
+            if (this.ret === void 0) err = new Error('no elements in sequence')
+            else this.sink.next(true)
+        }
+        super.complete(err)
+    }
+}
+
+export const every = deliver(Every)

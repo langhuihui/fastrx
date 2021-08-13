@@ -83,6 +83,7 @@ class SwitchMap extends Sink {
     init(makeSource, combineResults) {
         this.makeSource = makeSource
         this.combineResults = combineResults
+        this.index = 0
     }
     next(data) {
         const makeSource = this.makeSource
@@ -91,7 +92,7 @@ class SwitchMap extends Sink {
             this.switch.dispose()
         }
         this.switch = new _SwitchMap(this.sink, data, this)
-        makeSource(data)(this.switch)
+        makeSource(data, this.index++)(this.switch)
     }
     complete(err) {
         if (!this.switch || this.switch.disposed) super.complete(err)
@@ -102,7 +103,43 @@ class SwitchMap extends Sink {
 export const switchMap = deliver(SwitchMap)
 
 export const switchMapTo = (innerSource, combineResults) => switchMap(d => innerSource, combineResults)
-
+class _MergeMap extends Sink {
+    init(data, context) {
+        this.data = data
+        this.context = context
+    }
+    next(data) {
+        const combineResults = this.context.combineResults
+        if (combineResults) {
+            this.sink.next(combineResults(this.data, data))
+        } else {
+            this.sink.next(data)
+        }
+    }
+    complete(err) {
+        this.context.subDisposed++
+        if (this.context.subDisposed == this.context.count && this.context.disposed) super.complete(err)
+        else this.dispose(false)
+    }
+}
+class MergeMap extends Sink {
+    init(makeSource, combineResults) {
+        this.makeSource = makeSource
+        this.combineResults = combineResults
+        this.subDisposed = 0
+        this.count = 0
+    }
+    next(data) {
+        const makeSource = this.makeSource
+        makeSource(data, this.count++)(new _MergeMap(this.sink, data, this))
+    }
+    complete(err) {
+        if (this.subDisposed === this.count) super.complete(err)
+        else this.dispose(false)
+    }
+}
+export const mergeMap = deliver(MergeMap)
+export const mergeMapTo = (innerSource, combineResults) => mergeMap(d => innerSource, combineResults)
 class BufferTime extends Sink {
     init(miniseconds) {
         this.buffer = []
@@ -123,3 +160,14 @@ class BufferTime extends Sink {
 }
 
 export const bufferTime = deliver(BufferTime)
+
+class TimeInterval extends Sink {
+    init() {
+        this.start = new Date()
+    }
+    next(value) {
+        this.sink.next({ value, interval: new Date() - this.start });
+        this.start = new Date()
+    }
+}
+export const timeInterval = deliver(TimeInterval)

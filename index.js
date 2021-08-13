@@ -25,7 +25,7 @@ export const toPromise = () => source => new Promise((resolve, reject) => {
 })
 
 // //SUBSCRIBER
-export const subscribe = (n, e = noop, c = noop) => source => {
+export const subscribe = (n = noop, e = noop, c = noop) => source => {
     const sink = new Sink()
     sink.next = n
     sink.complete = err => err ? e(err) : c()

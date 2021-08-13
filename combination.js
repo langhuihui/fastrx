@@ -1,4 +1,5 @@
 import { Sink, deliver, noop } from './common'
+import rx from './index'
 class Share extends Sink {
     init(source) {
         this.source = source
@@ -183,3 +184,71 @@ export const startWith = (...xs) => inputSource => (sink, pos = 0, l = xs.length
     }
     sink.disposed || inputSource(sink)
 }
+
+class BufferCount extends Sink {
+    init(bufferSize, startBufferEvery) {
+        this.bufferSize = bufferSize
+        this.startBufferEvery = startBufferEvery
+        this.buffer = []
+        if (startBufferEvery) {
+            this.buffers = [[]]
+            this.count = 0
+        }
+    }
+    next(data) {
+        if (this.startBufferEvery) {
+            if (this.count++ === this.startBufferEvery) {
+                this.buffers.push([])
+                this.count = 1
+            }
+            this.buffers.forEach((buffer) => {
+                buffer.push(data)
+            })
+            if (this.buffers[0].length === this.bufferSize) {
+                this.sink.next(this.buffers.shift())
+            }
+        } else {
+            this.buffer.push(data)
+            if (this.buffer.length === this.bufferSize) {
+                this.sink.next(this.buffer)
+                this.buffer = []
+            }
+        }
+    }
+    complete(err) {
+        if (!err) {
+            if (this.buffer.length) {
+                this.sink.next(this.buffer)
+            } else if (this.buffers.size) {
+                this.buffers.forEach(buffer => this.sink.next(buffer))
+            }
+        }
+        super.complete(err)
+    }
+}
+
+export const bufferCount = deliver(BufferCount)
+
+class GroupBy extends Sink {
+    init(f) {
+        this.f = f
+        this.groups = new Map()
+    }
+    next(data) {
+        const key = this.f(data)
+        let group = this.groups.get(key)
+        if (!group) {
+            group = rx.subject()
+            group.key = key
+            this.groups.set(key, group)
+            this.sink.next(group)
+        }
+        group.next(data)
+    }
+    complete(err) {
+        this.groups.forEach(group => group.complete(err))
+        super.complete(err)
+    }
+}
+
+export const groupBy = deliver(GroupBy)

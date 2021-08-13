@@ -23,16 +23,25 @@ declare namespace Rx {
         findIndex(f: (d: any) => Boolean): Observable
         first(f?: (d: any) => Boolean, defaultValue?: any): Observable
         last(f?: (d: any) => Boolean, defaultValue?: any): Observable
+        every(f: (d: any) => Boolean): Observable
         delay(period: number): Observable
         scan(f: (d: any) => any, seed?: any): Observable
         repeat(count: number): Observable
         pluck(prop: string): Observable
-        switchMap(source: (d: any) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
+        switchMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
         switchMapTo(source: Observable): Observable
+        mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
+        mergeMapTo(source: Observable): Observable
+        groupBy(f: (d: any) => any): Observable
         bufferTime(miniseconds: number): Observable
+        timeInterval(): Observable
         catchError(selector: (e: Error | any) => Observable): Observable
         toPromise(): Promise<any>
-        subscribe(n: (d: any) => void, e: (d: Error) => void, c: () => void): Sink
+        reduce(f: (acc: any, d: any) => any, seed?: any): Observable
+        max(): Observable
+        min(): Observable
+        sum(): Observable
+        subscribe(n?: (d: any) => void, e?: (d: Error) => void, c?: () => void): Sink
     }
     interface Creator {
         (f: (sink: Sink) => void): Observable
@@ -115,7 +124,10 @@ export function never(): Observable
 export function empty(): Observable
 export function throwError(e: Error | any): Observable
 
-
+export function reduce(f: (acc: any, d: any) => any, seed?: any): Observable
+export function max(): Observable
+export function min(): Observable
+export function sum(): Observable
 export function take(count: number): Observable
 export function takeUntil(source: Observable): Observable
 export function takeWhile(f: (d: any) => Boolean): Observable
@@ -139,15 +151,20 @@ export function find(f: (d: any) => Boolean): Observable
 export function findIndex(f: (d: any) => Boolean): Observable
 export function first(f?: (d: any) => Boolean, defaultValue?: any): Observable
 export function last(f?: (d: any) => Boolean, defaultValue?: any): Observable
+export function every(f: (d: any) => Boolean): Observable
 export function delay(period: number): Observable
 export function scan(f: (d: any) => any, seed?: any): Observable
 export function repeat(count: number): Observable
 export function pluck(prop: string): Observable
-export function switchMap(source: (d: any) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
+export function switchMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
 export function switchMapTo(source: Observable): Observable
+export function mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
+export function mergeMapTo(source: Observable): Observable
+export function groupBy(f: (d: any) => any): Observable
 export function bufferTime(miniseconds: number): Observable
+export function timeInterval(): Observable
 export function catchError(selector: (e: Error | any) => Observable): Observable
 export function toPromise(): Observer<Sink>
-export function subscribe(n: (d: any) => void, e: (d: Error) => void, c: () => void): Observer<Sink>
+export function subscribe(n?: (d: any) => void, e?: (d: Error) => void, c?: () => void): Observer<Sink>
 
 export const rx: Rx.Creator

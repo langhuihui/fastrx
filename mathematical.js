@@ -1,4 +1,4 @@
-import { Sink } from './common'
+import { deliver, Sink } from './common'
 class Reduce extends Sink {
     init(hasSeed, f, seed) {
         this.f = f
@@ -21,5 +21,6 @@ class Reduce extends Sink {
 }
 export const reduce = (...args) => source => sink => source(new Reduce(sink, args.length === 2, ...args))
 export const count = f => reduce((aac, c) => f(c) ? aac + 1 : aac, 0)
-export const max = reduce(Math.max)
-export const min = reduce(Math.min)
+export const max = () => reduce(Math.max)
+export const min = () => reduce(Math.min)
+export const sum = () => reduce((aac, c) => aac + c, 0)

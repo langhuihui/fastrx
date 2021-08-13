@@ -17,95 +17,13 @@ require('core-js/modules/web.dom-collections.for-each.js');
 require('core-js/modules/web.dom-collections.iterator.js');
 require('core-js/modules/es.array.every.js');
 require('core-js/modules/es.array.map.js');
+require('core-js/modules/es.map.js');
 require('core-js/modules/es.symbol.js');
 require('core-js/modules/es.symbol.description.js');
 require('core-js/modules/es.symbol.iterator.js');
 require('core-js/modules/es.array.find.js');
 require('core-js/modules/es.array.join.js');
 require('core-js/modules/es.function.name.js');
-
-var fastrx = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  get pipe () { return pipe; },
-  get reusePipe () { return reusePipe; },
-  get toPromise () { return toPromise; },
-  get subscribe () { return subscribe; },
-  get tap () { return tap; },
-  get delay () { return delay; },
-  get Events () { return Events$1; },
-  get catchError () { return catchError; },
-  get default () { return index; },
-  get noop () { return noop; },
-  get once () { return once; },
-  get Sink () { return Sink; },
-  get asap () { return asap; },
-  get deliver () { return deliver; },
-  get share () { return share; },
-  get shareReplay () { return shareReplay; },
-  get iif () { return iif; },
-  get race () { return race; },
-  get concat () { return concat; },
-  get mergeArray () { return mergeArray; },
-  get merge () { return merge; },
-  get combineLatest () { return combineLatest; },
-  get withLatestFrom () { return withLatestFrom; },
-  get zip () { return zip; },
-  get startWith () { return startWith; },
-  get filter () { return filter; },
-  get ignoreElements () { return ignoreElements; },
-  get take () { return take; },
-  get takeUntil () { return takeUntil; },
-  get takeWhile () { return takeWhile; },
-  get takeLast () { return takeLast; },
-  get skip () { return skip; },
-  get skipUntil () { return skipUntil; },
-  get skipWhile () { return skipWhile; },
-  get throttle () { return throttle; },
-  get audit () { return audit; },
-  get throttleTime () { return throttleTime; },
-  get debounceTime () { return debounceTime; },
-  get debounce () { return debounce; },
-  get elementAt () { return elementAt; },
-  get find () { return find; },
-  get findIndex () { return findIndex; },
-  get first () { return first; },
-  get last () { return last; },
-  get reduce () { return reduce; },
-  get count () { return count; },
-  get max () { return max; },
-  get min () { return min; },
-  get subject () { return subject; },
-  get fromArray () { return fromArray; },
-  get of () { return of; },
-  get interval () { return interval; },
-  get timer () { return timer; },
-  get fromAnimationFrame () { return fromAnimationFrame; },
-  get fromEventPattern () { return fromEventPattern; },
-  get fromEvent () { return fromEvent; },
-  get fromVueEvent () { return fromVueEvent; },
-  get fromVueEventOnce () { return fromVueEventOnce; },
-  get fromEventSource () { return fromEventSource; },
-  get fromFetch () { return fromFetch; },
-  get fromNextTick () { return fromNextTick; },
-  get range () { return range; },
-  get fromPromise () { return fromPromise; },
-  get fromIterable () { return fromIterable; },
-  get from () { return from; },
-  get bindCallback () { return bindCallback; },
-  get bindNodeCallback () { return bindNodeCallback; },
-  get never () { return never; },
-  get throwError () { return throwError; },
-  get empty () { return empty; },
-  get scan () { return scan; },
-  get map () { return map; },
-  get mapTo () { return mapTo; },
-  get pluck () { return pluck; },
-  get pairwise () { return pairwise; },
-  get repeat () { return repeat; },
-  get switchMap () { return switchMap; },
-  get switchMapTo () { return switchMapTo; },
-  get bufferTime () { return bufferTime; }
-});
 
 function _typeof(obj) {
   "@babel/helpers - typeof";
@@ -1023,6 +941,126 @@ var startWith = function startWith() {
   };
 };
 
+var BufferCount = /*#__PURE__*/function (_Sink8) {
+  _inherits(BufferCount, _Sink8);
+
+  var _super8 = _createSuper(BufferCount);
+
+  function BufferCount() {
+    _classCallCheck(this, BufferCount);
+
+    return _super8.apply(this, arguments);
+  }
+
+  _createClass(BufferCount, [{
+    key: "init",
+    value: function init(bufferSize, startBufferEvery) {
+      this.bufferSize = bufferSize;
+      this.startBufferEvery = startBufferEvery;
+      this.buffer = [];
+
+      if (startBufferEvery) {
+        this.buffers = [[]];
+        this.count = 0;
+      }
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (this.startBufferEvery) {
+        if (this.count++ === this.startBufferEvery) {
+          this.buffers.push([]);
+          this.count = 1;
+        }
+
+        this.buffers.forEach(function (buffer) {
+          buffer.push(data);
+        });
+
+        if (this.buffers[0].length === this.bufferSize) {
+          this.sink.next(this.buffers.shift());
+        }
+      } else {
+        this.buffer.push(data);
+
+        if (this.buffer.length === this.bufferSize) {
+          this.sink.next(this.buffer);
+          this.buffer = [];
+        }
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      var _this2 = this;
+
+      if (!err) {
+        if (this.buffer.length) {
+          this.sink.next(this.buffer);
+        } else if (this.buffers.size) {
+          this.buffers.forEach(function (buffer) {
+            return _this2.sink.next(buffer);
+          });
+        }
+      }
+
+      _get(_getPrototypeOf(BufferCount.prototype), "complete", this).call(this, err);
+    }
+  }]);
+
+  return BufferCount;
+}(Sink);
+
+var bufferCount = deliver(BufferCount);
+
+var GroupBy = /*#__PURE__*/function (_Sink9) {
+  _inherits(GroupBy, _Sink9);
+
+  var _super9 = _createSuper(GroupBy);
+
+  function GroupBy() {
+    _classCallCheck(this, GroupBy);
+
+    return _super9.apply(this, arguments);
+  }
+
+  _createClass(GroupBy, [{
+    key: "init",
+    value: function init(f) {
+      this.f = f;
+      this.groups = new Map();
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var key = this.f(data);
+      var group = this.groups.get(key);
+
+      if (!group) {
+        group = rx.subject();
+        group.key = key;
+        this.groups.set(key, group);
+        this.sink.next(group);
+      }
+
+      group.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      this.groups.forEach(function (group) {
+        return group.complete(err);
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this, err);
+    }
+  }]);
+
+  return GroupBy;
+}(Sink);
+
+var groupBy = deliver(GroupBy);
+
 var combination = /*#__PURE__*/Object.freeze({
   __proto__: null,
   share: share,
@@ -1035,7 +1073,9 @@ var combination = /*#__PURE__*/Object.freeze({
   combineLatest: combineLatest,
   withLatestFrom: withLatestFrom,
   zip: zip,
-  startWith: startWith
+  startWith: startWith,
+  bufferCount: bufferCount,
+  groupBy: groupBy
 });
 
 var Reduce = /*#__PURE__*/function (_Sink) {
@@ -1098,15 +1138,25 @@ var count = function count(f) {
     return f(c) ? aac + 1 : aac;
   }, 0);
 };
-var max = reduce(Math.max);
-var min = reduce(Math.min);
+var max = function max() {
+  return reduce(Math.max);
+};
+var min = function min() {
+  return reduce(Math.min);
+};
+var sum = function sum() {
+  return reduce(function (aac, c) {
+    return aac + c;
+  }, 0);
+};
 
 var mathematical = /*#__PURE__*/Object.freeze({
   __proto__: null,
   reduce: reduce,
   count: count,
   max: max,
-  min: min
+  min: min,
+  sum: sum
 });
 
 function compose(g, f) {
@@ -2001,6 +2051,52 @@ var Last = /*#__PURE__*/function (_Sink18) {
 
 var last = deliver(Last);
 
+var Every = /*#__PURE__*/function (_Sink19) {
+  _inherits(Every, _Sink19);
+
+  var _super19 = _createSuper(Every);
+
+  function Every() {
+    _classCallCheck(this, Every);
+
+    return _super19.apply(this, arguments);
+  }
+
+  _createClass(Every, [{
+    key: "init",
+    value: function init(f) {
+      this.f = f;
+      this.ret = void 0;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+
+      if (!f(data)) {
+        this.ret = false;
+        this.defer();
+        this.complete();
+      } else {
+        this.ret = true;
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (!err) {
+        if (this.ret === void 0) err = new Error('no elements in sequence');else this.sink.next(true);
+      }
+
+      _get(_getPrototypeOf(Every.prototype), "complete", this).call(this, err);
+    }
+  }]);
+
+  return Every;
+}(Sink);
+
+var every = deliver(Every);
+
 var filtering = /*#__PURE__*/Object.freeze({
   __proto__: null,
   filter: filter,
@@ -2021,7 +2117,8 @@ var filtering = /*#__PURE__*/Object.freeze({
   find: find,
   findIndex: findIndex,
   first: first,
-  last: last
+  last: last,
+  every: every
 });
 
 var subject = function subject(source) {
@@ -2506,6 +2603,7 @@ var SwitchMap = /*#__PURE__*/function (_Sink5) {
     value: function init(makeSource, combineResults) {
       this.makeSource = makeSource;
       this.combineResults = combineResults;
+      this.index = 0;
     }
   }, {
     key: "next",
@@ -2518,7 +2616,7 @@ var SwitchMap = /*#__PURE__*/function (_Sink5) {
       }
 
       this.switch = new _SwitchMap(this.sink, data, this);
-      makeSource(data)(this.switch);
+      makeSource(data, this.index++)(this.switch);
     }
   }, {
     key: "complete",
@@ -2537,15 +2635,96 @@ var switchMapTo = function switchMapTo(innerSource, combineResults) {
   }, combineResults);
 };
 
-var BufferTime = /*#__PURE__*/function (_Sink6) {
-  _inherits(BufferTime, _Sink6);
+var _MergeMap = /*#__PURE__*/function (_Sink6) {
+  _inherits(_MergeMap, _Sink6);
 
-  var _super6 = _createSuper(BufferTime);
+  var _super6 = _createSuper(_MergeMap);
+
+  function _MergeMap() {
+    _classCallCheck(this, _MergeMap);
+
+    return _super6.apply(this, arguments);
+  }
+
+  _createClass(_MergeMap, [{
+    key: "init",
+    value: function init(data, context) {
+      this.data = data;
+      this.context = context;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var combineResults = this.context.combineResults;
+
+      if (combineResults) {
+        this.sink.next(combineResults(this.data, data));
+      } else {
+        this.sink.next(data);
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      this.context.subDisposed++;
+      if (this.context.subDisposed == this.context.count && this.context.disposed) _get(_getPrototypeOf(_MergeMap.prototype), "complete", this).call(this, err);else this.dispose(false);
+    }
+  }]);
+
+  return _MergeMap;
+}(Sink);
+
+var MergeMap = /*#__PURE__*/function (_Sink7) {
+  _inherits(MergeMap, _Sink7);
+
+  var _super7 = _createSuper(MergeMap);
+
+  function MergeMap() {
+    _classCallCheck(this, MergeMap);
+
+    return _super7.apply(this, arguments);
+  }
+
+  _createClass(MergeMap, [{
+    key: "init",
+    value: function init(makeSource, combineResults) {
+      this.makeSource = makeSource;
+      this.combineResults = combineResults;
+      this.subDisposed = 0;
+      this.count = 0;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var makeSource = this.makeSource;
+      makeSource(data, this.count++)(new _MergeMap(this.sink, data, this));
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (this.subDisposed === this.count) _get(_getPrototypeOf(MergeMap.prototype), "complete", this).call(this, err);else this.dispose(false);
+    }
+  }]);
+
+  return MergeMap;
+}(Sink);
+
+var mergeMap = deliver(MergeMap);
+var mergeMapTo = function mergeMapTo(innerSource, combineResults) {
+  return mergeMap(function (d) {
+    return innerSource;
+  }, combineResults);
+};
+
+var BufferTime = /*#__PURE__*/function (_Sink8) {
+  _inherits(BufferTime, _Sink8);
+
+  var _super8 = _createSuper(BufferTime);
 
   function BufferTime() {
     _classCallCheck(this, BufferTime);
 
-    return _super6.apply(this, arguments);
+    return _super8.apply(this, arguments);
   }
 
   _createClass(BufferTime, [{
@@ -2581,6 +2760,38 @@ var BufferTime = /*#__PURE__*/function (_Sink6) {
 
 var bufferTime = deliver(BufferTime);
 
+var TimeInterval = /*#__PURE__*/function (_Sink9) {
+  _inherits(TimeInterval, _Sink9);
+
+  var _super9 = _createSuper(TimeInterval);
+
+  function TimeInterval() {
+    _classCallCheck(this, TimeInterval);
+
+    return _super9.apply(this, arguments);
+  }
+
+  _createClass(TimeInterval, [{
+    key: "init",
+    value: function init() {
+      this.start = new Date();
+    }
+  }, {
+    key: "next",
+    value: function next(value) {
+      this.sink.next({
+        value: value,
+        interval: new Date() - this.start
+      });
+      this.start = new Date();
+    }
+  }]);
+
+  return TimeInterval;
+}(Sink);
+
+var timeInterval = deliver(TimeInterval);
+
 var transformation = /*#__PURE__*/Object.freeze({
   __proto__: null,
   scan: scan,
@@ -2591,11 +2802,12 @@ var transformation = /*#__PURE__*/Object.freeze({
   repeat: repeat,
   switchMap: switchMap,
   switchMapTo: switchMapTo,
-  bufferTime: bufferTime
+  mergeMap: mergeMap,
+  mergeMapTo: mergeMapTo,
+  bufferTime: bufferTime,
+  timeInterval: timeInterval
 });
 
-var Sink$1 = Sink;
-var Events = Events$1;
 var COUNT = 0;
 var Node = /*#__PURE__*/function () {
   function Node() {
@@ -2700,7 +2912,7 @@ var Node = /*#__PURE__*/function () {
       var source = this.source,
           name = this.name,
           arg = this.arg;
-      var realrx = typeof name == 'string' ? fastrx[name].apply(fastrx, _toConsumableArray(arg)) : name;
+      var realrx = typeof name == 'string' ? observables[name].apply(observables, _toConsumableArray(arg)) : name;
       var f = source && !this.end ? realrx(function (s) {
         s.streamId = streamCount - 1;
         s.nodeId = _this3.id;
@@ -2735,7 +2947,7 @@ var Node = /*#__PURE__*/function () {
           });
         }
 
-        var newSink = new Sink$1(sink);
+        var newSink = new Sink(sink);
 
         newSink.next = function (data) {
           Events.next(_this4, streamId, data);
@@ -2842,7 +3054,8 @@ var toPromise = function toPromise() {
   };
 }; // //SUBSCRIBER
 
-var subscribe = function subscribe(n) {
+var subscribe = function subscribe() {
+  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : noop;
   var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : noop;
   var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : noop;
   return function (source) {
@@ -2986,7 +3199,7 @@ var CatchError = /*#__PURE__*/function (_Sink3) {
   return CatchError;
 }(Sink);
 
-var Events$1 = {
+var Events = {
   addSource: noop,
   subscribe: noop,
   next: noop,
@@ -2997,7 +3210,6 @@ var Events$1 = {
   create: noop
 };
 var catchError = deliver(CatchError);
-
 var observables = _objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2(_objectSpread2({
   delay: delay,
   tap: tap,
@@ -3101,14 +3313,14 @@ function send(event, payload) {
   });
 }
 
-Events$1.create = function (who) {
+Events.create = function (who) {
   send("create", {
     name: who.toString(),
     id: who.id
   });
 };
 
-Events$1.next = function (who, streamId, data) {
+Events.next = function (who, streamId, data) {
   send("next", {
     id: who.id,
     streamId: streamId,
@@ -3116,7 +3328,7 @@ Events$1.next = function (who, streamId, data) {
   });
 };
 
-Events$1.complete = function (who, streamId, err) {
+Events.complete = function (who, streamId, err) {
   send("complete", {
     id: who.id,
     streamId: streamId,
@@ -3124,14 +3336,14 @@ Events$1.complete = function (who, streamId, err) {
   });
 };
 
-Events$1.defer = function (who, streamId) {
+Events.defer = function (who, streamId) {
   send("defer", {
     id: who.id,
     streamId: streamId
   });
 };
 
-Events$1.addSource = function (who, source) {
+Events.addSource = function (who, source) {
   send("addSource", {
     id: who.id,
     name: who.toString(),
@@ -3142,7 +3354,7 @@ Events$1.addSource = function (who, source) {
   });
 };
 
-Events$1.pipe = function (who) {
+Events.pipe = function (who) {
   send("pipe", {
     name: who.toString(),
     id: who.id,
@@ -3153,14 +3365,14 @@ Events$1.pipe = function (who) {
   });
 };
 
-Events$1.update = function (who) {
+Events.update = function (who) {
   send('update', {
     id: who.id,
     name: who.toString()
   });
 };
 
-Events$1.subscribe = function (_ref, sink) {
+Events.subscribe = function (_ref, sink) {
   var id = _ref.id,
       end = _ref.end;
   send("subscribe", {
@@ -3173,14 +3385,15 @@ Events$1.subscribe = function (_ref, sink) {
   });
 };
 
-var index = createRx();
+var rx = createRx();
 
-exports.Events = Events$1;
+exports.Events = Events;
 exports.Sink = Sink;
 exports.asap = asap;
 exports.audit = audit;
 exports.bindCallback = bindCallback;
 exports.bindNodeCallback = bindNodeCallback;
+exports.bufferCount = bufferCount;
 exports.bufferTime = bufferTime;
 exports.catchError = catchError;
 exports.combineLatest = combineLatest;
@@ -3188,11 +3401,12 @@ exports.concat = concat;
 exports.count = count;
 exports.debounce = debounce;
 exports.debounceTime = debounceTime;
-exports.default = index;
+exports.default = rx;
 exports.delay = delay;
 exports.deliver = deliver;
 exports.elementAt = elementAt;
 exports.empty = empty;
+exports.every = every;
 exports.filter = filter;
 exports.find = find;
 exports.findIndex = findIndex;
@@ -3209,6 +3423,7 @@ exports.fromNextTick = fromNextTick;
 exports.fromPromise = fromPromise;
 exports.fromVueEvent = fromVueEvent;
 exports.fromVueEventOnce = fromVueEventOnce;
+exports.groupBy = groupBy;
 exports.ignoreElements = ignoreElements;
 exports.iif = iif;
 exports.interval = interval;
@@ -3218,9 +3433,12 @@ exports.mapTo = mapTo;
 exports.max = max;
 exports.merge = merge;
 exports.mergeArray = mergeArray;
+exports.mergeMap = mergeMap;
+exports.mergeMapTo = mergeMapTo;
 exports.min = min;
 exports.never = never;
 exports.noop = noop;
+exports.observables = observables;
 exports.of = of;
 exports.once = once;
 exports.pairwise = pairwise;
@@ -3240,6 +3458,7 @@ exports.skipWhile = skipWhile;
 exports.startWith = startWith;
 exports.subject = subject;
 exports.subscribe = subscribe;
+exports.sum = sum;
 exports.switchMap = switchMap;
 exports.switchMapTo = switchMapTo;
 exports.take = take;
@@ -3250,6 +3469,7 @@ exports.tap = tap;
 exports.throttle = throttle;
 exports.throttleTime = throttleTime;
 exports.throwError = throwError;
+exports.timeInterval = timeInterval;
 exports.timer = timer;
 exports.toPromise = toPromise;
 exports.withLatestFrom = withLatestFrom;
