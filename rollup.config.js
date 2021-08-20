@@ -17,20 +17,21 @@ import commonjs from 'rollup-plugin-commonjs';
 //         commonjs()]
 //     }
 // })
-const result = []
+const result = [];
 result.push({
-    input: 'index.js', // 入口文件
-    output: {
-        format: 'cjs',
-        file: 'dist/cjs.js', // 打包后输出文件
-        name: 'rx', // 打包后的内容会挂载到window，name就是挂载到window的名称
-        sourcemap: true // 代码调试 开发环境填true
-    },
-    plugins: [
-        babel({
-            exclude: "node_modules/**"
-        }),
-        commonjs()
-    ]
-})
-export default result
+  input: 'index.js', // 入口文件
+  output: {
+    format: 'cjs',
+    file: 'dist/cjs.js', // 打包后输出文件
+    name: 'rx', // 打包后的内容会挂载到window，name就是挂载到window的名称
+    sourcemap: true, // 代码调试 开发环境填true
+  },
+  plugins: [
+    babel({
+      exclude: 'node_modules/**',
+    }),
+    commonjs(),
+    //uglify()
+  ],
+});
+export default result;

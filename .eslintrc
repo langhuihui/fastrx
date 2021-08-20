@@ -1,0 +1,38 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "eslint:recommended"
+  ],
+  "plugins": [
+    "classes",
+    "prettier"
+  ],
+  "env": {
+    "node": true,
+    "es6": true,
+    "browser": true,
+    "jasmine": true
+  },
+  "rules": {
+    "classes/name": [
+      2,
+      "class",
+      "method"
+    ],
+    "no-console": 0,
+    "require-jsdoc": 0,
+    "prettier/prettier": [
+      "error",
+      {
+        "printWidth": 100,
+        "singleQuote": true
+      }
+    ],
+    "no-unused-vars": 0,
+    "no-sparse-arrays": 0
+  },
+  "parserOptions": {
+    "ecmaVersion": 7,
+    "sourceType": "module"
+  }
+}

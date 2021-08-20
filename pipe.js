@@ -1,0 +1,177 @@
+/* eslint-disable require-jsdoc */
+import { Sink, deliver, noop } from './common';
+export * from './common';
+export const pipe = (first, ...cbs) => cbs.reduce((aac, c) => c(aac), first);
+class Reuse {
+  constructor(subscribe, ...args) {
+    this.subscribe = subscribe;
+    this.source = pipe(...args);
+  }
+  start() {
+    this.subscriber = this.subscribe(this.source);
+  }
+  stop() {
+    this.subscriber && this.subscriber.dispose();
+  }
+}
+
+// //在pipe的基础上增加了start和stop方法，方便反复调用
+export const reusePipe = (...args) => new Reuse(...args);
+
+export const toPromise = () => (source) =>
+  new Promise((resolve, reject) => {
+    const sink = new Sink();
+    sink.next = (d) => (sink.value = d);
+    sink.complete = (err) => (err ? reject(err) : resolve(sink.value));
+    source(sink);
+  });
+
+// //SUBSCRIBER
+export const subscribe =
+  (n = noop, e = noop, c = noop) =>
+  (source) => {
+    const sink = new Sink();
+    sink.next = n;
+    sink.complete = (err) => (err ? e(err) : c());
+    sink.then = noop;
+    source(sink);
+    return sink;
+  };
+// // UTILITY
+class Tap extends Sink {
+  init(f) {
+    this.f = f;
+  }
+  next(data) {
+    const f = this.f;
+    f(data);
+    this.sink.next(data);
+  }
+}
+
+export const tap = deliver(Tap);
+
+class Delay extends Sink {
+  init(delay) {
+    this.delayTime = delay;
+    this.buffer = [];
+    // eslint-disable-next-line no-sparse-arrays
+    this.timeoutId = [clearTimeout, ,];
+    this.defer(this.timeoutId);
+  }
+  delay(delay) {
+    this.timeoutId[2] = setTimeout(this.pop, delay, this);
+  }
+  pop(_this) {
+    const { time: lastTime, data } = _this.buffer.shift();
+    _this.sink.next(data);
+    if (_this.buffer.length) {
+      _this.delay(_this.buffer[0].time - lastTime);
+    }
+  }
+  next(data) {
+    if (!this.buffer.length) {
+      this.delay(this.delayTime);
+    }
+    this.buffer.push({ time: new Date(), data });
+  }
+  complete(err) {
+    if (err) this.sink.complete(err);
+    else {
+      this.timeoutId[2] = setTimeout(() => this.sink.complete(), this.delayTime);
+    }
+  }
+}
+export const delay = deliver(Delay);
+class CatchError extends Sink {
+  init(selector) {
+    this.selector = selector;
+  }
+  complete(err) {
+    if (err) {
+      this.selector(err)(this.sink);
+    } else {
+      super.complete();
+    }
+  }
+}
+
+export const catchError = deliver(CatchError);
+export * from './combination';
+export * from './filtering';
+export * from './mathematical';
+export * from './producer';
+export * from './transformation';
+import { subject } from './producer';
+class GroupBy extends Sink {
+  init(f) {
+    this.f = f;
+    this.groups = new Map();
+  }
+  next(data) {
+    const key = this.f(data);
+    let group = this.groups.get(key);
+    if (!group) {
+      group = subject();
+      group.key = key;
+      this.groups.set(key, group);
+      this.sink.next(group);
+    }
+    group.next(data);
+  }
+  complete(err) {
+    this.groups.forEach((group) => group.complete(err));
+    super.complete(err);
+  }
+}
+export const groupBy = deliver(GroupBy);
+
+export const Events = {
+  addSource: noop,
+  subscribe: noop,
+  next: noop,
+  complete: noop,
+  defer: noop,
+  pipe: noop,
+  update: noop,
+  create: noop,
+};
+function send(event, payload) {
+  window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
+}
+Events.create = (who) => {
+  send('create', { name: who.toString(), id: who.id });
+};
+Events.next = (who, streamId, data) => {
+  send('next', { id: who.id, streamId, data: data && data.toString() });
+};
+Events.complete = (who, streamId, err) => {
+  send('complete', { id: who.id, streamId, err: err ? err.toString() : null });
+};
+Events.defer = (who, streamId) => {
+  send('defer', { id: who.id, streamId });
+};
+Events.addSource = (who, source) => {
+  send('addSource', {
+    id: who.id,
+    name: who.toString(),
+    source: { id: source.id, name: source.toString() },
+  });
+};
+Events.pipe = (who) => {
+  send('pipe', {
+    name: who.toString(),
+    id: who.id,
+    source: { id: who.source.id, name: who.source.toString() },
+  });
+};
+Events.update = (who) => {
+  send('update', { id: who.id, name: who.toString() });
+};
+Events.subscribe = ({ id, end }, sink) => {
+  send('subscribe', {
+    id,
+    end,
+    sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId },
+  });
+};

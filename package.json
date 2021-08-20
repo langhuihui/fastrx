@@ -1,6 +1,6 @@
 {
     "name": "fastrx",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "description": "fast rxjs implemention",
     "main": "dist/index.js",
     "module": "./index.js",
@@ -26,6 +26,11 @@
     "devDependencies": {
         "@babel/core": "^7.12.3",
         "@babel/preset-env": "^7.12.1",
+        "babel-eslint": "^10.1.0",
+        "eslint": "^5.16.0",
+        "eslint-plugin-classes": "^0.1.1",
+        "eslint-plugin-prettier": "^3.1.0",
+        "prettier": "^2.3.2",
         "rollup": "^2.32.1",
         "rollup-plugin-babel": "^4.4.0",
         "rollup-plugin-commonjs": "^10.1.0",

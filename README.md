@@ -16,9 +16,9 @@ rx.of(1,2,3).filter(x=>x<2).subscribe(console.log)
 ```
 
 or
-
+> with tree-shaking
 ```js
-import {pipe,fromArray,filter,subscribe} from 'fastrx';
+import {pipe,fromArray,filter,subscribe} from 'fastrx/pipe';
 pipe(fromArray([1,2,3]), filter(x=>x<2), subscribe(console.log))
 ```
 
@@ -51,7 +51,7 @@ myObservable.subscribe(console.log)
 or
 
 ```js
-import {pipe,subscribe} from 'fastrx';
+import {pipe,subscribe} from 'fastrx/pipe';
 const myObservable = ()=>sink=>{
     sink.next('data')
     sink.complete()
@@ -76,12 +76,6 @@ then you can use your observable anywhere
 ```js
 import rx from 'fastrx';
 rx.myObservable('something').subscribe(console.log)
-```
-or
-
-```js
-import {pipe,myObservable} from 'fastrx';
-pipe(myObservable('something'), subscribe(console.log))
 ```
 
 ## vue2.0 usage
