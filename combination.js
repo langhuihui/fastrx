@@ -1,6 +1,5 @@
 /* eslint-disable no-fallthrough */
 import { Sink, deliver, noop } from './common';
-import { map, mapTo } from './transformation';
 class Share extends Sink {
   init(source) {
     this.source = source;
@@ -246,47 +245,3 @@ class BufferCount extends Sink {
 }
 
 export const bufferCount = deliver(BufferCount);
-
-class ConcatAll extends Sink {
-  init() {
-    this.sources = [];
-    this.running = false;
-  }
-  sub(data) {
-    const s = new Sink(this.sink);
-    this.running = true;
-    s.complete = (err) => {
-      this.running = false;
-      if (err) {
-        s.dispose(true);
-        super.complete(err);
-      } else {
-        s.dispose(false);
-        if (this.sources.length) {
-          this.sub(this.sources.shift());
-        } else if (this.disposed) {
-          super.complete();
-        }
-      }
-    };
-    data(s);
-  }
-  next(data) {
-    if (!this.running) {
-      this.sub(data);
-    } else {
-      this.sources.push(data);
-    }
-  }
-  complete(err) {
-    if (err) {
-      if (!this.running) super.complete(err);
-    } else if (this.running) this.dispose(false);
-    else super.complete();
-  }
-}
-
-export const concatAll = deliver(ConcatAll);
-
-export const concatMap = (f) => (source) => concatAll()(map(f)(source));
-export const concatMapTo = (ob) => (source) => concatAll()(mapTo(ob)(source));

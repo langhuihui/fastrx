@@ -84,7 +84,6 @@ export function mergeMap(source: (d: any, index: number) => Observable, combineR
 export function mergeMapTo(source: Observable): Observable
 export function concatMap(f: (d: any) => Observable):Observable
 export function concatMapTo(inner:Observable):Observable
-export function concatAll(): Observable
 export function groupBy(f: (d: any) => any): Observable
 export function bufferTime(miniseconds: number): Observable
 export function timeInterval(): Observable

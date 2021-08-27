@@ -31,15 +31,12 @@ function groupBy() {
     .subscribe((p) => console.log(p));
 }
 
-function concatAll() {
-  rx.range(1, 10)
-    .map((i) => rx.timer(i * 100))
-    .concatAll()
-    .subscribe(console.log);
-}
 concatMap();
 function concatMap() {
   rx.range(1, 10)
-    .concatMap((i) => rx.timer(i * 100))
+    .concatMap(
+      (i) => rx.timer(i * 100),
+      (out) => out
+    )
     .subscribe(console.log);
 }

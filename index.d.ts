@@ -33,7 +33,6 @@ interface Observable {
     mergeMapTo(source: Observable): Observable
     concatMap(f: (d: any) => Observable):Observable
     concatMapTo(inner:Observable):Observable
-    concatAll(): Observable
     groupBy(f: (d: any) => any): Observable
     bufferTime(miniseconds: number): Observable
     timeInterval(): Observable

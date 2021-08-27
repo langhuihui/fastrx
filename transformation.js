@@ -179,3 +179,52 @@ class TimeInterval extends Sink {
   }
 }
 export const timeInterval = deliver(TimeInterval);
+
+class ConcatMap extends Sink {
+  init(f, combineResults) {
+    this.f = f;
+    this.combineResults = combineResults;
+    this.sources = [];
+    this.running = false;
+  }
+  sub(data) {
+    const s = new Sink(this.sink);
+    this.running = true;
+    if (this.combineResults) {
+      s.next = (d) => {
+        this.sink.next(this.combineResults(data, d));
+      };
+    }
+    s.complete = (err) => {
+      this.running = false;
+      if (err) {
+        s.dispose(true);
+        super.complete(err);
+      } else {
+        s.dispose(false);
+        if (this.sources.length) {
+          this.sub(this.sources.shift());
+        } else if (this.disposed) {
+          super.complete();
+        }
+      }
+    };
+    this.f(data)(s);
+  }
+  next(data) {
+    if (!this.running) {
+      this.sub(data);
+    } else {
+      this.sources.push(data);
+    }
+  }
+  complete(err) {
+    if (err) {
+      if (!this.running) super.complete(err);
+    } else if (this.running) this.dispose(false);
+    else super.complete();
+  }
+}
+
+export const concatMap = deliver(ConcatMap);
+export const concatMapTo = (ob, combineResults) => concatMap((d) => ob, combineResults);

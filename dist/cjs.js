@@ -13,11 +13,11 @@ require('core-js/modules/es.array.concat.js');
 require('core-js/modules/es.array.slice.js');
 require('core-js/modules/es.set.js');
 require('core-js/modules/es.array.map.js');
-require('core-js/modules/es.string.sub.js');
 require('core-js/modules/es.symbol.js');
 require('core-js/modules/es.symbol.description.js');
 require('core-js/modules/es.symbol.iterator.js');
 require('core-js/modules/es.array.find.js');
+require('core-js/modules/es.string.sub.js');
 require('core-js/modules/es.array.join.js');
 require('core-js/modules/es.function.name.js');
 
@@ -502,514 +502,6 @@ var deliver = function deliver(Class) {
     };
   };
 };
-
-function compose(g, f) {
-  return function (x) {
-    return g(f(x));
-  };
-}
-
-function and(a, b) {
-  return function (x) {
-    return a(x) && b(x);
-  };
-}
-
-var Filter = /*#__PURE__*/function (_Sink) {
-  _inherits(Filter, _Sink);
-
-  var _super = _createSuper(Filter);
-
-  function Filter() {
-    _classCallCheck(this, Filter);
-
-    return _super.apply(this, arguments);
-  }
-
-  _createClass(Filter, [{
-    key: "init",
-    value: function init(f) {
-      this.f = f;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var f = this.f;
-      f(data) && this.sink.next(data);
-    }
-  }, {
-    key: "fusionFilter",
-    value: function fusionFilter(f) {
-      this.f = and(f, this.f);
-      return this; // return new Filter(this.sink, this.and(f, this.f))
-    }
-  }]);
-
-  return Filter;
-}(Sink);
-
-var FilterMapSink = /*#__PURE__*/function (_Sink2) {
-  _inherits(FilterMapSink, _Sink2);
-
-  var _super2 = _createSuper(FilterMapSink);
-
-  function FilterMapSink() {
-    _classCallCheck(this, FilterMapSink);
-
-    return _super2.apply(this, arguments);
-  }
-
-  _createClass(FilterMapSink, [{
-    key: "init",
-    value: function init(f, m) {
-      this.f = f;
-      this.m = m;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var f = this.f;
-      var m = this.m;
-      f(data) && this.sink.next(m(data));
-    }
-  }, {
-    key: "fusionFilter",
-    value: function fusionFilter(f) {
-      this.f = and(f, this.f);
-      return this; // return new Filter(this, f)
-    }
-  }]);
-
-  return FilterMapSink;
-}(Sink);
-
-var MapSink = /*#__PURE__*/function (_Sink3) {
-  _inherits(MapSink, _Sink3);
-
-  var _super3 = _createSuper(MapSink);
-
-  function MapSink() {
-    _classCallCheck(this, MapSink);
-
-    return _super3.apply(this, arguments);
-  }
-
-  _createClass(MapSink, [{
-    key: "init",
-    value: function init(f) {
-      this.f = f;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var f = this.f;
-      this.sink.next(f(data));
-    }
-  }, {
-    key: "fusionFilter",
-    value: function fusionFilter(f) {
-      this.disposePass = false;
-      this.dispose(false);
-      return new FilterMapSink(this.sink, f, this.f);
-    }
-  }, {
-    key: "fusionMap",
-    value: function fusionMap(f) {
-      this.f = compose(this.f, f);
-      return this; // return new MapSink(this.sink, this.compose(this.f, f))
-    }
-  }]);
-
-  return MapSink;
-}(Sink);
-
-var Scan = /*#__PURE__*/function (_Sink) {
-  _inherits(Scan, _Sink);
-
-  var _super = _createSuper(Scan);
-
-  function Scan() {
-    _classCallCheck(this, Scan);
-
-    return _super.apply(this, arguments);
-  }
-
-  _createClass(Scan, [{
-    key: "init",
-    value: function init(hasSeed, f, seed) {
-      var _this = this;
-
-      this.f = f;
-      this.aac = seed;
-
-      if (!hasSeed) {
-        this.next = function (d) {
-          delete _this.next;
-
-          _this.sink.next(_this.aac = d);
-        };
-      }
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var f = this.f;
-      this.aac = f(this.aac, data);
-      this.sink.next(this.aac);
-    }
-  }]);
-
-  return Scan;
-}(Sink);
-
-var scan = function scan() {
-  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-    args[_key] = arguments[_key];
-  }
-
-  return function (source) {
-    return function (sink) {
-      return source(_construct(Scan, [sink, args.length == 2].concat(args)));
-    };
-  };
-};
-var map = function map(f) {
-  return function (source) {
-    return function (sink) {
-      return source(sink.fusionMap ? sink.fusionMap(f) : new MapSink(sink, f));
-    };
-  };
-};
-var mapTo = function mapTo(target) {
-  return map(function (x) {
-    return target;
-  });
-};
-var pluck = function pluck(s) {
-  return map(function (d) {
-    return d[s];
-  });
-};
-
-var Pairwise = /*#__PURE__*/function (_Sink2) {
-  _inherits(Pairwise, _Sink2);
-
-  var _super2 = _createSuper(Pairwise);
-
-  function Pairwise() {
-    _classCallCheck(this, Pairwise);
-
-    return _super2.apply(this, arguments);
-  }
-
-  _createClass(Pairwise, [{
-    key: "init",
-    value: function init() {
-      this.hasLast = false;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      if (this.hasLast) {
-        this.sink.next([this.last, data]);
-      } else {
-        this.hasLast = true;
-      }
-
-      this.last = data;
-    }
-  }]);
-
-  return Pairwise;
-}(Sink);
-
-var pairwise = deliver(Pairwise);
-
-var Repeat = /*#__PURE__*/function (_Sink3) {
-  _inherits(Repeat, _Sink3);
-
-  var _super3 = _createSuper(Repeat);
-
-  function Repeat() {
-    _classCallCheck(this, Repeat);
-
-    return _super3.apply(this, arguments);
-  }
-
-  _createClass(Repeat, [{
-    key: "init",
-    value: function init(count) {
-      this.buffer = [];
-      this.count = count;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      this.buffer.push(data);
-      this.sink.next(data);
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      if (err) _get(_getPrototypeOf(Repeat.prototype), "complete", this).call(this, err);else {
-        while (this.count--) {
-          for (var i = 0, l = this.buffer.length; i < l; this.sink.next(this.buffer[i++])) {
-            if (this.disposed) return;
-          }
-        }
-
-        _get(_getPrototypeOf(Repeat.prototype), "complete", this).call(this);
-      }
-    }
-  }]);
-
-  return Repeat;
-}(Sink);
-
-var repeat = deliver(Repeat);
-
-var _SwitchMap = /*#__PURE__*/function (_Sink4) {
-  _inherits(_SwitchMap, _Sink4);
-
-  var _super4 = _createSuper(_SwitchMap);
-
-  function _SwitchMap() {
-    _classCallCheck(this, _SwitchMap);
-
-    return _super4.apply(this, arguments);
-  }
-
-  _createClass(_SwitchMap, [{
-    key: "init",
-    value: function init(data, context) {
-      this.data = data;
-      this.context = context;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var combineResults = this.context.combineResults;
-
-      if (combineResults) {
-        this.sink.next(combineResults(this.data, data));
-      } else {
-        this.sink.next(data);
-      }
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      if (this.context.disposed) _get(_getPrototypeOf(_SwitchMap.prototype), "complete", this).call(this, err);else this.dispose(false);
-    }
-  }]);
-
-  return _SwitchMap;
-}(Sink);
-
-var SwitchMap = /*#__PURE__*/function (_Sink5) {
-  _inherits(SwitchMap, _Sink5);
-
-  var _super5 = _createSuper(SwitchMap);
-
-  function SwitchMap() {
-    _classCallCheck(this, SwitchMap);
-
-    return _super5.apply(this, arguments);
-  }
-
-  _createClass(SwitchMap, [{
-    key: "init",
-    value: function init(makeSource, combineResults) {
-      this.makeSource = makeSource;
-      this.combineResults = combineResults;
-      this.index = 0;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var makeSource = this.makeSource;
-
-      if (this.switch) {
-        this.switch.disposePass = false;
-        this.switch.dispose();
-      }
-
-      this.switch = new _SwitchMap(this.sink, data, this);
-      makeSource(data, this.index++)(this.switch);
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      if (!this.switch || this.switch.disposed) _get(_getPrototypeOf(SwitchMap.prototype), "complete", this).call(this, err);else this.dispose(false);
-    }
-  }]);
-
-  return SwitchMap;
-}(Sink);
-
-var switchMap = deliver(SwitchMap);
-var switchMapTo = function switchMapTo(innerSource, combineResults) {
-  return switchMap(function (d) {
-    return innerSource;
-  }, combineResults);
-};
-
-var _MergeMap = /*#__PURE__*/function (_Sink6) {
-  _inherits(_MergeMap, _Sink6);
-
-  var _super6 = _createSuper(_MergeMap);
-
-  function _MergeMap() {
-    _classCallCheck(this, _MergeMap);
-
-    return _super6.apply(this, arguments);
-  }
-
-  _createClass(_MergeMap, [{
-    key: "init",
-    value: function init(data, context) {
-      this.data = data;
-      this.context = context;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var combineResults = this.context.combineResults;
-
-      if (combineResults) {
-        this.sink.next(combineResults(this.data, data));
-      } else {
-        this.sink.next(data);
-      }
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      this.context.subDisposed++;
-      if (this.context.subDisposed == this.context.count && this.context.disposed) _get(_getPrototypeOf(_MergeMap.prototype), "complete", this).call(this, err);else this.dispose(false);
-    }
-  }]);
-
-  return _MergeMap;
-}(Sink);
-
-var MergeMap = /*#__PURE__*/function (_Sink7) {
-  _inherits(MergeMap, _Sink7);
-
-  var _super7 = _createSuper(MergeMap);
-
-  function MergeMap() {
-    _classCallCheck(this, MergeMap);
-
-    return _super7.apply(this, arguments);
-  }
-
-  _createClass(MergeMap, [{
-    key: "init",
-    value: function init(makeSource, combineResults) {
-      this.makeSource = makeSource;
-      this.combineResults = combineResults;
-      this.subDisposed = 0;
-      this.count = 0;
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      var makeSource = this.makeSource;
-      makeSource(data, this.count++)(new _MergeMap(this.sink, data, this));
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      if (this.subDisposed === this.count) _get(_getPrototypeOf(MergeMap.prototype), "complete", this).call(this, err);else this.dispose(false);
-    }
-  }]);
-
-  return MergeMap;
-}(Sink);
-
-var mergeMap = deliver(MergeMap);
-var mergeMapTo = function mergeMapTo(innerSource, combineResults) {
-  return mergeMap(function (d) {
-    return innerSource;
-  }, combineResults);
-};
-
-var BufferTime = /*#__PURE__*/function (_Sink8) {
-  _inherits(BufferTime, _Sink8);
-
-  var _super8 = _createSuper(BufferTime);
-
-  function BufferTime() {
-    _classCallCheck(this, BufferTime);
-
-    return _super8.apply(this, arguments);
-  }
-
-  _createClass(BufferTime, [{
-    key: "init",
-    value: function init(miniseconds) {
-      var _this2 = this;
-
-      this.buffer = [];
-      this.id = setInterval(function () {
-        _this2.sink.next(_this2.buffer.concat());
-
-        _this2.buffer.length = 0;
-      }, miniseconds);
-      this.defer([clearInterval,, this.id]);
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      this.buffer.push(data);
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      clearInterval(this.id);
-      if (!err) this.sink.next(this.buffer);
-
-      _get(_getPrototypeOf(BufferTime.prototype), "complete", this).call(this, err);
-    }
-  }]);
-
-  return BufferTime;
-}(Sink);
-
-var bufferTime = deliver(BufferTime);
-
-var TimeInterval = /*#__PURE__*/function (_Sink9) {
-  _inherits(TimeInterval, _Sink9);
-
-  var _super9 = _createSuper(TimeInterval);
-
-  function TimeInterval() {
-    _classCallCheck(this, TimeInterval);
-
-    return _super9.apply(this, arguments);
-  }
-
-  _createClass(TimeInterval, [{
-    key: "init",
-    value: function init() {
-      this.start = new Date();
-    }
-  }, {
-    key: "next",
-    value: function next(value) {
-      this.sink.next({
-        value: value,
-        interval: new Date() - this.start
-      });
-      this.start = new Date();
-    }
-  }]);
-
-  return TimeInterval;
-}(Sink);
-
-var timeInterval = deliver(TimeInterval);
 
 var Share = /*#__PURE__*/function (_Sink) {
   _inherits(Share, _Sink);
@@ -1506,84 +998,6 @@ var BufferCount = /*#__PURE__*/function (_Sink8) {
 
 var bufferCount = deliver(BufferCount);
 
-var ConcatAll = /*#__PURE__*/function (_Sink9) {
-  _inherits(ConcatAll, _Sink9);
-
-  var _super9 = _createSuper(ConcatAll);
-
-  function ConcatAll() {
-    _classCallCheck(this, ConcatAll);
-
-    return _super9.apply(this, arguments);
-  }
-
-  _createClass(ConcatAll, [{
-    key: "init",
-    value: function init() {
-      this.sources = [];
-      this.running = false;
-    }
-  }, {
-    key: "sub",
-    value: function sub(data) {
-      var _this3 = this;
-
-      var s = new Sink(this.sink);
-      this.running = true;
-
-      s.complete = function (err) {
-        _this3.running = false;
-
-        if (err) {
-          s.dispose(true);
-
-          _get(_getPrototypeOf(ConcatAll.prototype), "complete", _this3).call(_this3, err);
-        } else {
-          s.dispose(false);
-
-          if (_this3.sources.length) {
-            _this3.sub(_this3.sources.shift());
-          } else if (_this3.disposed) {
-            _get(_getPrototypeOf(ConcatAll.prototype), "complete", _this3).call(_this3);
-          }
-        }
-      };
-
-      data(s);
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      if (!this.running) {
-        this.sub(data);
-      } else {
-        this.sources.push(data);
-      }
-    }
-  }, {
-    key: "complete",
-    value: function complete(err) {
-      if (err) {
-        if (!this.running) _get(_getPrototypeOf(ConcatAll.prototype), "complete", this).call(this, err);
-      } else if (this.running) this.dispose(false);else _get(_getPrototypeOf(ConcatAll.prototype), "complete", this).call(this);
-    }
-  }]);
-
-  return ConcatAll;
-}(Sink);
-
-var concatAll = deliver(ConcatAll);
-var concatMap = function concatMap(f) {
-  return function (source) {
-    return concatAll()(map(f)(source));
-  };
-};
-var concatMapTo = function concatMapTo(ob) {
-  return function (source) {
-    return concatAll()(mapTo(ob)(source));
-  };
-};
-
 var Reduce = /*#__PURE__*/function (_Sink) {
   _inherits(Reduce, _Sink);
 
@@ -1655,6 +1069,126 @@ var sum = function sum() {
     return aac + c;
   }, 0);
 };
+
+function compose(g, f) {
+  return function (x) {
+    return g(f(x));
+  };
+}
+
+function and(a, b) {
+  return function (x) {
+    return a(x) && b(x);
+  };
+}
+
+var Filter = /*#__PURE__*/function (_Sink) {
+  _inherits(Filter, _Sink);
+
+  var _super = _createSuper(Filter);
+
+  function Filter() {
+    _classCallCheck(this, Filter);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(Filter, [{
+    key: "init",
+    value: function init(f) {
+      this.f = f;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      f(data) && this.sink.next(data);
+    }
+  }, {
+    key: "fusionFilter",
+    value: function fusionFilter(f) {
+      this.f = and(f, this.f);
+      return this; // return new Filter(this.sink, this.and(f, this.f))
+    }
+  }]);
+
+  return Filter;
+}(Sink);
+
+var FilterMapSink = /*#__PURE__*/function (_Sink2) {
+  _inherits(FilterMapSink, _Sink2);
+
+  var _super2 = _createSuper(FilterMapSink);
+
+  function FilterMapSink() {
+    _classCallCheck(this, FilterMapSink);
+
+    return _super2.apply(this, arguments);
+  }
+
+  _createClass(FilterMapSink, [{
+    key: "init",
+    value: function init(f, m) {
+      this.f = f;
+      this.m = m;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      var m = this.m;
+      f(data) && this.sink.next(m(data));
+    }
+  }, {
+    key: "fusionFilter",
+    value: function fusionFilter(f) {
+      this.f = and(f, this.f);
+      return this; // return new Filter(this, f)
+    }
+  }]);
+
+  return FilterMapSink;
+}(Sink);
+
+var MapSink = /*#__PURE__*/function (_Sink3) {
+  _inherits(MapSink, _Sink3);
+
+  var _super3 = _createSuper(MapSink);
+
+  function MapSink() {
+    _classCallCheck(this, MapSink);
+
+    return _super3.apply(this, arguments);
+  }
+
+  _createClass(MapSink, [{
+    key: "init",
+    value: function init(f) {
+      this.f = f;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      this.sink.next(f(data));
+    }
+  }, {
+    key: "fusionFilter",
+    value: function fusionFilter(f) {
+      this.disposePass = false;
+      this.dispose(false);
+      return new FilterMapSink(this.sink, f, this.f);
+    }
+  }, {
+    key: "fusionMap",
+    value: function fusionMap(f) {
+      this.f = compose(this.f, f);
+      return this; // return new MapSink(this.sink, this.compose(this.f, f))
+    }
+  }]);
+
+  return MapSink;
+}(Sink);
 
 var filter = function filter(f) {
   return function (source) {
@@ -2731,6 +2265,475 @@ var empty = function empty() {
   return throwError();
 };
 
+var Scan = /*#__PURE__*/function (_Sink) {
+  _inherits(Scan, _Sink);
+
+  var _super = _createSuper(Scan);
+
+  function Scan() {
+    _classCallCheck(this, Scan);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(Scan, [{
+    key: "init",
+    value: function init(hasSeed, f, seed) {
+      var _this = this;
+
+      this.f = f;
+      this.aac = seed;
+
+      if (!hasSeed) {
+        this.next = function (d) {
+          delete _this.next;
+
+          _this.sink.next(_this.aac = d);
+        };
+      }
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var f = this.f;
+      this.aac = f(this.aac, data);
+      this.sink.next(this.aac);
+    }
+  }]);
+
+  return Scan;
+}(Sink);
+
+var scan = function scan() {
+  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+    args[_key] = arguments[_key];
+  }
+
+  return function (source) {
+    return function (sink) {
+      return source(_construct(Scan, [sink, args.length == 2].concat(args)));
+    };
+  };
+};
+var map = function map(f) {
+  return function (source) {
+    return function (sink) {
+      return source(sink.fusionMap ? sink.fusionMap(f) : new MapSink(sink, f));
+    };
+  };
+};
+var mapTo = function mapTo(target) {
+  return map(function (x) {
+    return target;
+  });
+};
+var pluck = function pluck(s) {
+  return map(function (d) {
+    return d[s];
+  });
+};
+
+var Pairwise = /*#__PURE__*/function (_Sink2) {
+  _inherits(Pairwise, _Sink2);
+
+  var _super2 = _createSuper(Pairwise);
+
+  function Pairwise() {
+    _classCallCheck(this, Pairwise);
+
+    return _super2.apply(this, arguments);
+  }
+
+  _createClass(Pairwise, [{
+    key: "init",
+    value: function init() {
+      this.hasLast = false;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (this.hasLast) {
+        this.sink.next([this.last, data]);
+      } else {
+        this.hasLast = true;
+      }
+
+      this.last = data;
+    }
+  }]);
+
+  return Pairwise;
+}(Sink);
+
+var pairwise = deliver(Pairwise);
+
+var Repeat = /*#__PURE__*/function (_Sink3) {
+  _inherits(Repeat, _Sink3);
+
+  var _super3 = _createSuper(Repeat);
+
+  function Repeat() {
+    _classCallCheck(this, Repeat);
+
+    return _super3.apply(this, arguments);
+  }
+
+  _createClass(Repeat, [{
+    key: "init",
+    value: function init(count) {
+      this.buffer = [];
+      this.count = count;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      this.buffer.push(data);
+      this.sink.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (err) _get(_getPrototypeOf(Repeat.prototype), "complete", this).call(this, err);else {
+        while (this.count--) {
+          for (var i = 0, l = this.buffer.length; i < l; this.sink.next(this.buffer[i++])) {
+            if (this.disposed) return;
+          }
+        }
+
+        _get(_getPrototypeOf(Repeat.prototype), "complete", this).call(this);
+      }
+    }
+  }]);
+
+  return Repeat;
+}(Sink);
+
+var repeat = deliver(Repeat);
+
+var _SwitchMap = /*#__PURE__*/function (_Sink4) {
+  _inherits(_SwitchMap, _Sink4);
+
+  var _super4 = _createSuper(_SwitchMap);
+
+  function _SwitchMap() {
+    _classCallCheck(this, _SwitchMap);
+
+    return _super4.apply(this, arguments);
+  }
+
+  _createClass(_SwitchMap, [{
+    key: "init",
+    value: function init(data, context) {
+      this.data = data;
+      this.context = context;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var combineResults = this.context.combineResults;
+
+      if (combineResults) {
+        this.sink.next(combineResults(this.data, data));
+      } else {
+        this.sink.next(data);
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (this.context.disposed) _get(_getPrototypeOf(_SwitchMap.prototype), "complete", this).call(this, err);else this.dispose(false);
+    }
+  }]);
+
+  return _SwitchMap;
+}(Sink);
+
+var SwitchMap = /*#__PURE__*/function (_Sink5) {
+  _inherits(SwitchMap, _Sink5);
+
+  var _super5 = _createSuper(SwitchMap);
+
+  function SwitchMap() {
+    _classCallCheck(this, SwitchMap);
+
+    return _super5.apply(this, arguments);
+  }
+
+  _createClass(SwitchMap, [{
+    key: "init",
+    value: function init(makeSource, combineResults) {
+      this.makeSource = makeSource;
+      this.combineResults = combineResults;
+      this.index = 0;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var makeSource = this.makeSource;
+
+      if (this.switch) {
+        this.switch.disposePass = false;
+        this.switch.dispose();
+      }
+
+      this.switch = new _SwitchMap(this.sink, data, this);
+      makeSource(data, this.index++)(this.switch);
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (!this.switch || this.switch.disposed) _get(_getPrototypeOf(SwitchMap.prototype), "complete", this).call(this, err);else this.dispose(false);
+    }
+  }]);
+
+  return SwitchMap;
+}(Sink);
+
+var switchMap = deliver(SwitchMap);
+var switchMapTo = function switchMapTo(innerSource, combineResults) {
+  return switchMap(function (d) {
+    return innerSource;
+  }, combineResults);
+};
+
+var _MergeMap = /*#__PURE__*/function (_Sink6) {
+  _inherits(_MergeMap, _Sink6);
+
+  var _super6 = _createSuper(_MergeMap);
+
+  function _MergeMap() {
+    _classCallCheck(this, _MergeMap);
+
+    return _super6.apply(this, arguments);
+  }
+
+  _createClass(_MergeMap, [{
+    key: "init",
+    value: function init(data, context) {
+      this.data = data;
+      this.context = context;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var combineResults = this.context.combineResults;
+
+      if (combineResults) {
+        this.sink.next(combineResults(this.data, data));
+      } else {
+        this.sink.next(data);
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      this.context.subDisposed++;
+      if (this.context.subDisposed == this.context.count && this.context.disposed) _get(_getPrototypeOf(_MergeMap.prototype), "complete", this).call(this, err);else this.dispose(false);
+    }
+  }]);
+
+  return _MergeMap;
+}(Sink);
+
+var MergeMap = /*#__PURE__*/function (_Sink7) {
+  _inherits(MergeMap, _Sink7);
+
+  var _super7 = _createSuper(MergeMap);
+
+  function MergeMap() {
+    _classCallCheck(this, MergeMap);
+
+    return _super7.apply(this, arguments);
+  }
+
+  _createClass(MergeMap, [{
+    key: "init",
+    value: function init(makeSource, combineResults) {
+      this.makeSource = makeSource;
+      this.combineResults = combineResults;
+      this.subDisposed = 0;
+      this.count = 0;
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      var makeSource = this.makeSource;
+      makeSource(data, this.count++)(new _MergeMap(this.sink, data, this));
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (this.subDisposed === this.count) _get(_getPrototypeOf(MergeMap.prototype), "complete", this).call(this, err);else this.dispose(false);
+    }
+  }]);
+
+  return MergeMap;
+}(Sink);
+
+var mergeMap = deliver(MergeMap);
+var mergeMapTo = function mergeMapTo(innerSource, combineResults) {
+  return mergeMap(function (d) {
+    return innerSource;
+  }, combineResults);
+};
+
+var BufferTime = /*#__PURE__*/function (_Sink8) {
+  _inherits(BufferTime, _Sink8);
+
+  var _super8 = _createSuper(BufferTime);
+
+  function BufferTime() {
+    _classCallCheck(this, BufferTime);
+
+    return _super8.apply(this, arguments);
+  }
+
+  _createClass(BufferTime, [{
+    key: "init",
+    value: function init(miniseconds) {
+      var _this2 = this;
+
+      this.buffer = [];
+      this.id = setInterval(function () {
+        _this2.sink.next(_this2.buffer.concat());
+
+        _this2.buffer.length = 0;
+      }, miniseconds);
+      this.defer([clearInterval,, this.id]);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      this.buffer.push(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      clearInterval(this.id);
+      if (!err) this.sink.next(this.buffer);
+
+      _get(_getPrototypeOf(BufferTime.prototype), "complete", this).call(this, err);
+    }
+  }]);
+
+  return BufferTime;
+}(Sink);
+
+var bufferTime = deliver(BufferTime);
+
+var TimeInterval = /*#__PURE__*/function (_Sink9) {
+  _inherits(TimeInterval, _Sink9);
+
+  var _super9 = _createSuper(TimeInterval);
+
+  function TimeInterval() {
+    _classCallCheck(this, TimeInterval);
+
+    return _super9.apply(this, arguments);
+  }
+
+  _createClass(TimeInterval, [{
+    key: "init",
+    value: function init() {
+      this.start = new Date();
+    }
+  }, {
+    key: "next",
+    value: function next(value) {
+      this.sink.next({
+        value: value,
+        interval: new Date() - this.start
+      });
+      this.start = new Date();
+    }
+  }]);
+
+  return TimeInterval;
+}(Sink);
+
+var timeInterval = deliver(TimeInterval);
+
+var ConcatMap = /*#__PURE__*/function (_Sink10) {
+  _inherits(ConcatMap, _Sink10);
+
+  var _super10 = _createSuper(ConcatMap);
+
+  function ConcatMap() {
+    _classCallCheck(this, ConcatMap);
+
+    return _super10.apply(this, arguments);
+  }
+
+  _createClass(ConcatMap, [{
+    key: "init",
+    value: function init(f, combineResults) {
+      this.f = f;
+      this.combineResults = combineResults;
+      this.sources = [];
+      this.running = false;
+    }
+  }, {
+    key: "sub",
+    value: function sub(data) {
+      var _this3 = this;
+
+      var s = new Sink(this.sink);
+      this.running = true;
+
+      if (this.combineResults) {
+        s.next = function (d) {
+          _this3.sink.next(_this3.combineResults(data, d));
+        };
+      }
+
+      s.complete = function (err) {
+        _this3.running = false;
+
+        if (err) {
+          s.dispose(true);
+
+          _get(_getPrototypeOf(ConcatMap.prototype), "complete", _this3).call(_this3, err);
+        } else {
+          s.dispose(false);
+
+          if (_this3.sources.length) {
+            _this3.sub(_this3.sources.shift());
+          } else if (_this3.disposed) {
+            _get(_getPrototypeOf(ConcatMap.prototype), "complete", _this3).call(_this3);
+          }
+        }
+      };
+
+      this.f(data)(s);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (!this.running) {
+        this.sub(data);
+      } else {
+        this.sources.push(data);
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (err) {
+        if (!this.running) _get(_getPrototypeOf(ConcatMap.prototype), "complete", this).call(this, err);
+      } else if (this.running) this.dispose(false);else _get(_getPrototypeOf(ConcatMap.prototype), "complete", this).call(this);
+    }
+  }]);
+
+  return ConcatMap;
+}(Sink);
+
+var concatMap = deliver(ConcatMap);
+var concatMapTo = function concatMapTo(ob, combineResults) {
+  return concatMap(function (d) {
+    return ob;
+  }, combineResults);
+};
+
 var pipe = function pipe(first) {
   for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
     cbs[_key - 1] = arguments[_key];
@@ -3111,9 +3114,6 @@ var _observables = /*#__PURE__*/Object.freeze({
   zip: zip,
   startWith: startWith,
   bufferCount: bufferCount,
-  concatAll: concatAll,
-  concatMap: concatMap,
-  concatMapTo: concatMapTo,
   filter: filter,
   ignoreElements: ignoreElements,
   take: take,
@@ -3172,7 +3172,9 @@ var _observables = /*#__PURE__*/Object.freeze({
   mergeMap: mergeMap,
   mergeMapTo: mergeMapTo,
   bufferTime: bufferTime,
-  timeInterval: timeInterval
+  timeInterval: timeInterval,
+  concatMap: concatMap,
+  concatMapTo: concatMapTo
 });
 
 var Events$1 = Events,
