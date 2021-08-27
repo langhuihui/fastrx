@@ -37,4 +37,9 @@ function concatAll() {
     .concatAll()
     .subscribe(console.log);
 }
-concatAll();
+concatMap();
+function concatMap() {
+  rx.range(1, 10)
+    .concatMap((i) => rx.timer(i * 100))
+    .subscribe(console.log);
+}

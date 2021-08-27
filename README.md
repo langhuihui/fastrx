@@ -21,7 +21,11 @@ or
 import {pipe,fromArray,filter,subscribe} from 'fastrx/pipe';
 pipe(fromArray([1,2,3]), filter(x=>x<2), subscribe(console.log))
 ```
-
+> with "@babel/plugin-proposal-pipeline-operator"
+```js
+import {fromArray,filter,subscribe} from 'fastrx/pipe';
+fromArray([1,2,3]) |> filter(x=>x<2) |> subscribe(console.log)
+```
 
 dataflow for 1000000 source events
 -----------------------------------------------

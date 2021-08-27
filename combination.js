@@ -1,5 +1,6 @@
 /* eslint-disable no-fallthrough */
 import { Sink, deliver, noop } from './common';
+import { map, mapTo } from './transformation';
 class Share extends Sink {
   init(source) {
     this.source = source;
@@ -286,3 +287,6 @@ class ConcatAll extends Sink {
 }
 
 export const concatAll = deliver(ConcatAll);
+
+export const concatMap = (f) => (source) => concatAll()(map(f)(source));
+export const concatMapTo = (ob) => (source) => concatAll()(mapTo(ob)(source));
