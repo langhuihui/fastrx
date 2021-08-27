@@ -1,6 +1,5 @@
 'use strict';
 
-require('core-js/modules/es.array.for-each.js');
 require('core-js/modules/es.array.iterator.js');
 require('core-js/modules/es.map.js');
 require('core-js/modules/es.object.set-prototype-of.js');
@@ -8,14 +7,13 @@ require('core-js/modules/es.object.to-string.js');
 require('core-js/modules/es.string.iterator.js');
 require('core-js/modules/web.dom-collections.for-each.js');
 require('core-js/modules/web.dom-collections.iterator.js');
-require('core-js/modules/es.array.reduce.js');
 require('core-js/modules/es.promise.js');
 require('core-js/modules/es.regexp.to-string.js');
 require('core-js/modules/es.array.concat.js');
 require('core-js/modules/es.array.slice.js');
 require('core-js/modules/es.set.js');
-require('core-js/modules/es.array.every.js');
 require('core-js/modules/es.array.map.js');
+require('core-js/modules/es.string.sub.js');
 require('core-js/modules/es.symbol.js');
 require('core-js/modules/es.symbol.description.js');
 require('core-js/modules/es.symbol.iterator.js');
@@ -98,7 +96,7 @@ function _isNativeReflectConstruct() {
   if (typeof Proxy === "function") return true;
 
   try {
-    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
     return true;
   } catch (e) {
     return false;
@@ -169,6 +167,8 @@ function _assertThisInitialized(self) {
 function _possibleConstructorReturn(self, call) {
   if (call && (typeof call === "object" || typeof call === "function")) {
     return call;
+  } else if (call !== void 0) {
+    throw new TypeError("Derived constructors may only return object or undefined");
   }
 
   return _assertThisInitialized(self);
@@ -240,7 +240,7 @@ function _arrayWithHoles(arr) {
 }
 
 function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+  if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
 }
 
 function _unsupportedIterableToArray(o, minLen) {
@@ -269,9 +269,9 @@ function _nonIterableRest() {
 }
 
 function _createForOfIteratorHelper(o, allowArrayLike) {
-  var it;
+  var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"];
 
-  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+  if (!it) {
     if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
       if (it) o = it;
       var i = 0;
@@ -304,7 +304,7 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
       err;
   return {
     s: function () {
-      it = o[Symbol.iterator]();
+      it = it.call(o);
     },
     n: function () {
       var step = it.next();
@@ -354,6 +354,12 @@ var Sink = /*#__PURE__*/function () {
   _createClass(Sink, [{
     key: "init",
     value: function init() {}
+  }, {
+    key: "disposePass",
+    set: function set(value) {
+      if (!this.sink) return;
+      if (value) this.sink.defers.add(this);else this.sink.defers.delete(this);
+    }
   }, {
     key: "next",
     value: function next(data) {
@@ -426,12 +432,6 @@ var Sink = /*#__PURE__*/function () {
       sources.forEach(function (source) {
         return source(_this2);
       });
-    }
-  }, {
-    key: "disposePass",
-    set: function set(value) {
-      if (!this.sink) return;
-      if (value) this.sink.defers.add(this);else this.sink.defers.delete(this);
     }
   }]);
 
@@ -814,8 +814,7 @@ var WithLatestFrom = /*#__PURE__*/function (_Sink6) {
   _createClass(WithLatestFrom, [{
     key: "init",
     value: function init() {
-      var _this = this,
-          _exports;
+      var _this = this;
 
       this._withLatestFrom = new Sink(this.sink);
 
@@ -824,8 +823,7 @@ var WithLatestFrom = /*#__PURE__*/function (_Sink6) {
       };
 
       this._withLatestFrom.complete = noop;
-
-      (_exports = exports).combineLatest.apply(_exports, arguments)(this._withLatestFrom);
+      combineLatest.apply(void 0, arguments)(this._withLatestFrom);
     }
   }, {
     key: "next",
@@ -999,6 +997,74 @@ var BufferCount = /*#__PURE__*/function (_Sink8) {
 }(Sink);
 
 var bufferCount = deliver(BufferCount);
+
+var ConcatAll = /*#__PURE__*/function (_Sink9) {
+  _inherits(ConcatAll, _Sink9);
+
+  var _super9 = _createSuper(ConcatAll);
+
+  function ConcatAll() {
+    _classCallCheck(this, ConcatAll);
+
+    return _super9.apply(this, arguments);
+  }
+
+  _createClass(ConcatAll, [{
+    key: "init",
+    value: function init() {
+      this.sources = [];
+      this.running = false;
+    }
+  }, {
+    key: "sub",
+    value: function sub(data) {
+      var _this3 = this;
+
+      var s = new Sink(this.sink);
+      this.running = true;
+
+      s.complete = function (err) {
+        _this3.running = false;
+
+        if (err) {
+          s.dispose(true);
+
+          _get(_getPrototypeOf(ConcatAll.prototype), "complete", _this3).call(_this3, err);
+        } else {
+          s.dispose(false);
+
+          if (_this3.sources.length) {
+            _this3.sub(_this3.sources.shift());
+          } else if (_this3.disposed) {
+            _get(_getPrototypeOf(ConcatAll.prototype), "complete", _this3).call(_this3);
+          }
+        }
+      };
+
+      data(s);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (!this.running) {
+        this.sub(data);
+      } else {
+        this.sources.push(data);
+      }
+    }
+  }, {
+    key: "complete",
+    value: function complete(err) {
+      if (err) {
+        if (!this.running) _get(_getPrototypeOf(ConcatAll.prototype), "complete", this).call(this, err);
+      } else if (this.running) this.dispose(false);else _get(_getPrototypeOf(ConcatAll.prototype), "complete", this).call(this);
+    }
+  }]);
+
+  return ConcatAll;
+}(Sink);
+
+var concatAll = deliver(ConcatAll);
 
 var Reduce = /*#__PURE__*/function (_Sink) {
   _inherits(Reduce, _Sink);
@@ -3035,6 +3101,7 @@ var _observables = /*#__PURE__*/Object.freeze({
   zip: zip,
   startWith: startWith,
   bufferCount: bufferCount,
+  concatAll: concatAll,
   filter: filter,
   ignoreElements: ignoreElements,
   take: take,
@@ -3137,8 +3204,13 @@ var Node = /*#__PURE__*/function () {
       }).join(','), ")");
     }
   }, {
+    key: "unProxy",
+    get: function get() {
+      return this;
+    } //是否属于子流
+
+  }, {
     key: "checkSubNode",
-    //是否属于子流
     value: function checkSubNode(x) {
       var _this = this;
 
@@ -3157,10 +3229,19 @@ var Node = /*#__PURE__*/function () {
     } //过滤子事件流，放入sources数组中，就能显示
 
   }, {
-    key: "pipe",
-    // 通过返回proxy产生链式调用
-    value: function pipe() {
+    key: "args",
+    set: function set(value) {
       var _this2 = this;
+
+      this.arg = value.map(function (x) {
+        return _this2.checkSubNode(x);
+      });
+    } // 通过返回proxy产生链式调用
+
+  }, {
+    key: "pipe",
+    value: function pipe() {
+      var _this3 = this;
 
       if (this.end) {
         return this.subscribe();
@@ -3168,7 +3249,7 @@ var Node = /*#__PURE__*/function () {
 
       var target = this;
       return new Proxy(function (sink) {
-        return _this2.subscribe(sink);
+        return _this3.subscribe(sink);
       }, {
         get: function get(_, prop) {
           if (prop != 'subscribe' && (target[prop] || target.hasOwnProperty(prop))) return target[prop];
@@ -3197,7 +3278,7 @@ var Node = /*#__PURE__*/function () {
   }, {
     key: "subscribe",
     value: function subscribe(sink) {
-      var _this3 = this;
+      var _this4 = this;
 
       var source = this.source,
           name = this.name,
@@ -3205,13 +3286,13 @@ var Node = /*#__PURE__*/function () {
       var realrx = typeof name == 'string' ? _observables[name].apply(_observables, _toConsumableArray(arg)) : name;
       var f = source && !this.end ? realrx(function (s) {
         s.streamId = streamCount - 1;
-        s.nodeId = _this3.id;
+        s.nodeId = _this4.id;
         source.subscribe(s);
       }) : realrx;
       var streamCount = 0;
 
       this.subscribe = function (sink) {
-        var _this4 = this;
+        var _this5 = this;
 
         var streamId = streamCount++;
 
@@ -3221,18 +3302,18 @@ var Node = /*#__PURE__*/function () {
             var oComplete = s.complete;
 
             s.next = function (data) {
-              Events$1.next(_this4, streamId, data);
+              Events$1.next(_this5, streamId, data);
               oNext(data);
             };
 
             s.complete = function (err) {
-              Events$1.complete(_this4, streamId, err);
+              Events$1.complete(_this5, streamId, err);
               oComplete(err);
             };
 
             s.streamId = streamId;
-            s.nodeId = _this4.id;
-            Events$1.subscribe(_this4);
+            s.nodeId = _this5.id;
+            Events$1.subscribe(_this5);
             source.subscribe(s);
           });
         }
@@ -3240,17 +3321,17 @@ var Node = /*#__PURE__*/function () {
         var newSink = new Sink$1(sink);
 
         newSink.next = function (data) {
-          Events$1.next(_this4, streamId, data);
+          Events$1.next(_this5, streamId, data);
           sink.next(data);
         };
 
         newSink.complete = function (err) {
-          Events$1.complete(_this4, streamId, err);
+          Events$1.complete(_this5, streamId, err);
           sink.complete(err);
         };
 
         newSink.defer(function () {
-          Events$1.defer(_this4, streamId);
+          Events$1.defer(_this5, streamId);
         });
         Events$1.subscribe(this, sink);
         f(newSink);
@@ -3258,20 +3339,6 @@ var Node = /*#__PURE__*/function () {
       };
 
       return this.subscribe(sink);
-    }
-  }, {
-    key: "unProxy",
-    get: function get() {
-      return this;
-    }
-  }, {
-    key: "args",
-    set: function set(value) {
-      var _this5 = this;
-
-      this.arg = value.map(function (x) {
-        return _this5.checkSubNode(x);
-      });
     }
   }]);
 

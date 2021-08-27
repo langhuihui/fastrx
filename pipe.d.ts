@@ -82,6 +82,7 @@ export function switchMap(source: (d: any, index: number) => Observable, combine
 export function switchMapTo(source: Observable): Observable
 export function mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
 export function mergeMapTo(source: Observable): Observable
+export function concatAll(): Observable
 export function groupBy(f: (d: any) => any): Observable
 export function bufferTime(miniseconds: number): Observable
 export function timeInterval(): Observable

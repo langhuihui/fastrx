@@ -148,7 +148,7 @@ class WithLatestFrom extends Sink {
     this._withLatestFrom = new Sink(this.sink);
     this._withLatestFrom.next = (data) => (this.buffer = data);
     this._withLatestFrom.complete = noop;
-    exports.combineLatest(...sources)(this._withLatestFrom);
+    combineLatest(...sources)(this._withLatestFrom);
   }
   next(data) {
     if (this.buffer) {
@@ -245,3 +245,44 @@ class BufferCount extends Sink {
 }
 
 export const bufferCount = deliver(BufferCount);
+
+class ConcatAll extends Sink {
+  init() {
+    this.sources = [];
+    this.running = false;
+  }
+  sub(data) {
+    const s = new Sink(this.sink);
+    this.running = true;
+    s.complete = (err) => {
+      this.running = false;
+      if (err) {
+        s.dispose(true);
+        super.complete(err);
+      } else {
+        s.dispose(false);
+        if (this.sources.length) {
+          this.sub(this.sources.shift());
+        } else if (this.disposed) {
+          super.complete();
+        }
+      }
+    };
+    data(s);
+  }
+  next(data) {
+    if (!this.running) {
+      this.sub(data);
+    } else {
+      this.sources.push(data);
+    }
+  }
+  complete(err) {
+    if (err) {
+      if (!this.running) super.complete(err);
+    } else if (this.running) this.dispose(false);
+    else super.complete();
+  }
+}
+
+export const concatAll = deliver(ConcatAll);

@@ -31,6 +31,7 @@ interface Observable {
     switchMapTo(source: Observable): Observable
     mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
     mergeMapTo(source: Observable): Observable
+    concatAll(): Observable
     groupBy(f: (d: any) => any): Observable
     bufferTime(miniseconds: number): Observable
     timeInterval(): Observable
