@@ -107,7 +107,11 @@ export const range =
 export const fromPromise = (source) => (sink) => {
   source.then((d) => (sink.next(d), sink.complete())).catch((e) => sink.complete(e));
 };
-
+export const fromAsyncFunc = (f) => (sink) => {
+  f()
+    .then((d) => (sink.next(d), sink.complete()))
+    .catch((e) => sink.complete(e));
+};
 export const fromIterable = (source) => (sink) => {
   try {
     for (let data of source) {

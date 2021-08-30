@@ -31,8 +31,8 @@ interface Observable {
     switchMapTo(source: Observable): Observable
     mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
     mergeMapTo(source: Observable): Observable
-    concatMap(f: (d: any) => Observable):Observable
-    concatMapTo(inner:Observable):Observable
+    concatMap(f: (d: any) => Observable,combineResults?: (outter: any, inner: any) => any):Observable
+    concatMapTo(inner:Observable,combineResults?: (outter: any, inner: any) => any):Observable
     groupBy(f: (d: any) => any): Observable
     bufferTime(miniseconds: number): Observable
     timeInterval(): Observable
@@ -59,6 +59,7 @@ interface Creator {
     fromAnimationFrame(): Observable
     fromFetch(input: RequestInfo, init?: RequestInit): Observable
     fromNextTick(vm: any): Observable
+    fromAsyncFunc(f: () => Promise): Observable
     eventHandler(once?: boolean): Observable | { handler: () => void }
     range(start: Number, count: Number): Observable
     interval(period: Number): Observable

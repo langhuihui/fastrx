@@ -29,6 +29,7 @@ export function fromPromise<T>(source: Promise<T>): Observable
 export function fromAnimationFrame(): Observable
 export function fromFetch(input: RequestInfo, init?: RequestInit): Observable
 export function fromNextTick(vm: any): Observable
+export function fromAsyncFunc(f: () => Promise): Observable
 export function eventHandler(once?: boolean): Observable | { handler: () => void }
 export function range(start: Number, count: Number): Observable
 export function interval(period: Number): Observable
@@ -82,8 +83,8 @@ export function switchMap(source: (d: any, index: number) => Observable, combine
 export function switchMapTo(source: Observable): Observable
 export function mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
 export function mergeMapTo(source: Observable): Observable
-export function concatMap(f: (d: any) => Observable):Observable
-export function concatMapTo(inner:Observable):Observable
+export function concatMap(f: (d: any) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
+export function concatMapTo(inner: Observable, combineResults?: (outter: any, inner: any) => any): Observable
 export function groupBy(f: (d: any) => any): Observable
 export function bufferTime(miniseconds: number): Observable
 export function timeInterval(): Observable

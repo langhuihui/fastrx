@@ -2182,6 +2182,15 @@ var fromPromise = function fromPromise(source) {
     });
   };
 };
+var fromAsyncFunc = function fromAsyncFunc(f) {
+  return function (sink) {
+    f().then(function (d) {
+      return sink.next(d), sink.complete();
+    }).catch(function (e) {
+      return sink.complete(e);
+    });
+  };
+};
 var fromIterable = function fromIterable(source) {
   return function (sink) {
     try {
@@ -3154,6 +3163,7 @@ var _observables = /*#__PURE__*/Object.freeze({
   fromNextTick: fromNextTick,
   range: range,
   fromPromise: fromPromise,
+  fromAsyncFunc: fromAsyncFunc,
   fromIterable: fromIterable,
   from: from,
   bindCallback: bindCallback,
