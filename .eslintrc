@@ -1,5 +1,5 @@
 {
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
   "extends": [
     "eslint:recommended"
   ],
@@ -21,18 +21,20 @@
     ],
     "no-console": 0,
     "require-jsdoc": 0,
-    "prettier/prettier": [
-      "error",
-      {
-        "printWidth": 100,
-        "singleQuote": true
-      }
-    ],
     "no-unused-vars": 0,
     "no-sparse-arrays": 0
   },
   "parserOptions": {
     "ecmaVersion": 7,
     "sourceType": "module"
-  }
+  },
+  "overrides": [
+    {
+      "files": "*.ts",
+      "parser": "@typescript-eslint/parser",
+      "rules": {
+        "no-undef": 0
+      }
+    }
+  ]
 }

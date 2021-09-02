@@ -1,44 +1,52 @@
 {
-    "name": "fastrx",
-    "version": "2.1.6",
-    "description": "fast rxjs implemention",
-    "main": "dist/index.js",
-    "module": "./index.js",
-    "scripts": {
-        "test": "node test",
-        "build": "rollup -c",
-        "build:devtools": "cd devtools/devtools/panel && npm run build"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/langhuihui/fastrx.git"
-    },
-    "keywords": [
-        "rxjs",
-        "fast"
-    ],
-    "typings": "./index.d.ts",
-    "author": "langhuihui",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/langhuihui/fastrx/issues"
-    },
-    "homepage": "https://github.com/langhuihui/fastrx#readme",
-    "devDependencies": {
-        "@babel/core": "^7.12.3",
-        "@babel/preset-env": "^7.12.1",
-        "babel-eslint": "^10.1.0",
-        "eslint": "^5.16.0",
-        "eslint-plugin-classes": "^0.1.1",
-        "eslint-plugin-prettier": "^3.1.0",
-        "prettier": "^2.3.2",
-        "rollup": "^2.32.1",
-        "rollup-plugin-babel": "^4.4.0",
-        "rollup-plugin-commonjs": "^10.1.0",
-        "rollup-plugin-node-resolve": "^5.2.0",
-        "rollup-plugin-uglify": "^6.0.4"
-    },
-    "dependencies": {
-        "core-js": "^3.7.0"
-    }
+  "name": "fastrx",
+  "version": "2.1.6",
+  "description": "fast rxjs implemention",
+  "main": "dist/index.js",
+  "module": "./index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "rollup -c",
+    "build:devtools": "cd devtools/devtools/panel && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/langhuihui/fastrx.git"
+  },
+  "keywords": [
+    "rxjs",
+    "fast"
+  ],
+  "typings": "./index.d.ts",
+  "author": "langhuihui",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/langhuihui/fastrx/issues"
+  },
+  "homepage": "https://github.com/langhuihui/fastrx#readme",
+  "devDependencies": {
+    "@babel/core": "^7.15.0",
+    "@babel/eslint-parser": "^7.15.0",
+    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-typescript": "^7.15.0",
+    "@types/jest": "^27.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.30.0",
+    "@typescript-eslint/parser": "^4.30.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-classes": "^0.1.1",
+    "eslint-plugin-prettier": "^3.1.0",
+    "jest": "^27.1.0",
+    "prettier": "^2.3.2",
+    "rollup": "^2.32.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-uglify": "^6.0.4",
+    "ts-jest": "^27.0.5",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.2"
+  },
+  "dependencies": {
+    "core-js": "^3.7.0"
+  }
 }

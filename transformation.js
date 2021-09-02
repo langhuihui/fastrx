@@ -26,7 +26,6 @@ export const scan =
 export const map = (f) => (source) => (sink) =>
   source(sink.fusionMap ? sink.fusionMap(f) : new MapSink(sink, f));
 export const mapTo = (target) => map((x) => target);
-export const pluck = (s) => map((d) => d[s]);
 
 class Pairwise extends Sink {
   init() {

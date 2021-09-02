@@ -26,7 +26,6 @@ interface Observable {
     delay(period: number): Observable
     scan(f: (d: any) => any, seed?: any): Observable
     repeat(count: number): Observable
-    pluck(prop: string): Observable
     switchMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
     switchMapTo(source: Observable): Observable
     mergeMap(source: (d: any, index: number) => Observable, combineResults?: (outter: any, inner: any) => any): Observable
