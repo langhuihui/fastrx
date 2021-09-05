@@ -1,5 +1,4 @@
 import { Observer, deliver, nothing } from './common';
-export * from './common';
 export const pipe = (first, ...cbs) => cbs.reduce((aac, c) => c(aac), first);
 export const toPromise = () => (source) => new Promise((resolve, reject) => {
     let value;
@@ -9,11 +8,12 @@ export const toPromise = () => (source) => new Promise((resolve, reject) => {
     source(sink);
 });
 class Subscribe extends Observer {
-    constructor(n = nothing, e = nothing, c = nothing) {
+    constructor(next = nothing, error = nothing, complete = nothing) {
         super();
+        this.next = next;
+        this.error = error;
+        this.complete = complete;
         this.then = nothing;
-        this.next = n;
-        this.complete = (err) => (err ? e(err) : c());
     }
 }
 // //SUBSCRIBER
@@ -35,9 +35,10 @@ class Tap extends Observer {
 }
 export const tap = deliver(Tap);
 class Delay extends Observer {
-    init(delay) {
-        this.delayTime = delay;
+    constructor(sink, delay) {
+        super(sink);
         this.buffer = [];
+        this.delayTime = delay;
         this.defer(() => clearTimeout(this.timeoutId));
     }
     delay(delay) {
@@ -58,12 +59,8 @@ class Delay extends Observer {
         }
         this.buffer.push({ time: new Date(), data });
     }
-    complete(err) {
-        if (err)
-            super.complete(err);
-        else {
-            this.timeoutId = setTimeout(() => super.complete(), this.delayTime);
-        }
+    complete() {
+        this.timeoutId = setTimeout(() => super.complete(), this.delayTime);
     }
 }
 export const delay = deliver(Delay);
@@ -72,90 +69,111 @@ class CatchError extends Observer {
         super(sink);
         this.selector = selector;
     }
-    complete(err) {
-        if (err) {
-            this.selector(err)(this.sink);
-        }
-        else {
-            super.complete();
-        }
+    error(err) {
+        this.dispose(false);
+        this.selector(err)(this.sink);
     }
 }
 export const catchError = deliver(CatchError);
+export * from './common';
 export * from './producer';
 // export * from '../combination';
 // export * from '../filtering';
 // export * from '../mathematical';
 // export * from '../transformation';
-// import { subject } from '../producer';
-// class GroupBy extends Sink {
-//   init(f) {
-//     this.f = f;
-//     this.groups = new Map();
-//   }
-//   next(data) {
-//     const key = this.f(data);
-//     let group = this.groups.get(key);
-//     if (!group) {
-//       group = subject();
-//       group.key = key;
-//       this.groups.set(key, group);
-//       this.sink.next(group);
-//     }
-//     group.next(data);
-//   }
-//   complete(err) {
-//     this.groups.forEach((group) => group.complete(err));
-//     super.complete(err);
-//   }
-// }
-// export const groupBy = deliver(GroupBy);
-// export const Events = {
-//   addSource: noop,
-//   subscribe: noop,
-//   next: noop,
-//   complete: noop,
-//   defer: noop,
-//   pipe: noop,
-//   update: noop,
-//   create: noop,
-// };
-// function send(event, payload) {
-//   window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
-// }
-// Events.create = (who) => {
-//   send('create', { name: who.toString(), id: who.id });
-// };
-// Events.next = (who, streamId, data) => {
-//   send('next', { id: who.id, streamId, data: data && data.toString() });
-// };
-// Events.complete = (who, streamId, err) => {
-//   send('complete', { id: who.id, streamId, err: err ? err.toString() : null });
-// };
-// Events.defer = (who, streamId) => {
-//   send('defer', { id: who.id, streamId });
-// };
-// Events.addSource = (who, source) => {
-//   send('addSource', {
-//     id: who.id,
-//     name: who.toString(),
-//     source: { id: source.id, name: source.toString() },
-//   });
-// };
-// Events.pipe = (who) => {
-//   send('pipe', {
-//     name: who.toString(),
-//     id: who.id,
-//     source: { id: who.source.id, name: who.source.toString() },
-//   });
-// };
-// Events.update = (who) => {
-//   send('update', { id: who.id, name: who.toString() });
-// };
-// Events.subscribe = ({ id, end }, sink) => {
-//   send('subscribe', {
-//     id,
-//     end,
-//     sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId },
-//   });
-// };
+import { subject } from './producer';
+class GroupBy extends Observer {
+    constructor(sink, f) {
+        super(sink);
+        this.f = f;
+        this.groups = new Map();
+    }
+    next(data) {
+        const key = this.f(data);
+        let group = this.groups.get(key);
+        if (typeof group === 'undefined') {
+            group = subject();
+            group.key = key;
+            this.groups.set(key, group);
+            super.next(group);
+        }
+        group.next(data);
+    }
+    complete() {
+        this.groups.forEach((group) => group.complete());
+        super.complete();
+    }
+    error(err) {
+        this.groups.forEach((group) => group.error(err));
+        super.error(err);
+    }
+}
+export const groupBy = deliver(GroupBy);
+export class TimeoutError extends Error {
+    constructor(timeout) {
+        super(`timeout after ${timeout}ms`);
+        this.timeout = timeout;
+    }
+}
+class Timeout extends Observer {
+    constructor(sink, timeout) {
+        super(sink);
+        this.timeout = timeout;
+        this.id = setTimeout(() => this.error(new TimeoutError(timeout)), this.timeout);
+    }
+    next(data) {
+        super.next(data);
+        clearTimeout(this.id);
+        this.next = data => super.next(data);
+    }
+    complete() {
+        clearTimeout(this.id);
+        super.complete();
+    }
+    error(err) {
+        clearTimeout(this.id);
+        super.error(err);
+    }
+}
+export const timeout = deliver(Timeout);
+function send(event, payload) {
+    window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
+}
+export const Events = {
+    addSource(who, source) {
+        send('addSource', {
+            id: who.id,
+            name: who.toString(),
+            source: { id: source.id, name: source.toString() },
+        });
+    },
+    next(who, streamId, data) {
+        send('next', { id: who.id, streamId, data: data && data.toString() });
+    },
+    subscribe({ id, end }, sink) {
+        send('subscribe', {
+            id,
+            end,
+            sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId },
+        });
+    },
+    complete(who, streamId, err) {
+        send('complete', { id: who.id, streamId, err: err ? err.toString() : null });
+    },
+    defer(who, streamId) {
+        send('defer', { id: who.id, streamId });
+    },
+    pipe(who) {
+        send('pipe', {
+            name: who.toString(),
+            id: who.id,
+            source: { id: who.source.id, name: who.source.toString() },
+        });
+    },
+    update(who) {
+        send('update', { id: who.id, name: who.toString() });
+    },
+    create(who) {
+        send('create', { name: who.toString(), id: who.id });
+    },
+};

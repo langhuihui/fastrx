@@ -3,7 +3,7 @@
   "version": "2.1.6",
   "description": "fast rxjs implemention",
   "main": "dist/index.js",
-  "module": "./index.js",
+  "module": "./es/index.js",
   "scripts": {
     "test": "jest",
     "build": "rollup -c",
@@ -17,7 +17,7 @@
     "rxjs",
     "fast"
   ],
-  "typings": "./index.d.ts",
+  "typings": "./es/index.d.ts",
   "author": "langhuihui",
   "license": "MIT",
   "bugs": {

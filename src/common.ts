@@ -1,47 +1,36 @@
 export function nothing(...args: any[]): any { }
 export const call = (f: Function) => f();
-export interface IObserver<T, R = T> {
-    dispose(defer?: boolean): void;
-    next(data: R): void;
+export const identity = <T>(x: T): T => x;
+export type ObservableInputTuple<T> = {
+    [K in keyof T]: Observable<T[K]>;
+};
+type ObservedValueOf<O> = O extends Observable<infer T> ? T : never;
+export interface Observer<T> {
+    next(data: T): void;
     complete(): void;
     error(err: any): void;
-    defer(df?: Dispose): void;
-    get Next(): (data: R) => void;
-    get Complete(): () => void;
-    get Error(): (err: any) => void;
+}
+export interface ISink<T> extends Observer<T> {
+    disposed: boolean;
+    dispose(defer?: boolean): void;
+    defer(df: Dispose): void;
+    doDefer():void;
+    removeDefer(df: Dispose): void;
 }
 
 declare type Dispose = () => any;
-export type Observable<T> = (observer: IObserver<T>) => void;
+export type Observable<T> = (sink: ISink<T>) => void;
 export type Operator<T, R = T> = (source: Observable<T>) => Observable<R>;
-export class Observer<T, R = T> implements IObserver<T, R> {
+
+export class LastSink<T> implements ISink<T>{
     defers = new Set<Dispose>();
     disposed = false;
-    constructor(public readonly sink?: IObserver<R>) {
-    }
-    // set disposePass(value: boolean) {
-    //     if (!this.sink) return;
-    //     if (value) this.sink.defers.add(this);
-    //     else this.sink.defers.delete(this);
-    // }
-    get Next() {
-        return (data: R) => this.next(data);
-    }
-    get Complete() {
-        return () => this.complete();
-    }
-    get Error() {
-        return (err: any) => this.error(err);
-    }
-    next(data: R) {
-        if (this.sink) this.sink.next(data);
+    next(data: T) {
     }
     complete() {
-        if (this.sink) this.sink.complete();
         this.dispose(false);
     }
     error(err: any) {
-        if (this.sink) this.sink.error(err);
         this.dispose(false);
     }
     dispose(defer = true) {
@@ -50,17 +39,39 @@ export class Observer<T, R = T> implements IObserver<T, R> {
         this.error = nothing;
         this.next = nothing;
         this.dispose = nothing;
-        if (defer) this.defer(); //销毁时终止事件源
+        if (defer) {
+            this.doDefer();
+        } //销毁时终止事件源
     }
-    defer(df?: Dispose) {
-        if (df)
-            this.defers.add(df);
-        else {
-            this.defers.forEach(call);
-            this.defers.clear();
-        }
+    doDefer() {
+        this.defers.forEach(call);
+        this.defers.clear();
+    }
+    defer(df: Dispose) {
+        this.defers.add(df);
+    }
+    removeDefer(df: Dispose) {
+        this.defers.delete(df);
     }
 }
-export function deliver<T>(c: { new(sink: IObserver<T>, ...args: any[]): IObserver<T>; }) {
-    return (...args: any[]): (Operator<T>) => (source: Observable<T>) => (observer: IObserver<T>) => source(new c(observer, ...args));
+export class Sink<T, R = T> extends LastSink<T> {
+    constructor(public readonly sink: ISink<R>) {
+        super();
+        sink.defer(() => this.dispose());
+    }
+    next(data: T | R) {
+        this.sink.next(data as R);
+    }
+    complete() {
+        super.complete();
+        this.sink.complete();
+    }
+    error(err: any) {
+        super.error(err);
+        this.sink.error(err);
+    }
 }
+export function deliver<T, R, ARG extends any[]>(c: { new(sink: ISink<R>, ...args: ARG): ISink<T>; }) {
+    return (...args: ARG): (Operator<T, R>) => (source: Observable<T>) => (observer: ISink<R>) => source(new c(observer, ...args));
+}
+

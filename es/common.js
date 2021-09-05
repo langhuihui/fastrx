@@ -11,36 +11,39 @@ export class Observer {
     //     if (value) this.sink.defers.add(this);
     //     else this.sink.defers.delete(this);
     // }
-    get Next() {
-        return (data) => this.next(data);
-    }
-    get Complete() {
-        return (err) => this.complete(err);
-    }
     next(data) {
         if (this.sink)
             this.sink.next(data);
     }
-    complete(err) {
+    complete() {
         if (this.sink)
-            this.sink.complete(err);
+            this.sink.complete();
+        this.dispose(false);
+    }
+    error(err) {
+        if (this.sink)
+            this.sink.error(err);
         this.dispose(false);
     }
     dispose(defer = true) {
         this.disposed = true;
         this.complete = nothing;
+        this.error = nothing;
         this.next = nothing;
         this.dispose = nothing;
-        if (defer)
-            this.defer(); //销毁时终止事件源
+        if (defer) {
+            this.doDefer();
+        } //销毁时终止事件源
+    }
+    doDefer() {
+        this.defers.forEach(call);
+        this.defers.clear();
     }
     defer(df) {
-        if (df)
-            this.defers.add(df);
-        else {
-            this.defers.forEach(call);
-            this.defers.clear();
-        }
+        this.defers.add(df);
+    }
+    removeDefer(df) {
+        this.defers.delete(df);
     }
 }
 export function deliver(c) {
