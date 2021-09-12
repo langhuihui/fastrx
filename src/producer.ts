@@ -1,13 +1,9 @@
 import { merge, share } from "./combination";
-import { ISink, Observable, nothing } from "./common";
-import { takeUntil, take } from "./filtering";
-import { pipe, subscribe } from "./pipe";
+import { ISink, Observable, nothing, Observer } from "./common";
+import { takeUntil } from "./filtering";
+import { pipe } from "./pipe";
 import { switchMap } from "./transformation";
-export type Subject<T> = Observable<T> & {
-    next(data: T): void;
-    complete(): void;
-    error(err: any): void;
-};
+export type Subject<T> = Observable<T> & Observer<T>;
 export const subject = <T>(source?: Observable<T>) => {
     const observable: Subject<T> = share<T>()((sink: ISink<T>) => {
         observable.next = (data: T) => sink.next(data);
@@ -20,21 +16,19 @@ export const subject = <T>(source?: Observable<T>) => {
     observable.error = nothing;
     return observable;
 };
-export const defer = <T>(f: () => Observable<T>): Observable<T> => (sink: ISink<T>) => {
-    f()(sink);
-};
+export const defer = <T>(f: () => Observable<T>): Observable<T> => (sink) => f()(sink);
 export const of = <T>(...data: T[]) => fromArray(data);
 
-export const fromArray = <T>(data: T[]): Observable<T> => (sink: ISink<T>) => {
-    setTimeout(() => {
-        for (const d of data) {
-            if (sink.disposed)
-                return;
-            sink.next(d);
-        }
-        sink.complete();
-    });
-};
+const asap = <T>(f: Observable<T>): Observable<T> => (sink) => setTimeout(() => f(sink));
+
+export const fromArray = <T>(data: T[]): Observable<T> => asap((sink: ISink<T>) => {
+    for (const d of data) {
+        if (sink.disposed)
+            return;
+        sink.next(d);
+    }
+    sink.complete();
+});
 
 export const interval = (period: number): Observable<number> => (sink: ISink<number>) => {
     let i = 0;
@@ -90,10 +84,10 @@ export const fromEvent = <T>(target: EventDispachter<T>, name: string) => {
     }
     else throw 'target is not a EventDispachter';
 };
-interface Messager<T> {
+type Messager<T> = {
     onmessage: (event: T) => void;
     close: () => void;
-}
+};
 /**
  * 
  * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target 
@@ -110,19 +104,17 @@ export const fromPromise = <T>(promise: Promise<T>): Observable<T> => (sink: ISi
     promise.then(sink.next.bind(sink), sink.error.bind(sink));
 };
 export const fromFetch = (input: RequestInfo, init?: RequestInit) => defer(() => fromPromise(fetch(input, init)));
-export const fromIterable = <T>(source: Iterable<T>): Observable<T> => (sink: ISink<T>) => {
-    setTimeout(() => {
-        try {
-            for (const data of source) {
-                if (sink.disposed) return;
-                sink.next(data);
-            }
-            sink.complete();
-        } catch (err) {
-            sink.error(err);
+export const fromIterable = <T>(source: Iterable<T>): Observable<T> => asap((sink: ISink<T>) => {
+    try {
+        for (const data of source) {
+            if (sink.disposed) return;
+            sink.next(data);
         }
-    });
-};
+        sink.complete();
+    } catch (err) {
+        sink.error(err);
+    }
+});
 export const fromAnimationFrame = (): Observable<DOMHighResTimeStamp> => (sink: ISink<DOMHighResTimeStamp>) => {
     let id: number;
     function next(t: DOMHighResTimeStamp) {

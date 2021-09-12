@@ -3,9 +3,9 @@
   "version": "2.1.6",
   "description": "fast rxjs implemention",
   "main": "dist/index.js",
-  "module": "./es/index.js",
+  "module": "es/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --coverage",
     "build": "rollup -c",
     "build:devtools": "cd devtools/devtools/panel && npm run build"
   },

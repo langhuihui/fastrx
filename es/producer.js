@@ -15,26 +15,23 @@ export const subject = (source) => {
     observable.error = nothing;
     return observable;
 };
-export const defer = (f) => (sink) => {
-    f()(sink);
-};
+export const defer = (f) => (sink) => f()(sink);
 export const of = (...data) => fromArray(data);
-export const fromArray = (data) => (sink) => {
-    setTimeout(() => {
-        for (const d of data) {
-            if (sink.disposed)
-                return;
-            sink.next(d);
-        }
-        sink.complete();
-    });
-};
+const asap = (f) => (sink) => setTimeout(() => f(sink));
+export const fromArray = (data) => asap((sink) => {
+    for (const d of data) {
+        if (sink.disposed)
+            return;
+        sink.next(d);
+    }
+    sink.complete();
+});
 export const interval = (period) => (sink) => {
     let i = 0;
     const id = setInterval(() => sink.next(i++), period);
     sink.defer(() => { clearInterval(id); });
 };
-export const timer = (delay, period) => (sink) => {
+export const timer = (delay, period = 0) => (sink) => {
     let i = 0;
     const id = setTimeout(() => {
         sink.removeDefer(deferF);
@@ -84,21 +81,19 @@ export const fromPromise = (promise) => (sink) => {
     promise.then(sink.next.bind(sink), sink.error.bind(sink));
 };
 export const fromFetch = (input, init) => defer(() => fromPromise(fetch(input, init)));
-export const fromIterable = (source) => (sink) => {
-    setTimeout(() => {
-        try {
-            for (const data of source) {
-                if (sink.disposed)
-                    return;
-                sink.next(data);
-            }
-            sink.complete();
+export const fromIterable = (source) => asap((sink) => {
+    try {
+        for (const data of source) {
+            if (sink.disposed)
+                return;
+            sink.next(data);
         }
-        catch (err) {
-            sink.error(err);
-        }
-    });
-};
+        sink.complete();
+    }
+    catch (err) {
+        sink.error(err);
+    }
+});
 export const fromAnimationFrame = () => (sink) => {
     let id;
     function next(t) {

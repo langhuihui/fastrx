@@ -1,19 +1,26 @@
-import { Observer, deliver, nothing } from './common';
-export const pipe = (first, ...cbs) => cbs.reduce((aac, c) => c(aac), first);
+import { Sink, deliver, nothing, LastSink, TimeoutError } from './common';
+export function pipe(first, ...cbs) {
+    return cbs.reduce((aac, c) => c(aac), first);
+}
 export const toPromise = () => (source) => new Promise((resolve, reject) => {
     let value;
-    const sink = new Observer();
-    sink.next = (d) => (value = d);
-    sink.complete = (err) => (err ? reject(err) : resolve(value));
-    source(sink);
+    source(new Subscribe((d) => (value = d), reject, () => resolve(value)));
 });
-class Subscribe extends Observer {
-    constructor(next = nothing, error = nothing, complete = nothing) {
+export class Subscribe extends LastSink {
+    constructor(next = nothing, _error = nothing, _complete = nothing) {
         super();
         this.next = next;
-        this.error = error;
-        this.complete = complete;
+        this._error = _error;
+        this._complete = _complete;
         this.then = nothing;
+    }
+    complete() {
+        this.dispose();
+        this._complete();
+    }
+    error(err) {
+        this.dispose();
+        this._error(err);
     }
 }
 // //SUBSCRIBER
@@ -23,23 +30,30 @@ export const subscribe = (n = nothing, e = nothing, c = nothing) => (source) => 
     return sink;
 };
 // // UTILITY
-class Tap extends Observer {
-    constructor(sink, f) {
-        super(sink);
-        this.f = f;
+export const tap = (ob) => (source) => (sink) => {
+    const observer = new Sink(sink);
+    if (ob instanceof Function) {
+        observer.next = (data) => { ob(data); sink.next(data); };
     }
-    next(data) {
-        this.f(data);
-        super.next(data);
+    else {
+        if (ob.next)
+            observer.next = (data) => { ob.next(data); sink.next(data); };
+        if (ob.complete)
+            observer.complete = () => { ob.complete(); sink.complete(); };
+        if (ob.error)
+            observer.error = (err) => { ob.error(err); sink.error(err); };
     }
-}
-export const tap = deliver(Tap);
-class Delay extends Observer {
+    source(observer);
+};
+class Delay extends Sink {
     constructor(sink, delay) {
         super(sink);
         this.buffer = [];
         this.delayTime = delay;
-        this.defer(() => clearTimeout(this.timeoutId));
+    }
+    dispose() {
+        clearTimeout(this.timeoutId);
+        super.dispose();
     }
     delay(delay) {
         this.timeoutId = setTimeout(() => {
@@ -64,25 +78,19 @@ class Delay extends Observer {
     }
 }
 export const delay = deliver(Delay);
-class CatchError extends Observer {
+class CatchError extends Sink {
     constructor(sink, selector) {
         super(sink);
         this.selector = selector;
     }
     error(err) {
-        this.dispose(false);
+        this.dispose();
         this.selector(err)(this.sink);
     }
 }
 export const catchError = deliver(CatchError);
-export * from './common';
-export * from './producer';
-// export * from '../combination';
-// export * from '../filtering';
-// export * from '../mathematical';
-// export * from '../transformation';
 import { subject } from './producer';
-class GroupBy extends Observer {
+class GroupBy extends Sink {
     constructor(sink, f) {
         super(sink);
         this.f = f;
@@ -109,71 +117,20 @@ class GroupBy extends Observer {
     }
 }
 export const groupBy = deliver(GroupBy);
-export class TimeoutError extends Error {
-    constructor(timeout) {
-        super(`timeout after ${timeout}ms`);
-        this.timeout = timeout;
-    }
-}
-class Timeout extends Observer {
+class Timeout extends Sink {
     constructor(sink, timeout) {
         super(sink);
         this.timeout = timeout;
-        this.id = setTimeout(() => this.error(new TimeoutError(timeout)), this.timeout);
+        this.id = setTimeout(() => this.error(new TimeoutError(this.timeout)), this.timeout);
     }
     next(data) {
         super.next(data);
         clearTimeout(this.id);
-        this.next = data => super.next(data);
+        this.next = super.next;
     }
-    complete() {
+    dispose() {
         clearTimeout(this.id);
-        super.complete();
-    }
-    error(err) {
-        clearTimeout(this.id);
-        super.error(err);
+        super.dispose();
     }
 }
 export const timeout = deliver(Timeout);
-function send(event, payload) {
-    window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
-}
-export const Events = {
-    addSource(who, source) {
-        send('addSource', {
-            id: who.id,
-            name: who.toString(),
-            source: { id: source.id, name: source.toString() },
-        });
-    },
-    next(who, streamId, data) {
-        send('next', { id: who.id, streamId, data: data && data.toString() });
-    },
-    subscribe({ id, end }, sink) {
-        send('subscribe', {
-            id,
-            end,
-            sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId },
-        });
-    },
-    complete(who, streamId, err) {
-        send('complete', { id: who.id, streamId, err: err ? err.toString() : null });
-    },
-    defer(who, streamId) {
-        send('defer', { id: who.id, streamId });
-    },
-    pipe(who) {
-        send('pipe', {
-            name: who.toString(),
-            id: who.id,
-            source: { id: who.source.id, name: who.source.toString() },
-        });
-    },
-    update(who) {
-        send('update', { id: who.id, name: who.toString() });
-    },
-    create(who) {
-        send('create', { name: who.toString(), id: who.id });
-    },
-};

@@ -1,48 +1,32 @@
-import { Observer, nothing, Observable, Operator } from './common';
+import { nothing, Observable, Operator, Observer, LastSink } from './common';
 import { Subject } from './producer';
-export declare const pipe: (first: Observable<unknown>, ...cbs: (Operator<unknown, unknown> | ((source: Observable<unknown>) => Subscribe<unknown>))[]) => Observable<unknown>;
+declare type Subscription<T, R = T> = Subscribe<T> | Promise<T> | Observable<R>;
+export declare function pipe<T, L extends Subscription<T>>(first: Observable<T>, sub: (source: Observable<T>) => L): L;
+export declare function pipe<T, T1, L extends Subscription<T1>>(first: Observable<T>, op1: Operator<T, T1>, sub: (source: Observable<T1>) => L): L;
+export declare function pipe<T, T1, T2, L extends Subscription<T2>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, sub: (source: Observable<T2>) => L): L;
+export declare function pipe<T, T1, T2, T3, L extends Subscription<T3>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, sub: (source: Observable<T3>) => L): L;
+export declare function pipe<T, T1, T2, T3, T4, L extends Subscription<T4>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, sub: (source: Observable<T4>) => L): L;
+export declare function pipe<T, T1, T2, T3, T4, T5, L extends Subscription<T5>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, sub: (source: Observable<T5>) => L): L;
+export declare function pipe<T, T1, T2, T3, T4, T5, T6, L extends Subscription<T6>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, op6: Operator<T5, T6>, sub: (source: Observable<T6>) => L): L;
+export declare function pipe<T, T1, T2, T3, T4, T5, T6, T7, L extends Subscription<T7>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, op6: Operator<T5, T6>, op7: Operator<T6, T7>, sub: (source: Observable<T7>) => L): L;
 export declare const toPromise: <T>() => (source: Observable<T>) => Promise<T>;
-declare class Subscribe<T> extends Observer<T> {
+export declare class Subscribe<T> extends LastSink<T> {
     next: typeof nothing;
-    error: typeof nothing;
-    complete: typeof nothing;
+    _error: typeof nothing;
+    _complete: typeof nothing;
     then: typeof nothing;
-    constructor(next?: typeof nothing, error?: typeof nothing, complete?: typeof nothing);
+    constructor(next?: typeof nothing, _error?: typeof nothing, _complete?: typeof nothing);
+    complete(): void;
+    error(err: any): void;
 }
 export declare const subscribe: <T>(n?: (data: T) => void, e?: typeof nothing, c?: typeof nothing) => (source: Observable<T>) => Subscribe<T>;
-export declare const tap: <T>(...args: any[]) => Operator<T, T>;
-export declare const delay: <T>(...args: any[]) => Operator<T, T>;
-export declare const catchError: <T, R = T>(...args: any[]) => Operator<R, R>;
-export * from './common';
-export * from './producer';
+export declare const tap: <T>(ob: Partial<Observer<T>> | ((d: T) => void)) => Operator<T, T>;
+export declare const delay: <T>(delay: number) => Operator<T, T>;
+export declare const catchError: <T, R = T>(selector: (err: any) => Observable<R>) => Operator<T | R, R>;
 declare type Group = Subject<unknown> & {
     key: any;
 };
-export declare const groupBy: <T>(...args: any[]) => Operator<Group, Group>;
-export declare class TimeoutError extends Error {
-    readonly timeout: number;
-    constructor(timeout: number);
-}
-export declare const timeout: <T>(...args: any[]) => Operator<T, T>;
-interface Node {
-    id: string;
-    toString(): string;
-    source: Node;
-}
-export declare const Events: {
-    addSource(who: Node, source: Node): void;
-    next(who: Node, streamId: string, data?: any): void;
-    subscribe({ id, end }: {
-        id: string;
-        end: boolean;
-    }, sink: {
-        nodeId: string;
-        streamId: string;
-    }): void;
-    complete(who: Node, streamId: string, err?: any): void;
-    defer(who: Node, streamId: string): void;
-    pipe(who: Node): void;
-    update(who: Node): void;
-    create(who: Node): void;
-};
+export declare const groupBy: <T>(f: (data: T) => any) => Operator<T, Group>;
+export declare const timeout: <T>(timeout: number) => Operator<T, T>;
+export {};
 //# sourceMappingURL=pipe.d.ts.map

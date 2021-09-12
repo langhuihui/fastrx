@@ -19,7 +19,7 @@ import commonjs from 'rollup-plugin-commonjs';
 // })
 const result = [];
 result.push({
-  input: 'index.js', // 入口文件
+  input: 'es/index.js', // 入口文件
   output: {
     format: 'cjs',
     file: 'dist/cjs.js', // 打包后输出文件
