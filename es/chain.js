@@ -27,7 +27,7 @@ const rxProxy = {
     get: (target, prop) => {
         switch (prop) {
             case "subscribe":
-                (...args) => subscribe(...args)(target);
+                return (...args) => subscribe(...args)(target);
             case "toPromise":
                 return () => toPromise()(target);
             default:

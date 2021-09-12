@@ -22,7 +22,7 @@ const rxProxy = {
     get: <T>(target: Observable<T>, prop: keyof Operators<T> | "subscribe" | "toPromise"): (Subscribe<T> | Promise<T> | InstanceType<ProxyConstructor>) => {
         switch (prop) {
             case "subscribe":
-                (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
+                return (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
             case "toPromise":
                 return () => toPromise<T>()(target);
             default:

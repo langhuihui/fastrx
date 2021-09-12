@@ -3116,6 +3116,9 @@ var rxProxy = {
   get: function get(target, prop) {
     switch (prop) {
       case "subscribe":
+        return function () {
+          return subscribe.apply(void 0, arguments)(target);
+        };
 
       case "toPromise":
         return function () {

@@ -1,12 +1,12 @@
 {
   "name": "fastrx",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "fast rxjs implemention",
   "main": "dist/index.js",
   "module": "es/index.js",
   "scripts": {
     "test": "jest --coverage",
-    "build": "rollup -c",
+    "build": "tsc && rollup -c",
     "build:devtools": "cd devtools/devtools/panel && npm run build"
   },
   "repository": {
