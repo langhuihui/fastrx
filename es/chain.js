@@ -17,7 +17,6 @@ import * as filtering from './filtering';
 import * as mathematical from './mathematical';
 import * as transformation from './transformation';
 import * as combination from './combination';
-export * from './index';
 const { zip, merge, race, concat, combineLatest } = combination, combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
 const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producer);
 const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, delay, timeout, catchError, groupBy }, combinations), filtering), mathematical), transformation);

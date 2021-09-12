@@ -2879,7 +2879,8 @@ var fastrx = /*#__PURE__*/Object.freeze({
   delay: delay,
   catchError: catchError,
   groupBy: groupBy,
-  timeout: timeout
+  timeout: timeout,
+  rx: rx
 });
 
 var COUNT = 0;
@@ -3152,91 +3153,5 @@ var rx = new Proxy(function (f) {
   }
 });
 
-exports.Events = Events;
-exports.LastSink = LastSink;
-exports.Sink = Sink;
-exports.Subscribe = Subscribe;
-exports.TimeoutError = TimeoutError;
-exports.audit = audit;
-exports.bindCallback = bindCallback;
-exports.bindNodeCallback = bindNodeCallback;
-exports.bufferCount = bufferCount;
-exports.bufferTime = bufferTime;
-exports.call = call;
-exports.catchError = catchError;
-exports.combineLatest = combineLatest;
-exports.concat = concat;
-exports.concatMap = concatMap;
-exports.concatMapTo = concatMapTo;
-exports.count = count;
-exports.debounce = debounce;
-exports.debounceTime = debounceTime;
-exports.defer = defer;
-exports.delay = delay;
-exports.deliver = deliver;
-exports.dispose = dispose;
-exports.elementAt = elementAt;
-exports.empty = empty;
-exports.every = every;
-exports.exhaustMap = exhaustMap;
-exports.exhaustMapTo = exhaustMapTo;
-exports.filter = filter;
-exports.find = find;
-exports.findIndex = findIndex;
-exports.first = first;
-exports.fromAnimationFrame = fromAnimationFrame;
-exports.fromArray = fromArray;
-exports.fromEvent = fromEvent;
-exports.fromEventPattern = fromEventPattern;
-exports.fromFetch = fromFetch;
-exports.fromIterable = fromIterable;
-exports.fromMessageEvent = fromMessageEvent;
-exports.fromPromise = fromPromise;
-exports.groupBy = groupBy;
-exports.identity = identity;
-exports.ignoreElements = ignoreElements;
-exports.iif = iif;
-exports.interval = interval;
-exports.last = last;
-exports.map = map;
-exports.mapTo = mapTo;
-exports.max = max;
-exports.merge = merge;
-exports.mergeMap = mergeMap;
-exports.mergeMapTo = mergeMapTo;
-exports.min = min;
-exports.never = never;
-exports.nothing = nothing;
-exports.of = of;
-exports.pairwise = pairwise;
-exports.pipe = pipe;
-exports.race = race;
-exports.range = range;
-exports.reduce = reduce;
 exports.rx = rx;
-exports.scan = scan;
-exports.share = share;
-exports.shareReplay = shareReplay;
-exports.skip = skip;
-exports.skipUntil = skipUntil;
-exports.skipWhile = skipWhile;
-exports.startWith = startWith;
-exports.subject = subject;
-exports.subscribe = subscribe;
-exports.sum = sum;
-exports.switchMap = switchMap;
-exports.switchMapTo = switchMapTo;
-exports.take = take;
-exports.takeLast = takeLast;
-exports.takeUntil = takeUntil;
-exports.takeWhile = takeWhile;
-exports.tap = tap;
-exports.throttle = throttle;
-exports.throwError = throwError;
-exports.timeInterval = timeInterval;
-exports.timeout = timeout;
-exports.timer = timer;
-exports.toPromise = toPromise;
-exports.withLatestFrom = withLatestFrom;
-exports.zip = zip;
 //# sourceMappingURL=cjs.js.map

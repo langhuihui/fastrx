@@ -7,7 +7,6 @@ import * as filtering from './filtering';
 import * as mathematical from './mathematical';
 import * as transformation from './transformation';
 import * as combination from './combination';
-export * from './index';
 const { zip, merge, race, concat, combineLatest, ...combinations } = combination;
 const observables = { zip, merge, race, concat, combineLatest, ...producer };
 const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
@@ -36,8 +35,8 @@ type Obs = {
     toPromise: typeof toPromise;
 };
 type Op = {
-    [key in keyof ((typeof operators) | Obs)]: (...args: Parameters<((typeof operators) | Obs)[key]>) => (key extends keyof Obs ? Obs : Op);
-};
+    [key in keyof (typeof operators)]: (...args: Parameters<((typeof operators))[key]>) => Op;
+} & Obs;
 type Rx = {
     [key in keyof typeof observables]: (...args: Parameters<(typeof observables)[key]>) => Op
 };

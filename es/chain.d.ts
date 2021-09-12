@@ -1,7 +1,6 @@
 import { subscribe, toPromise } from './pipe';
 import { Observable, Operator } from './common';
 import * as producer from './producer';
-export * from './index';
 declare const observables: {
     subject: <T>(source?: Observable<T> | undefined) => producer.Subject<T>;
     defer: <T_1>(f: () => Observable<T_1>) => Observable<T_1>;
@@ -113,10 +112,11 @@ declare type Obs = {
     toPromise: typeof toPromise;
 };
 declare type Op = {
-    [key in keyof ((typeof operators) | Obs)]: (...args: Parameters<((typeof operators) | Obs)[key]>) => (key extends keyof Obs ? Obs : Op);
-};
+    [key in keyof (typeof operators)]: (...args: Parameters<((typeof operators))[key]>) => Op;
+} & Obs;
 declare type Rx = {
     [key in keyof typeof observables]: (...args: Parameters<(typeof observables)[key]>) => Op;
 };
 export declare const rx: Rx;
+export {};
 //# sourceMappingURL=chain.d.ts.map
