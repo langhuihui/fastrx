@@ -1,7 +1,26 @@
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 // @ts-nocheck
-import * as _observables from './pipe';
+import { tap, delay, timeout, catchError, groupBy, subscribe, toPromise } from './pipe';
 import { Node } from './devtools';
-import { observables, operators } from './index';
+import * as producer from './producer';
+import * as filtering from './filtering';
+import * as mathematical from './mathematical';
+import * as transformation from './transformation';
+import * as combination from './combination';
+export * from './index';
+const { zip, merge, race, concat, combineLatest } = combination, combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
+const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producer);
+const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, delay, timeout, catchError, groupBy }, combinations), filtering), mathematical), transformation);
 function inspect() {
     return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
 }
@@ -9,8 +28,9 @@ const rxProxy = {
     get: (target, prop) => {
         switch (prop) {
             case "subscribe":
+                (...args) => subscribe(...args)(target);
             case "toPromise":
-                return (...args) => _observables[prop](...args)(target);
+                return () => toPromise()(target);
             default:
                 return ((operator) => (...args) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);
         }

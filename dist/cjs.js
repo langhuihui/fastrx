@@ -4,19 +4,37 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 require('core-js/modules/es.symbol.js');
 require('core-js/modules/es.object.assign.js');
-require('core-js/modules/es.array.concat.js');
 require('core-js/modules/es.array.iterator.js');
+require('core-js/modules/es.map.js');
+require('core-js/modules/es.number.constructor.js');
 require('core-js/modules/es.object.to-string.js');
-require('core-js/modules/es.regexp.to-string.js');
-require('core-js/modules/es.set.js');
+require('core-js/modules/es.promise.js');
 require('core-js/modules/es.string.iterator.js');
 require('core-js/modules/web.dom-collections.for-each.js');
 require('core-js/modules/web.dom-collections.iterator.js');
-require('core-js/modules/es.promise.js');
+require('core-js/modules/es.array.concat.js');
+require('core-js/modules/es.regexp.to-string.js');
+require('core-js/modules/es.set.js');
 require('core-js/modules/es.array.map.js');
-require('core-js/modules/es.map.js');
 require('core-js/modules/es.array.filter.js');
-require('core-js/modules/es.number.constructor.js');
+require('core-js/modules/es.array.join.js');
+require('core-js/modules/es.function.name.js');
+
+function _typeof(obj) {
+  "@babel/helpers - typeof";
+
+  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+    _typeof = function (obj) {
+      return typeof obj;
+    };
+  } else {
+    _typeof = function (obj) {
+      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    };
+  }
+
+  return _typeof(obj);
+}
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -1679,307 +1697,6 @@ var filtering = /*#__PURE__*/Object.freeze({
   every: every
 });
 
-function pipe(first) {
-  for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    cbs[_key - 1] = arguments[_key];
-  }
-
-  return cbs.reduce(function (aac, c) {
-    return c(aac);
-  }, first);
-}
-var toPromise = function toPromise() {
-  return function (source) {
-    return new Promise(function (resolve, reject) {
-      var value;
-      source(new Subscribe(function (d) {
-        return value = d;
-      }, reject, function () {
-        return resolve(value);
-      }));
-    });
-  };
-};
-var Subscribe = /*#__PURE__*/function (_LastSink) {
-  _inherits(Subscribe, _LastSink);
-
-  var _super = _createSuper(Subscribe);
-
-  function Subscribe() {
-    var _this;
-
-    var next = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
-
-    var _error = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
-
-    var _complete = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
-
-    _classCallCheck(this, Subscribe);
-
-    _this = _super.call(this);
-    _this.next = next;
-    _this._error = _error;
-    _this._complete = _complete;
-    _this.then = nothing;
-    return _this;
-  }
-
-  _createClass(Subscribe, [{
-    key: "complete",
-    value: function complete() {
-      this.dispose();
-
-      this._complete();
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-
-      this._error(err);
-    }
-  }]);
-
-  return Subscribe;
-}(LastSink); // //SUBSCRIBER
-
-var subscribe = function subscribe() {
-  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
-  var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
-  var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
-  return function (source) {
-    var sink = new Subscribe(n, e, c);
-    source(sink);
-    return sink;
-  };
-}; // // UTILITY
-
-var tap = function tap(ob) {
-  return function (source) {
-    return function (sink) {
-      var observer = new Sink(sink);
-
-      if (ob instanceof Function) {
-        observer.next = function (data) {
-          ob(data);
-          sink.next(data);
-        };
-      } else {
-        if (ob.next) observer.next = function (data) {
-          ob.next(data);
-          sink.next(data);
-        };
-        if (ob.complete) observer.complete = function () {
-          ob.complete();
-          sink.complete();
-        };
-        if (ob.error) observer.error = function (err) {
-          ob.error(err);
-          sink.error(err);
-        };
-      }
-
-      source(observer);
-    };
-  };
-};
-
-var Delay = /*#__PURE__*/function (_Sink) {
-  _inherits(Delay, _Sink);
-
-  var _super2 = _createSuper(Delay);
-
-  function Delay(sink, delay) {
-    var _this2;
-
-    _classCallCheck(this, Delay);
-
-    _this2 = _super2.call(this, sink);
-    _this2.buffer = [];
-    _this2.delayTime = delay;
-    return _this2;
-  }
-
-  _createClass(Delay, [{
-    key: "dispose",
-    value: function dispose() {
-      clearTimeout(this.timeoutId);
-
-      _get(_getPrototypeOf(Delay.prototype), "dispose", this).call(this);
-    }
-  }, {
-    key: "delay",
-    value: function delay(_delay) {
-      var _this3 = this;
-
-      this.timeoutId = setTimeout(function () {
-        var d = _this3.buffer.shift();
-
-        if (d) {
-          var lastTime = d.time,
-              data = d.data;
-
-          _get(_getPrototypeOf(Delay.prototype), "next", _this3).call(_this3, data);
-
-          if (_this3.buffer.length) {
-            _this3.delay(Number(_this3.buffer[0].time) - Number(lastTime));
-          }
-        }
-      }, _delay);
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      if (!this.buffer.length) {
-        this.delay(this.delayTime);
-      }
-
-      this.buffer.push({
-        time: new Date(),
-        data: data
-      });
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      var _this4 = this;
-
-      this.timeoutId = setTimeout(function () {
-        return _get(_getPrototypeOf(Delay.prototype), "complete", _this4).call(_this4);
-      }, this.delayTime);
-    }
-  }]);
-
-  return Delay;
-}(Sink);
-
-var delay = deliver(Delay);
-
-var CatchError = /*#__PURE__*/function (_Sink2) {
-  _inherits(CatchError, _Sink2);
-
-  var _super3 = _createSuper(CatchError);
-
-  function CatchError(sink, selector) {
-    var _this5;
-
-    _classCallCheck(this, CatchError);
-
-    _this5 = _super3.call(this, sink);
-    _this5.selector = selector;
-    return _this5;
-  }
-
-  _createClass(CatchError, [{
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-      this.selector(err)(this.sink);
-    }
-  }]);
-
-  return CatchError;
-}(Sink);
-
-var catchError = deliver(CatchError);
-
-var GroupBy = /*#__PURE__*/function (_Sink3) {
-  _inherits(GroupBy, _Sink3);
-
-  var _super4 = _createSuper(GroupBy);
-
-  function GroupBy(sink, f) {
-    var _this6;
-
-    _classCallCheck(this, GroupBy);
-
-    _this6 = _super4.call(this, sink);
-    _this6.f = f;
-    _this6.groups = new Map();
-    return _this6;
-  }
-
-  _createClass(GroupBy, [{
-    key: "next",
-    value: function next(data) {
-      var key = this.f(data);
-      var group = this.groups.get(key);
-
-      if (typeof group === 'undefined') {
-        group = subject();
-        group.key = key;
-        this.groups.set(key, group);
-
-        _get(_getPrototypeOf(GroupBy.prototype), "next", this).call(this, group);
-      }
-
-      group.next(data);
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      this.groups.forEach(function (group) {
-        return group.complete();
-      });
-
-      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this);
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.groups.forEach(function (group) {
-        return group.error(err);
-      });
-
-      _get(_getPrototypeOf(GroupBy.prototype), "error", this).call(this, err);
-    }
-  }]);
-
-  return GroupBy;
-}(Sink);
-
-var groupBy = deliver(GroupBy);
-
-var Timeout = /*#__PURE__*/function (_Sink4) {
-  _inherits(Timeout, _Sink4);
-
-  var _super5 = _createSuper(Timeout);
-
-  function Timeout(sink, timeout) {
-    var _this7;
-
-    _classCallCheck(this, Timeout);
-
-    _this7 = _super5.call(this, sink);
-    _this7.timeout = timeout;
-    _this7.id = setTimeout(function () {
-      return _this7.error(new TimeoutError(_this7.timeout));
-    }, _this7.timeout);
-    return _this7;
-  }
-
-  _createClass(Timeout, [{
-    key: "next",
-    value: function next(data) {
-      _get(_getPrototypeOf(Timeout.prototype), "next", this).call(this, data);
-
-      clearTimeout(this.id);
-      this.next = _get(_getPrototypeOf(Timeout.prototype), "next", this);
-    }
-  }, {
-    key: "dispose",
-    value: function dispose() {
-      clearTimeout(this.id);
-
-      _get(_getPrototypeOf(Timeout.prototype), "dispose", this).call(this);
-    }
-  }]);
-
-  return Timeout;
-}(Sink);
-
-var timeout = deliver(Timeout);
-
 var Scan = /*#__PURE__*/function (_Sink) {
   _inherits(Scan, _Sink);
 
@@ -2774,6 +2491,587 @@ var producer = /*#__PURE__*/Object.freeze({
   empty: empty
 });
 
+function pipe(first) {
+  for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    cbs[_key - 1] = arguments[_key];
+  }
+
+  return cbs.reduce(function (aac, c) {
+    return c(aac);
+  }, first);
+}
+var toPromise = function toPromise() {
+  return function (source) {
+    return new Promise(function (resolve, reject) {
+      var value;
+      source(new Subscribe(function (d) {
+        return value = d;
+      }, reject, function () {
+        return resolve(value);
+      }));
+    });
+  };
+};
+var Subscribe = /*#__PURE__*/function (_LastSink) {
+  _inherits(Subscribe, _LastSink);
+
+  var _super = _createSuper(Subscribe);
+
+  function Subscribe() {
+    var _this;
+
+    var next = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
+
+    var _error = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
+
+    var _complete = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
+
+    _classCallCheck(this, Subscribe);
+
+    _this = _super.call(this);
+    _this.next = next;
+    _this._error = _error;
+    _this._complete = _complete;
+    _this.then = nothing;
+    return _this;
+  }
+
+  _createClass(Subscribe, [{
+    key: "complete",
+    value: function complete() {
+      this.dispose();
+
+      this._complete();
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.dispose();
+
+      this._error(err);
+    }
+  }]);
+
+  return Subscribe;
+}(LastSink); // //SUBSCRIBER
+
+var subscribe = function subscribe() {
+  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
+  var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
+  var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
+  return function (source) {
+    var sink = new Subscribe(n, e, c);
+    source(sink);
+    return sink;
+  };
+}; // // UTILITY
+
+var tap = function tap(ob) {
+  return function (source) {
+    return function (sink) {
+      var observer = new Sink(sink);
+
+      if (ob instanceof Function) {
+        observer.next = function (data) {
+          ob(data);
+          sink.next(data);
+        };
+      } else {
+        if (ob.next) observer.next = function (data) {
+          ob.next(data);
+          sink.next(data);
+        };
+        if (ob.complete) observer.complete = function () {
+          ob.complete();
+          sink.complete();
+        };
+        if (ob.error) observer.error = function (err) {
+          ob.error(err);
+          sink.error(err);
+        };
+      }
+
+      source(observer);
+    };
+  };
+};
+
+var Delay = /*#__PURE__*/function (_Sink) {
+  _inherits(Delay, _Sink);
+
+  var _super2 = _createSuper(Delay);
+
+  function Delay(sink, delay) {
+    var _this2;
+
+    _classCallCheck(this, Delay);
+
+    _this2 = _super2.call(this, sink);
+    _this2.buffer = [];
+    _this2.delayTime = delay;
+    return _this2;
+  }
+
+  _createClass(Delay, [{
+    key: "dispose",
+    value: function dispose() {
+      clearTimeout(this.timeoutId);
+
+      _get(_getPrototypeOf(Delay.prototype), "dispose", this).call(this);
+    }
+  }, {
+    key: "delay",
+    value: function delay(_delay) {
+      var _this3 = this;
+
+      this.timeoutId = setTimeout(function () {
+        var d = _this3.buffer.shift();
+
+        if (d) {
+          var lastTime = d.time,
+              data = d.data;
+
+          _get(_getPrototypeOf(Delay.prototype), "next", _this3).call(_this3, data);
+
+          if (_this3.buffer.length) {
+            _this3.delay(Number(_this3.buffer[0].time) - Number(lastTime));
+          }
+        }
+      }, _delay);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (!this.buffer.length) {
+        this.delay(this.delayTime);
+      }
+
+      this.buffer.push({
+        time: new Date(),
+        data: data
+      });
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      var _this4 = this;
+
+      this.timeoutId = setTimeout(function () {
+        return _get(_getPrototypeOf(Delay.prototype), "complete", _this4).call(_this4);
+      }, this.delayTime);
+    }
+  }]);
+
+  return Delay;
+}(Sink);
+
+var delay = deliver(Delay);
+
+var CatchError = /*#__PURE__*/function (_Sink2) {
+  _inherits(CatchError, _Sink2);
+
+  var _super3 = _createSuper(CatchError);
+
+  function CatchError(sink, selector) {
+    var _this5;
+
+    _classCallCheck(this, CatchError);
+
+    _this5 = _super3.call(this, sink);
+    _this5.selector = selector;
+    return _this5;
+  }
+
+  _createClass(CatchError, [{
+    key: "error",
+    value: function error(err) {
+      this.dispose();
+      this.selector(err)(this.sink);
+    }
+  }]);
+
+  return CatchError;
+}(Sink);
+
+var catchError = deliver(CatchError);
+
+var GroupBy = /*#__PURE__*/function (_Sink3) {
+  _inherits(GroupBy, _Sink3);
+
+  var _super4 = _createSuper(GroupBy);
+
+  function GroupBy(sink, f) {
+    var _this6;
+
+    _classCallCheck(this, GroupBy);
+
+    _this6 = _super4.call(this, sink);
+    _this6.f = f;
+    _this6.groups = new Map();
+    return _this6;
+  }
+
+  _createClass(GroupBy, [{
+    key: "next",
+    value: function next(data) {
+      var key = this.f(data);
+      var group = this.groups.get(key);
+
+      if (typeof group === 'undefined') {
+        group = subject();
+        group.key = key;
+        this.groups.set(key, group);
+
+        _get(_getPrototypeOf(GroupBy.prototype), "next", this).call(this, group);
+      }
+
+      group.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      this.groups.forEach(function (group) {
+        return group.complete();
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this);
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.groups.forEach(function (group) {
+        return group.error(err);
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "error", this).call(this, err);
+    }
+  }]);
+
+  return GroupBy;
+}(Sink);
+
+var groupBy = deliver(GroupBy);
+
+var Timeout = /*#__PURE__*/function (_Sink4) {
+  _inherits(Timeout, _Sink4);
+
+  var _super5 = _createSuper(Timeout);
+
+  function Timeout(sink, timeout) {
+    var _this7;
+
+    _classCallCheck(this, Timeout);
+
+    _this7 = _super5.call(this, sink);
+    _this7.timeout = timeout;
+    _this7.id = setTimeout(function () {
+      return _this7.error(new TimeoutError(_this7.timeout));
+    }, _this7.timeout);
+    return _this7;
+  }
+
+  _createClass(Timeout, [{
+    key: "next",
+    value: function next(data) {
+      _get(_getPrototypeOf(Timeout.prototype), "next", this).call(this, data);
+
+      clearTimeout(this.id);
+      this.next = _get(_getPrototypeOf(Timeout.prototype), "next", this);
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      clearTimeout(this.id);
+
+      _get(_getPrototypeOf(Timeout.prototype), "dispose", this).call(this);
+    }
+  }]);
+
+  return Timeout;
+}(Sink);
+
+var timeout = deliver(Timeout);
+
+var fastrx = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  nothing: nothing,
+  call: call,
+  identity: identity,
+  dispose: dispose,
+  LastSink: LastSink,
+  Sink: Sink,
+  deliver: deliver,
+  Events: Events,
+  TimeoutError: TimeoutError,
+  subject: subject,
+  defer: defer,
+  of: of,
+  fromArray: fromArray,
+  interval: interval,
+  timer: timer,
+  fromEventPattern: fromEventPattern,
+  fromEvent: fromEvent,
+  fromMessageEvent: fromMessageEvent,
+  fromPromise: fromPromise,
+  fromFetch: fromFetch,
+  fromIterable: fromIterable,
+  fromAnimationFrame: fromAnimationFrame,
+  range: range,
+  bindCallback: bindCallback,
+  bindNodeCallback: bindNodeCallback,
+  never: never,
+  throwError: throwError,
+  empty: empty,
+  share: share,
+  merge: merge,
+  race: race,
+  concat: concat,
+  shareReplay: shareReplay,
+  iif: iif,
+  combineLatest: combineLatest,
+  zip: zip,
+  startWith: startWith,
+  withLatestFrom: withLatestFrom,
+  bufferCount: bufferCount,
+  filter: filter,
+  ignoreElements: ignoreElements,
+  take: take,
+  takeUntil: takeUntil,
+  takeWhile: takeWhile,
+  takeLast: takeLast,
+  skip: skip,
+  skipUntil: skipUntil,
+  skipWhile: skipWhile,
+  throttle: throttle,
+  audit: audit,
+  debounce: debounce,
+  debounceTime: debounceTime,
+  elementAt: elementAt,
+  find: find,
+  findIndex: findIndex,
+  first: first,
+  last: last,
+  every: every,
+  reduce: reduce,
+  count: count,
+  max: max,
+  min: min,
+  sum: sum,
+  scan: scan,
+  pairwise: pairwise,
+  map: map,
+  mapTo: mapTo,
+  switchMap: switchMap,
+  switchMapTo: switchMapTo,
+  concatMap: concatMap,
+  concatMapTo: concatMapTo,
+  mergeMap: mergeMap,
+  mergeMapTo: mergeMapTo,
+  exhaustMap: exhaustMap,
+  exhaustMapTo: exhaustMapTo,
+  timeInterval: timeInterval,
+  bufferTime: bufferTime,
+  pipe: pipe,
+  toPromise: toPromise,
+  Subscribe: Subscribe,
+  subscribe: subscribe,
+  tap: tap,
+  delay: delay,
+  catchError: catchError,
+  groupBy: groupBy,
+  timeout: timeout
+});
+
+var COUNT = 0;
+var Node = /*#__PURE__*/function () {
+  function Node() {
+    var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+    var arg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+    _classCallCheck(this, Node);
+
+    this.name = name;
+    this.arg = arg;
+    this.id = COUNT++;
+
+    switch (name) {
+      case 'subscribe':
+      case 'toPromise':
+      case 'toRef':
+        this.end = true;
+        break;
+
+      default:
+        this.end = false;
+    }
+
+    Events.create(this);
+
+    if (arg.length) {
+      this.args = arg;
+    }
+  }
+
+  _createClass(Node, [{
+    key: "toString",
+    value: function toString() {
+      return "".concat(typeof this.name == 'string' ? this.name : this.name.name, "(").concat(this.arg.map(function (x) {
+        return _typeof(x) == 'object' || typeof x == 'function' ? (typeof x.name == 'function' ? x.name.name : x.name) || '...' : x;
+      }).join(','), ")");
+    }
+  }, {
+    key: "unProxy",
+    get: function get() {
+      return this;
+    } //是否属于子流
+
+  }, {
+    key: "checkSubNode",
+    value: function checkSubNode(x) {
+      var _this = this;
+
+      if ("unProxy" in x) {
+        var isNode = x.unProxy;
+        Events.addSource(this, isNode), function (s) {
+          s.nodeId = _this.id;
+          s.streamId = 0;
+          isNode.subscribe(s);
+        };
+      }
+
+      return x;
+    } //过滤子事件流，放入sources数组中，就能显示
+
+  }, {
+    key: "args",
+    set: function set(value) {
+      var _this2 = this;
+
+      this.arg = value.map(function (x) {
+        return _this2.checkSubNode(x);
+      });
+    } // 通过返回proxy产生链式调用
+
+  }, {
+    key: "pipe",
+    value: function pipe() {
+      var _this3 = this;
+
+      if (this.end) {
+        return this.subscribe();
+      }
+
+      var target = this;
+      return new Proxy(function (sink) {
+        return _this3.subscribe(sink);
+      }, {
+        get: function get(_, prop) {
+          if (prop != 'subscribe' && prop in target) // @ts-ignore
+            return target[prop];
+          if (prop == 'subscribe' && target.subscribeSink) return target.subscribeSink;
+          var sink = target.createSink(prop);
+          return target.subscribeSink = function () {
+            for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+              args[_key] = arguments[_key];
+            }
+
+            sink.args = args;
+            Events.update(sink);
+            return sink.pipe();
+          };
+        }
+      });
+    }
+  }, {
+    key: "createSink",
+    value: function createSink(name) {
+      var sink = new Node(name);
+      sink.source = this;
+      Events.pipe(sink);
+      return sink;
+    }
+  }, {
+    key: "subscribe",
+    value: function subscribe(sink) {
+      var _this4 = this;
+
+      var source = this.source,
+          name = this.name,
+          arg = this.arg; // @ts-ignore
+
+      var realrx = typeof name == 'string' ? fastrx[name].apply(fastrx, _toConsumableArray(arg)) : name;
+      var f = source && !this.end ? realrx(function (s) {
+        s.streamId = streamCount - 1;
+        s.nodeId = _this4.id;
+        source.subscribe(s);
+      }) : realrx;
+      var streamCount = 0;
+
+      this.subscribe = function (sink) {
+        var _this5 = this;
+
+        var streamId = streamCount++;
+
+        if (sink) {
+          var newSink = new Sink(sink);
+
+          newSink.next = function (data) {
+            Events.next(_this5, streamId, data);
+            sink.next(data);
+          };
+
+          newSink.complete = function () {
+            Events.complete(_this5, streamId);
+            sink.complete();
+          };
+
+          newSink.error = function (err) {
+            Events.complete(_this5, streamId, err);
+            sink.error(err);
+          };
+
+          newSink.defer(function () {
+            Events.defer(_this5, streamId);
+          });
+          Events.subscribe(this, sink);
+          f(newSink);
+          return newSink;
+        }
+
+        return f(function (s) {
+          var next = s.next,
+              complete = s.complete,
+              error = s.error;
+
+          s.next = function (data) {
+            Events.next(_this5, streamId, data);
+            next(data);
+          };
+
+          s.error = function (err) {
+            Events.complete(_this5, streamId, err);
+            error(err);
+          };
+
+          s.complete = function () {
+            Events.complete(_this5, streamId);
+            complete();
+          };
+
+          s.streamId = streamId;
+          s.nodeId = _this5.id;
+          Events.subscribe(_this5);
+          source.subscribe(s);
+        });
+      };
+
+      return this.subscribe(sink);
+    }
+  }]);
+
+  return Node;
+}();
+
 var __rest = undefined && undefined.__rest || function (s, e) {
   var t = {};
 
@@ -2785,7 +3083,7 @@ var __rest = undefined && undefined.__rest || function (s, e) {
     if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i])) t[p[i]] = s[p[i]];
   }
   return t;
-};
+}; // @ts-nocheck
 
 var zip$1 = zip,
     merge$1 = merge,
@@ -2801,7 +3099,58 @@ var observables = Object.assign({
   concat: concat$1,
   combineLatest: combineLatest$1
 }, producer);
-var operators = Object.assign(Object.assign(Object.assign(Object.assign({}, combinations), filtering), mathematical), transformation);
+var operators = Object.assign(Object.assign(Object.assign(Object.assign({
+  tap: tap,
+  delay: delay,
+  timeout: timeout,
+  catchError: catchError,
+  groupBy: groupBy
+}, combinations), filtering), mathematical), transformation);
+
+function inspect() {
+  return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
+}
+
+var rxProxy = {
+  get: function get(target, prop) {
+    switch (prop) {
+      case "subscribe":
+
+      case "toPromise":
+        return function () {
+          return toPromise()(target);
+        };
+
+      default:
+        return function (operator) {
+          return function () {
+            return new Proxy(operator.apply(void 0, arguments)(target), rxProxy);
+          };
+        }(operators[prop]);
+    }
+  }
+};
+var rx = new Proxy(function (f) {
+  return inspect() ? new Node(f).pipe() : new Proxy(f, rxProxy);
+}, {
+  get: function get(_target, prop) {
+    return inspect() ? function () {
+      for (var _len = arguments.length, arg = new Array(_len), _key = 0; _key < _len; _key++) {
+        arg[_key] = arguments[_key];
+      }
+
+      return new Node(prop, arg).pipe();
+    } : function (observable) {
+      return function () {
+        return new Proxy(observable.apply(void 0, arguments), rxProxy);
+      };
+    }(observables[prop]);
+  },
+  // @ts-ignore
+  set: function set(_target, prop, value) {
+    return observables[prop] = value;
+  }
+});
 
 exports.Events = Events;
 exports.LastSink = LastSink;
@@ -2858,14 +3207,13 @@ exports.mergeMapTo = mergeMapTo;
 exports.min = min;
 exports.never = never;
 exports.nothing = nothing;
-exports.observables = observables;
 exports.of = of;
-exports.operators = operators;
 exports.pairwise = pairwise;
 exports.pipe = pipe;
 exports.race = race;
 exports.range = range;
 exports.reduce = reduce;
+exports.rx = rx;
 exports.scan = scan;
 exports.share = share;
 exports.shareReplay = shareReplay;

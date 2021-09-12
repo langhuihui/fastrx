@@ -1,9 +1,17 @@
 // @ts-nocheck
-import * as _observables from './pipe';
-import { Subscribe } from './pipe';
+import { Subscribe, tap, delay, timeout, catchError, groupBy, subscribe, toPromise } from './pipe';
 import { Node } from './devtools';
 import { Observable, Operator } from './common';
-import { observables, operators } from './index';
+import * as producer from './producer';
+import * as filtering from './filtering';
+import * as mathematical from './mathematical';
+import * as transformation from './transformation';
+import * as combination from './combination';
+export * from './index';
+const { zip, merge, race, concat, combineLatest, ...combinations } = combination;
+const observables = { zip, merge, race, concat, combineLatest, ...producer };
+const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
+
 function inspect() {
     return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
 }
@@ -15,14 +23,25 @@ const rxProxy = {
     get: <T>(target: Observable<T>, prop: keyof Operators<T> | "subscribe" | "toPromise"): (Subscribe<T> | Promise<T> | InstanceType<ProxyConstructor>) => {
         switch (prop) {
             case "subscribe":
+                (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
             case "toPromise":
-                return (...args: any[]) => _observables[prop](...args)(target);
+                return () => toPromise<T>()(target);
             default:
                 return (<R>(operator: (...args: any[]) => Operator<T, R>) => (...args: any[]) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);
         }
     }
 };
-export const rx = new Proxy(<T>(f: Observable<T>) => (inspect() ? new Node(f).pipe() : new Proxy(f, rxProxy)), {
+type Obs = {
+    subscribe: typeof subscribe;
+    toPromise: typeof toPromise;
+};
+type Op = {
+    [key in keyof ((typeof operators) | Obs)]: (...args: Parameters<((typeof operators) | Obs)[key]>) => (key extends keyof Obs ? Obs : Op);
+};
+type Rx = {
+    [key in keyof typeof observables]: (...args: Parameters<(typeof observables)[key]>) => Op
+};
+export const rx: Rx = new Proxy(<T>(f: Observable<T>) => (inspect() ? new Node(f).pipe() : new Proxy(f, rxProxy)), {
     get: (_target: any, prop: keyof typeof observables) =>
         inspect()
             ? (...arg: any[]) => new Node(prop, arg).pipe()
