@@ -2,23 +2,114 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-require('core-js/modules/es.symbol.js');
-require('core-js/modules/es.object.assign.js');
+require('core-js/modules/es.array.concat.js');
 require('core-js/modules/es.array.iterator.js');
-require('core-js/modules/es.map.js');
-require('core-js/modules/es.number.constructor.js');
 require('core-js/modules/es.object.to-string.js');
-require('core-js/modules/es.promise.js');
+require('core-js/modules/es.regexp.to-string.js');
+require('core-js/modules/es.set.js');
 require('core-js/modules/es.string.iterator.js');
 require('core-js/modules/web.dom-collections.for-each.js');
 require('core-js/modules/web.dom-collections.iterator.js');
-require('core-js/modules/es.array.concat.js');
-require('core-js/modules/es.regexp.to-string.js');
-require('core-js/modules/es.set.js');
+require('core-js/modules/es.promise.js');
 require('core-js/modules/es.array.map.js');
+require('core-js/modules/es.map.js');
 require('core-js/modules/es.array.filter.js');
+require('core-js/modules/es.number.constructor.js');
+require('core-js/modules/es.symbol.js');
+require('core-js/modules/es.object.assign.js');
 require('core-js/modules/es.array.join.js');
 require('core-js/modules/es.function.name.js');
+
+var fastrx = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  get nothing () { return nothing; },
+  get call () { return call; },
+  get identity () { return identity; },
+  get dispose () { return dispose; },
+  get LastSink () { return LastSink; },
+  get Sink () { return Sink; },
+  get deliver () { return deliver; },
+  get Events () { return Events; },
+  get TimeoutError () { return TimeoutError; },
+  get subject () { return subject; },
+  get defer () { return defer; },
+  get of () { return of; },
+  get fromArray () { return fromArray; },
+  get interval () { return interval; },
+  get timer () { return timer; },
+  get fromEventPattern () { return fromEventPattern; },
+  get fromEvent () { return fromEvent; },
+  get fromMessageEvent () { return fromMessageEvent; },
+  get fromPromise () { return fromPromise; },
+  get fromFetch () { return fromFetch; },
+  get fromIterable () { return fromIterable; },
+  get fromAnimationFrame () { return fromAnimationFrame; },
+  get range () { return range; },
+  get bindCallback () { return bindCallback; },
+  get bindNodeCallback () { return bindNodeCallback; },
+  get never () { return never; },
+  get throwError () { return throwError; },
+  get empty () { return empty; },
+  get share () { return share; },
+  get merge () { return merge; },
+  get race () { return race; },
+  get concat () { return concat; },
+  get shareReplay () { return shareReplay; },
+  get iif () { return iif; },
+  get combineLatest () { return combineLatest; },
+  get zip () { return zip; },
+  get startWith () { return startWith; },
+  get withLatestFrom () { return withLatestFrom; },
+  get bufferCount () { return bufferCount; },
+  get filter () { return filter; },
+  get ignoreElements () { return ignoreElements; },
+  get take () { return take; },
+  get takeUntil () { return takeUntil; },
+  get takeWhile () { return takeWhile; },
+  get takeLast () { return takeLast; },
+  get skip () { return skip; },
+  get skipUntil () { return skipUntil; },
+  get skipWhile () { return skipWhile; },
+  get throttle () { return throttle; },
+  get audit () { return audit; },
+  get debounce () { return debounce; },
+  get debounceTime () { return debounceTime; },
+  get elementAt () { return elementAt; },
+  get find () { return find; },
+  get findIndex () { return findIndex; },
+  get first () { return first; },
+  get last () { return last; },
+  get every () { return every; },
+  get reduce () { return reduce; },
+  get count () { return count; },
+  get max () { return max; },
+  get min () { return min; },
+  get sum () { return sum; },
+  get scan () { return scan; },
+  get pairwise () { return pairwise; },
+  get map () { return map; },
+  get mapTo () { return mapTo; },
+  get switchMap () { return switchMap; },
+  get switchMapTo () { return switchMapTo; },
+  get concatMap () { return concatMap; },
+  get concatMapTo () { return concatMapTo; },
+  get mergeMap () { return mergeMap; },
+  get mergeMapTo () { return mergeMapTo; },
+  get exhaustMap () { return exhaustMap; },
+  get exhaustMapTo () { return exhaustMapTo; },
+  get timeInterval () { return timeInterval; },
+  get bufferTime () { return bufferTime; },
+  get pipe () { return pipe; },
+  get toPromise () { return toPromise; },
+  get Subscribe () { return Subscribe; },
+  get subscribe () { return subscribe; },
+  get tap () { return tap; },
+  get delay () { return delay; },
+  get catchError () { return catchError; },
+  get groupBy () { return groupBy; },
+  get timeout () { return timeout; },
+  get rx () { return rx; }
+});
 
 function _typeof(obj) {
   "@babel/helpers - typeof";
@@ -1697,6 +1788,307 @@ var filtering = /*#__PURE__*/Object.freeze({
   every: every
 });
 
+function pipe(first) {
+  for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    cbs[_key - 1] = arguments[_key];
+  }
+
+  return cbs.reduce(function (aac, c) {
+    return c(aac);
+  }, first);
+}
+var toPromise = function toPromise() {
+  return function (source) {
+    return new Promise(function (resolve, reject) {
+      var value;
+      source(new Subscribe(function (d) {
+        return value = d;
+      }, reject, function () {
+        return resolve(value);
+      }));
+    });
+  };
+};
+var Subscribe = /*#__PURE__*/function (_LastSink) {
+  _inherits(Subscribe, _LastSink);
+
+  var _super = _createSuper(Subscribe);
+
+  function Subscribe() {
+    var _this;
+
+    var next = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
+
+    var _error = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
+
+    var _complete = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
+
+    _classCallCheck(this, Subscribe);
+
+    _this = _super.call(this);
+    _this.next = next;
+    _this._error = _error;
+    _this._complete = _complete;
+    _this.then = nothing;
+    return _this;
+  }
+
+  _createClass(Subscribe, [{
+    key: "complete",
+    value: function complete() {
+      this.dispose();
+
+      this._complete();
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.dispose();
+
+      this._error(err);
+    }
+  }]);
+
+  return Subscribe;
+}(LastSink); // //SUBSCRIBER
+
+var subscribe = function subscribe() {
+  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
+  var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
+  var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
+  return function (source) {
+    var sink = new Subscribe(n, e, c);
+    source(sink);
+    return sink;
+  };
+}; // // UTILITY
+
+var tap = function tap(ob) {
+  return function (source) {
+    return function (sink) {
+      var observer = new Sink(sink);
+
+      if (ob instanceof Function) {
+        observer.next = function (data) {
+          ob(data);
+          sink.next(data);
+        };
+      } else {
+        if (ob.next) observer.next = function (data) {
+          ob.next(data);
+          sink.next(data);
+        };
+        if (ob.complete) observer.complete = function () {
+          ob.complete();
+          sink.complete();
+        };
+        if (ob.error) observer.error = function (err) {
+          ob.error(err);
+          sink.error(err);
+        };
+      }
+
+      source(observer);
+    };
+  };
+};
+
+var Delay = /*#__PURE__*/function (_Sink) {
+  _inherits(Delay, _Sink);
+
+  var _super2 = _createSuper(Delay);
+
+  function Delay(sink, delay) {
+    var _this2;
+
+    _classCallCheck(this, Delay);
+
+    _this2 = _super2.call(this, sink);
+    _this2.buffer = [];
+    _this2.delayTime = delay;
+    return _this2;
+  }
+
+  _createClass(Delay, [{
+    key: "dispose",
+    value: function dispose() {
+      clearTimeout(this.timeoutId);
+
+      _get(_getPrototypeOf(Delay.prototype), "dispose", this).call(this);
+    }
+  }, {
+    key: "delay",
+    value: function delay(_delay) {
+      var _this3 = this;
+
+      this.timeoutId = setTimeout(function () {
+        var d = _this3.buffer.shift();
+
+        if (d) {
+          var lastTime = d.time,
+              data = d.data;
+
+          _get(_getPrototypeOf(Delay.prototype), "next", _this3).call(_this3, data);
+
+          if (_this3.buffer.length) {
+            _this3.delay(Number(_this3.buffer[0].time) - Number(lastTime));
+          }
+        }
+      }, _delay);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (!this.buffer.length) {
+        this.delay(this.delayTime);
+      }
+
+      this.buffer.push({
+        time: new Date(),
+        data: data
+      });
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      var _this4 = this;
+
+      this.timeoutId = setTimeout(function () {
+        return _get(_getPrototypeOf(Delay.prototype), "complete", _this4).call(_this4);
+      }, this.delayTime);
+    }
+  }]);
+
+  return Delay;
+}(Sink);
+
+var delay = deliver(Delay);
+
+var CatchError = /*#__PURE__*/function (_Sink2) {
+  _inherits(CatchError, _Sink2);
+
+  var _super3 = _createSuper(CatchError);
+
+  function CatchError(sink, selector) {
+    var _this5;
+
+    _classCallCheck(this, CatchError);
+
+    _this5 = _super3.call(this, sink);
+    _this5.selector = selector;
+    return _this5;
+  }
+
+  _createClass(CatchError, [{
+    key: "error",
+    value: function error(err) {
+      this.dispose();
+      this.selector(err)(this.sink);
+    }
+  }]);
+
+  return CatchError;
+}(Sink);
+
+var catchError = deliver(CatchError);
+
+var GroupBy = /*#__PURE__*/function (_Sink3) {
+  _inherits(GroupBy, _Sink3);
+
+  var _super4 = _createSuper(GroupBy);
+
+  function GroupBy(sink, f) {
+    var _this6;
+
+    _classCallCheck(this, GroupBy);
+
+    _this6 = _super4.call(this, sink);
+    _this6.f = f;
+    _this6.groups = new Map();
+    return _this6;
+  }
+
+  _createClass(GroupBy, [{
+    key: "next",
+    value: function next(data) {
+      var key = this.f(data);
+      var group = this.groups.get(key);
+
+      if (typeof group === 'undefined') {
+        group = subject();
+        group.key = key;
+        this.groups.set(key, group);
+
+        _get(_getPrototypeOf(GroupBy.prototype), "next", this).call(this, group);
+      }
+
+      group.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      this.groups.forEach(function (group) {
+        return group.complete();
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this);
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.groups.forEach(function (group) {
+        return group.error(err);
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "error", this).call(this, err);
+    }
+  }]);
+
+  return GroupBy;
+}(Sink);
+
+var groupBy = deliver(GroupBy);
+
+var Timeout = /*#__PURE__*/function (_Sink4) {
+  _inherits(Timeout, _Sink4);
+
+  var _super5 = _createSuper(Timeout);
+
+  function Timeout(sink, timeout) {
+    var _this7;
+
+    _classCallCheck(this, Timeout);
+
+    _this7 = _super5.call(this, sink);
+    _this7.timeout = timeout;
+    _this7.id = setTimeout(function () {
+      return _this7.error(new TimeoutError(_this7.timeout));
+    }, _this7.timeout);
+    return _this7;
+  }
+
+  _createClass(Timeout, [{
+    key: "next",
+    value: function next(data) {
+      _get(_getPrototypeOf(Timeout.prototype), "next", this).call(this, data);
+
+      clearTimeout(this.id);
+      this.next = _get(_getPrototypeOf(Timeout.prototype), "next", this);
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      clearTimeout(this.id);
+
+      _get(_getPrototypeOf(Timeout.prototype), "dispose", this).call(this);
+    }
+  }]);
+
+  return Timeout;
+}(Sink);
+
+var timeout = deliver(Timeout);
+
 var Scan = /*#__PURE__*/function (_Sink) {
   _inherits(Scan, _Sink);
 
@@ -2491,398 +2883,6 @@ var producer = /*#__PURE__*/Object.freeze({
   empty: empty
 });
 
-function pipe(first) {
-  for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    cbs[_key - 1] = arguments[_key];
-  }
-
-  return cbs.reduce(function (aac, c) {
-    return c(aac);
-  }, first);
-}
-var toPromise = function toPromise() {
-  return function (source) {
-    return new Promise(function (resolve, reject) {
-      var value;
-      source(new Subscribe(function (d) {
-        return value = d;
-      }, reject, function () {
-        return resolve(value);
-      }));
-    });
-  };
-};
-var Subscribe = /*#__PURE__*/function (_LastSink) {
-  _inherits(Subscribe, _LastSink);
-
-  var _super = _createSuper(Subscribe);
-
-  function Subscribe() {
-    var _this;
-
-    var next = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
-
-    var _error = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
-
-    var _complete = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
-
-    _classCallCheck(this, Subscribe);
-
-    _this = _super.call(this);
-    _this.next = next;
-    _this._error = _error;
-    _this._complete = _complete;
-    _this.then = nothing;
-    return _this;
-  }
-
-  _createClass(Subscribe, [{
-    key: "complete",
-    value: function complete() {
-      this.dispose();
-
-      this._complete();
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-
-      this._error(err);
-    }
-  }]);
-
-  return Subscribe;
-}(LastSink); // //SUBSCRIBER
-
-var subscribe = function subscribe() {
-  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
-  var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
-  var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
-  return function (source) {
-    var sink = new Subscribe(n, e, c);
-    source(sink);
-    return sink;
-  };
-}; // // UTILITY
-
-var tap = function tap(ob) {
-  return function (source) {
-    return function (sink) {
-      var observer = new Sink(sink);
-
-      if (ob instanceof Function) {
-        observer.next = function (data) {
-          ob(data);
-          sink.next(data);
-        };
-      } else {
-        if (ob.next) observer.next = function (data) {
-          ob.next(data);
-          sink.next(data);
-        };
-        if (ob.complete) observer.complete = function () {
-          ob.complete();
-          sink.complete();
-        };
-        if (ob.error) observer.error = function (err) {
-          ob.error(err);
-          sink.error(err);
-        };
-      }
-
-      source(observer);
-    };
-  };
-};
-
-var Delay = /*#__PURE__*/function (_Sink) {
-  _inherits(Delay, _Sink);
-
-  var _super2 = _createSuper(Delay);
-
-  function Delay(sink, delay) {
-    var _this2;
-
-    _classCallCheck(this, Delay);
-
-    _this2 = _super2.call(this, sink);
-    _this2.buffer = [];
-    _this2.delayTime = delay;
-    return _this2;
-  }
-
-  _createClass(Delay, [{
-    key: "dispose",
-    value: function dispose() {
-      clearTimeout(this.timeoutId);
-
-      _get(_getPrototypeOf(Delay.prototype), "dispose", this).call(this);
-    }
-  }, {
-    key: "delay",
-    value: function delay(_delay) {
-      var _this3 = this;
-
-      this.timeoutId = setTimeout(function () {
-        var d = _this3.buffer.shift();
-
-        if (d) {
-          var lastTime = d.time,
-              data = d.data;
-
-          _get(_getPrototypeOf(Delay.prototype), "next", _this3).call(_this3, data);
-
-          if (_this3.buffer.length) {
-            _this3.delay(Number(_this3.buffer[0].time) - Number(lastTime));
-          }
-        }
-      }, _delay);
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      if (!this.buffer.length) {
-        this.delay(this.delayTime);
-      }
-
-      this.buffer.push({
-        time: new Date(),
-        data: data
-      });
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      var _this4 = this;
-
-      this.timeoutId = setTimeout(function () {
-        return _get(_getPrototypeOf(Delay.prototype), "complete", _this4).call(_this4);
-      }, this.delayTime);
-    }
-  }]);
-
-  return Delay;
-}(Sink);
-
-var delay = deliver(Delay);
-
-var CatchError = /*#__PURE__*/function (_Sink2) {
-  _inherits(CatchError, _Sink2);
-
-  var _super3 = _createSuper(CatchError);
-
-  function CatchError(sink, selector) {
-    var _this5;
-
-    _classCallCheck(this, CatchError);
-
-    _this5 = _super3.call(this, sink);
-    _this5.selector = selector;
-    return _this5;
-  }
-
-  _createClass(CatchError, [{
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-      this.selector(err)(this.sink);
-    }
-  }]);
-
-  return CatchError;
-}(Sink);
-
-var catchError = deliver(CatchError);
-
-var GroupBy = /*#__PURE__*/function (_Sink3) {
-  _inherits(GroupBy, _Sink3);
-
-  var _super4 = _createSuper(GroupBy);
-
-  function GroupBy(sink, f) {
-    var _this6;
-
-    _classCallCheck(this, GroupBy);
-
-    _this6 = _super4.call(this, sink);
-    _this6.f = f;
-    _this6.groups = new Map();
-    return _this6;
-  }
-
-  _createClass(GroupBy, [{
-    key: "next",
-    value: function next(data) {
-      var key = this.f(data);
-      var group = this.groups.get(key);
-
-      if (typeof group === 'undefined') {
-        group = subject();
-        group.key = key;
-        this.groups.set(key, group);
-
-        _get(_getPrototypeOf(GroupBy.prototype), "next", this).call(this, group);
-      }
-
-      group.next(data);
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      this.groups.forEach(function (group) {
-        return group.complete();
-      });
-
-      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this);
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.groups.forEach(function (group) {
-        return group.error(err);
-      });
-
-      _get(_getPrototypeOf(GroupBy.prototype), "error", this).call(this, err);
-    }
-  }]);
-
-  return GroupBy;
-}(Sink);
-
-var groupBy = deliver(GroupBy);
-
-var Timeout = /*#__PURE__*/function (_Sink4) {
-  _inherits(Timeout, _Sink4);
-
-  var _super5 = _createSuper(Timeout);
-
-  function Timeout(sink, timeout) {
-    var _this7;
-
-    _classCallCheck(this, Timeout);
-
-    _this7 = _super5.call(this, sink);
-    _this7.timeout = timeout;
-    _this7.id = setTimeout(function () {
-      return _this7.error(new TimeoutError(_this7.timeout));
-    }, _this7.timeout);
-    return _this7;
-  }
-
-  _createClass(Timeout, [{
-    key: "next",
-    value: function next(data) {
-      _get(_getPrototypeOf(Timeout.prototype), "next", this).call(this, data);
-
-      clearTimeout(this.id);
-      this.next = _get(_getPrototypeOf(Timeout.prototype), "next", this);
-    }
-  }, {
-    key: "dispose",
-    value: function dispose() {
-      clearTimeout(this.id);
-
-      _get(_getPrototypeOf(Timeout.prototype), "dispose", this).call(this);
-    }
-  }]);
-
-  return Timeout;
-}(Sink);
-
-var timeout = deliver(Timeout);
-
-var fastrx = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  nothing: nothing,
-  call: call,
-  identity: identity,
-  dispose: dispose,
-  LastSink: LastSink,
-  Sink: Sink,
-  deliver: deliver,
-  Events: Events,
-  TimeoutError: TimeoutError,
-  subject: subject,
-  defer: defer,
-  of: of,
-  fromArray: fromArray,
-  interval: interval,
-  timer: timer,
-  fromEventPattern: fromEventPattern,
-  fromEvent: fromEvent,
-  fromMessageEvent: fromMessageEvent,
-  fromPromise: fromPromise,
-  fromFetch: fromFetch,
-  fromIterable: fromIterable,
-  fromAnimationFrame: fromAnimationFrame,
-  range: range,
-  bindCallback: bindCallback,
-  bindNodeCallback: bindNodeCallback,
-  never: never,
-  throwError: throwError,
-  empty: empty,
-  share: share,
-  merge: merge,
-  race: race,
-  concat: concat,
-  shareReplay: shareReplay,
-  iif: iif,
-  combineLatest: combineLatest,
-  zip: zip,
-  startWith: startWith,
-  withLatestFrom: withLatestFrom,
-  bufferCount: bufferCount,
-  filter: filter,
-  ignoreElements: ignoreElements,
-  take: take,
-  takeUntil: takeUntil,
-  takeWhile: takeWhile,
-  takeLast: takeLast,
-  skip: skip,
-  skipUntil: skipUntil,
-  skipWhile: skipWhile,
-  throttle: throttle,
-  audit: audit,
-  debounce: debounce,
-  debounceTime: debounceTime,
-  elementAt: elementAt,
-  find: find,
-  findIndex: findIndex,
-  first: first,
-  last: last,
-  every: every,
-  reduce: reduce,
-  count: count,
-  max: max,
-  min: min,
-  sum: sum,
-  scan: scan,
-  pairwise: pairwise,
-  map: map,
-  mapTo: mapTo,
-  switchMap: switchMap,
-  switchMapTo: switchMapTo,
-  concatMap: concatMap,
-  concatMapTo: concatMapTo,
-  mergeMap: mergeMap,
-  mergeMapTo: mergeMapTo,
-  exhaustMap: exhaustMap,
-  exhaustMapTo: exhaustMapTo,
-  timeInterval: timeInterval,
-  bufferTime: bufferTime,
-  pipe: pipe,
-  toPromise: toPromise,
-  Subscribe: Subscribe,
-  subscribe: subscribe,
-  tap: tap,
-  delay: delay,
-  catchError: catchError,
-  groupBy: groupBy,
-  timeout: timeout,
-  rx: rx
-});
-
 var COUNT = 0;
 var Node = /*#__PURE__*/function () {
   function Node() {
@@ -3156,5 +3156,91 @@ var rx = new Proxy(function (f) {
   }
 });
 
+exports.Events = Events;
+exports.LastSink = LastSink;
+exports.Sink = Sink;
+exports.Subscribe = Subscribe;
+exports.TimeoutError = TimeoutError;
+exports.audit = audit;
+exports.bindCallback = bindCallback;
+exports.bindNodeCallback = bindNodeCallback;
+exports.bufferCount = bufferCount;
+exports.bufferTime = bufferTime;
+exports.call = call;
+exports.catchError = catchError;
+exports.combineLatest = combineLatest;
+exports.concat = concat;
+exports.concatMap = concatMap;
+exports.concatMapTo = concatMapTo;
+exports.count = count;
+exports.debounce = debounce;
+exports.debounceTime = debounceTime;
+exports.defer = defer;
+exports.delay = delay;
+exports.deliver = deliver;
+exports.dispose = dispose;
+exports.elementAt = elementAt;
+exports.empty = empty;
+exports.every = every;
+exports.exhaustMap = exhaustMap;
+exports.exhaustMapTo = exhaustMapTo;
+exports.filter = filter;
+exports.find = find;
+exports.findIndex = findIndex;
+exports.first = first;
+exports.fromAnimationFrame = fromAnimationFrame;
+exports.fromArray = fromArray;
+exports.fromEvent = fromEvent;
+exports.fromEventPattern = fromEventPattern;
+exports.fromFetch = fromFetch;
+exports.fromIterable = fromIterable;
+exports.fromMessageEvent = fromMessageEvent;
+exports.fromPromise = fromPromise;
+exports.groupBy = groupBy;
+exports.identity = identity;
+exports.ignoreElements = ignoreElements;
+exports.iif = iif;
+exports.interval = interval;
+exports.last = last;
+exports.map = map;
+exports.mapTo = mapTo;
+exports.max = max;
+exports.merge = merge;
+exports.mergeMap = mergeMap;
+exports.mergeMapTo = mergeMapTo;
+exports.min = min;
+exports.never = never;
+exports.nothing = nothing;
+exports.of = of;
+exports.pairwise = pairwise;
+exports.pipe = pipe;
+exports.race = race;
+exports.range = range;
+exports.reduce = reduce;
 exports.rx = rx;
+exports.scan = scan;
+exports.share = share;
+exports.shareReplay = shareReplay;
+exports.skip = skip;
+exports.skipUntil = skipUntil;
+exports.skipWhile = skipWhile;
+exports.startWith = startWith;
+exports.subject = subject;
+exports.subscribe = subscribe;
+exports.sum = sum;
+exports.switchMap = switchMap;
+exports.switchMapTo = switchMapTo;
+exports.take = take;
+exports.takeLast = takeLast;
+exports.takeUntil = takeUntil;
+exports.takeWhile = takeWhile;
+exports.tap = tap;
+exports.throttle = throttle;
+exports.throwError = throwError;
+exports.timeInterval = timeInterval;
+exports.timeout = timeout;
+exports.timer = timer;
+exports.toPromise = toPromise;
+exports.withLatestFrom = withLatestFrom;
+exports.zip = zip;
 //# sourceMappingURL=cjs.js.map

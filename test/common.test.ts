@@ -1,4 +1,4 @@
-import { subscribe, subject, delay, pipe, timeout, interval, nothing, throwError, of, switchMap, catchError } from '../src/pipe';
+import { subscribe, subject, delay, pipe, timeout, interval, nothing, throwError, of, switchMap, catchError } from '../src/index';
 test('subject', () => {
     const ob = subject<number>();
     ob.next(4);

@@ -91,7 +91,7 @@ class Maps<T, U, R, CS extends InnerSink<T, U, R, MapContext<T, U, R>>> extends 
 class _SwitchMap<T, U, R> extends InnerSink<T, U, R, SwitchMap<T, U, R>> {
 
 }
-class SwitchMap<T, U, R> extends Maps<T, U, R, _SwitchMap<T, U, R>> {
+class SwitchMap<T, U, R = U> extends Maps<T, U, R, _SwitchMap<T, U, R>> {
     next(data: T) {
         if (this.currentSink) {
             this.currentSink.dispose();
@@ -119,7 +119,7 @@ class _ConcatMap<T, U, R> extends InnerSink<T, U, R, ConcatMap<T, U, R>> {
     }
 }
 
-class ConcatMap<T, U, R> extends Maps<T, U, R, _ConcatMap<T, U, R>>{
+class ConcatMap<T, U, R = U> extends Maps<T, U, R, _ConcatMap<T, U, R>>{
     sources: T[] = [];
     next2 = this.sources.push.bind(this.sources);
     next(data: T) {
@@ -155,7 +155,7 @@ class _MergeMap<T, U, R> extends InnerSink<T, U, R, MergeMap<T, U, R>> {
 }
 // type __Maps<C> = C extends MapContext<infer T, infer U, infer R> ? C : never;
 // type _Maps<C> = C extends InnerSink<infer T, infer U, infer R, infer> ? Maps<T, U, R, C> : never;
-class MergeMap<T, U, R> extends Maps<T, U, R, _MergeMap<T, U, R>>{
+class MergeMap<T, U, R = U> extends Maps<T, U, R, _MergeMap<T, U, R>>{
     inners = new Set<_MergeMap<T, U, R>>();
     next(data: T) {
         this.subInner(data, _MergeMap);
@@ -177,7 +177,7 @@ class _ExhaustMap<T, U, R> extends InnerSink<T, U, R, ExhaustMap<T, U, R>> {
         super.dispose();
     }
 }
-class ExhaustMap<T, U, R> extends Maps<T, U, R, _ExhaustMap<T, U, R>>{
+class ExhaustMap<T, U, R = U> extends Maps<T, U, R, _ExhaustMap<T, U, R>>{
     next(data: T) {
         this.next = nothing;
         this.subInner(data, _ExhaustMap);

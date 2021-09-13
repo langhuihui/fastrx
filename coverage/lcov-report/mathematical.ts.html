@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.59% </span>
+                <span class="strong">65.52% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>12/17</span>
+                <span class='fraction'>19/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>2/4</span>
+                <span class='fraction'>1/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">30% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/4</span>
+                <span class='fraction'>3/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">70.59% </span>
+                <span class="strong">78.95% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>12/17</span>
+                <span class='fraction'>15/19</span>
             </div>
         
             
@@ -85,7 +85,10 @@
 <a name='L26'></a><a href='#L26'>26</a>
 <a name='L27'></a><a href='#L27'>27</a>
 <a name='L28'></a><a href='#L28'>28</a>
-<a name='L29'></a><a href='#L29'>29</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -93,7 +96,9 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -108,47 +113,51 @@
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span></td><td class="text"><pre class="prettyprint lang-js">import { Sink, ISink, deliver } from "./common";
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { Sink, ISink, deliver } from "./common";
 &nbsp;
 class Reduce&lt;T, R, ACC extends R | T&gt; extends Sink&lt;T, ACC&gt; {
     acc!: ACC;
-    initialized = false;
     constructor(sink: ISink&lt;ACC&gt;, private readonly f: (acc: ACC, c: T) =&gt; ACC, seed?: ACC) {
         super(sink);
+        const accSet = () =&gt; {
+            this.sink.next(this.acc);
+            this.sink.complete();
+        };
         <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof seed === "undefined") {
-            const next = <span class="cstat-no" title="statement not covered" >this.next;</span>
 <span class="cstat-no" title="statement not covered" >            this.next = <span class="fstat-no" title="function not covered" >(d</span>: T) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                this.acc = d as ACC;</span>
-<span class="cstat-no" title="statement not covered" >                this.initialized = true;</span>
-<span class="cstat-no" title="statement not covered" >                this.next = next;</span>
+<span class="cstat-no" title="statement not covered" >                this.complete = accSet;</span>
+<span class="cstat-no" title="statement not covered" >                this.resetNext();</span>
             };
         } else {
             this.acc = seed;
-            this.initialized = true;
+            this.complete = accSet;
         }
     }
     next(data: T) {
         this.acc = this.f(this.acc, data);
     }
-    complete() {
-        <span class="missing-if-branch" title="else path not taken" >E</span>if (this.initialized)
-            this.sink.next(this.acc);
-        super.complete();
-    }
 }
-export const reduce = deliver(Reduce);</pre></td></tr></table></pre>
+export const reduce = deliver(Reduce);
+&nbsp;
+export const count = <span class="fstat-no" title="function not covered" >&lt;T&gt;(f</span>: (d: T) =&gt; boolean) =&gt; <span class="cstat-no" title="statement not covered" >reduce(<span class="fstat-no" title="function not covered" >(a</span>ac, c: T) =&gt; (<span class="cstat-no" title="statement not covered" >f(c) ? aac + 1 : aac)</span>, 0);</span>
+export const max = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reduce(Math.max);</span>
+export const min = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reduce(Math.min);</span>
+export const sum = <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >reduce(<span class="fstat-no" title="function not covered" >(a</span>ac, c: number) =&gt; <span class="cstat-no" title="statement not covered" >aac + c,</span> 0);</span>
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Mon Sep 06 2021 13:54:32 GMT+0800 (中国标准时间)
+                at Mon Sep 13 2021 08:41:07 GMT+0800 (中国标准时间)
             </div>
         </div>
         <script src="prettify.js"></script>

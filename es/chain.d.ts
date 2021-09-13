@@ -53,14 +53,14 @@ declare const operators: {
     pairwise: <T_1>() => Operator<T_1, [T_1, T_1]>;
     map: <T_2, R_1>(mapper: (data: T_2) => R_1, thisArg?: any) => Operator<T_2, R_1>;
     mapTo: <T_3, R_2>(target: R_2) => Operator<T_3, R_2>;
-    switchMap: <T_4, U, R_3>(makeSource: (data: T_4, index: number) => Observable<U>, combineResults?: ((outter: T_4, inner: U) => R_3) | undefined) => Operator<T_4, R_3>;
-    switchMapTo: <T_4, U, R_3>(innerSource: Observable<U>, combineResults?: ((outter: T_4, inner: U) => R_3) | undefined) => Operator<T_4, R_3>;
-    concatMap: <T_5, U_1, R_4>(makeSource: (data: T_5, index: number) => Observable<U_1>, combineResults?: ((outter: T_5, inner: U_1) => R_4) | undefined) => Operator<T_5, R_4>;
-    concatMapTo: <T_5, U_1, R_4>(innerSource: Observable<U_1>, combineResults?: ((outter: T_5, inner: U_1) => R_4) | undefined) => Operator<T_5, R_4>;
-    mergeMap: <T_6, U_2, R_5>(makeSource: (data: T_6, index: number) => Observable<U_2>, combineResults?: ((outter: T_6, inner: U_2) => R_5) | undefined) => Operator<T_6, R_5>;
-    mergeMapTo: <T_6, U_2, R_5>(innerSource: Observable<U_2>, combineResults?: ((outter: T_6, inner: U_2) => R_5) | undefined) => Operator<T_6, R_5>;
-    exhaustMap: <T_7, U_3, R_6>(makeSource: (data: T_7, index: number) => Observable<U_3>, combineResults?: ((outter: T_7, inner: U_3) => R_6) | undefined) => Operator<T_7, R_6>;
-    exhaustMapTo: <T_7, U_3, R_6>(innerSource: Observable<U_3>, combineResults?: ((outter: T_7, inner: U_3) => R_6) | undefined) => Operator<T_7, R_6>;
+    switchMap: <T_4, U, R_3 = U>(makeSource: (data: T_4, index: number) => Observable<U>, combineResults?: ((outter: T_4, inner: U) => R_3) | undefined) => Operator<T_4, R_3>;
+    switchMapTo: <T_4, U, R_3 = U>(innerSource: Observable<U>, combineResults?: ((outter: T_4, inner: U) => R_3) | undefined) => Operator<T_4, R_3>;
+    concatMap: <T_5, U_1, R_4 = U_1>(makeSource: (data: T_5, index: number) => Observable<U_1>, combineResults?: ((outter: T_5, inner: U_1) => R_4) | undefined) => Operator<T_5, R_4>;
+    concatMapTo: <T_5, U_1, R_4 = U_1>(innerSource: Observable<U_1>, combineResults?: ((outter: T_5, inner: U_1) => R_4) | undefined) => Operator<T_5, R_4>;
+    mergeMap: <T_6, U_2, R_5 = U_2>(makeSource: (data: T_6, index: number) => Observable<U_2>, combineResults?: ((outter: T_6, inner: U_2) => R_5) | undefined) => Operator<T_6, R_5>;
+    mergeMapTo: <T_6, U_2, R_5 = U_2>(innerSource: Observable<U_2>, combineResults?: ((outter: T_6, inner: U_2) => R_5) | undefined) => Operator<T_6, R_5>;
+    exhaustMap: <T_7, U_3, R_6 = U_3>(makeSource: (data: T_7, index: number) => Observable<U_3>, combineResults?: ((outter: T_7, inner: U_3) => R_6) | undefined) => Operator<T_7, R_6>;
+    exhaustMapTo: <T_7, U_3, R_6 = U_3>(innerSource: Observable<U_3>, combineResults?: ((outter: T_7, inner: U_3) => R_6) | undefined) => Operator<T_7, R_6>;
     timeInterval: <T_8>() => Operator<T_8, {
         value: T_8;
         interval: number;
