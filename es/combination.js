@@ -62,6 +62,7 @@ export const race = (...sources) => (sink) => {
             sinks.delete(source); //先排除自己，防止自己调用dispose
             sinks.forEach((s) => s.dispose()); //其他所有流全部取消订阅
             r.resetNext();
+            r.resetComplete();
             r.next(data);
         };
     });

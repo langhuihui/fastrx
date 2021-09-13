@@ -1,4 +1,4 @@
-import { pipe, subscribe, timer, identity, range, concatMap,interval, nothing ,mergeMap,elementAt, take} from "../src/index";
+import { pipe, subscribe, timer, identity, range, concatMap,interval, nothing ,mergeMap,elementAt, take, switchMap, tap, of} from "../src/index";
 
 test('concatMap', async () => {
     let result = 0;
@@ -30,3 +30,16 @@ test('mergeMap', async () => {
     });
 });
 
+test('switchMap',async ()=>{
+  return new Promise((resolve,reject) => {
+    pipe(range(1, 5)
+        , switchMap(
+            (i) => of(i,i*2)
+        ),
+        tap(console.log),
+        elementAt(1),
+        subscribe((d) => { expect(d).toBe(10);}, reject, () => {
+            resolve(true);
+        }));
+});
+})

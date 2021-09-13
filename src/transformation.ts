@@ -93,10 +93,11 @@ class _SwitchMap<T, U, R> extends InnerSink<T, U, R, SwitchMap<T, U, R>> {
 }
 class SwitchMap<T, U, R = U> extends Maps<T, U, R, _SwitchMap<T, U, R>> {
     next(data: T) {
-        if (this.currentSink) {
-            this.currentSink.dispose();
-        }
         this.subInner(data, _SwitchMap);
+        this.next = (data:T) => {
+            this.currentSink.dispose();
+            this.subInner(data, _SwitchMap);
+        }
     }
 }
 

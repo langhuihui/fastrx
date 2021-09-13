@@ -8,18 +8,18 @@ export declare const interval: (period: number) => Observable<number>;
 export declare const timer: (delay: number, period?: number) => Observable<number>;
 export declare const fromEventPattern: <T>(add: (n: EventHandler<T>) => void, remove: (n: EventHandler<T>) => void) => Observable<T>;
 declare type EventHandler<T> = (event: T) => void;
-declare type EventMethod<T> = (name: string, handler: EventHandler<T>) => void;
-declare type EventDispachter<T> = {
-    on: EventMethod<T>;
-    off: EventMethod<T>;
+declare type EventMethod<N, T> = (name: N, handler: EventHandler<T>) => void;
+declare type EventDispachter<N, T> = {
+    on: EventMethod<N, T>;
+    off: EventMethod<N, T>;
 } | {
-    addListener: EventMethod<T>;
-    removeListener: EventMethod<T>;
+    addListener: EventMethod<N, T>;
+    removeListener: EventMethod<N, T>;
 } | {
-    addEventListener: EventMethod<T>;
-    removeEventListener: EventMethod<T>;
+    addEventListener: EventMethod<N, T>;
+    removeEventListener: EventMethod<N, T>;
 };
-export declare const fromEvent: <T>(target: EventDispachter<T>, name: string) => Observable<T>;
+export declare const fromEvent: <T, N>(target: EventDispachter<N, T>, name: N) => Observable<T>;
 declare type Messager<T> = {
     onmessage: (event: T) => void;
     close: () => void;
@@ -29,7 +29,7 @@ declare type Messager<T> = {
  * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target
  * @returns
  */
-export declare const fromMessageEvent: <T>(target: Messager<T> & EventDispachter<T>) => Observable<T>;
+export declare const fromMessageEvent: <T>(target: Messager<T> & EventDispachter<string, T>) => Observable<T>;
 export declare const fromPromise: <T>(promise: Promise<T>) => Observable<T>;
 export declare const fromFetch: (input: RequestInfo, init?: RequestInit | undefined) => Observable<Response>;
 export declare const fromIterable: <T>(source: Iterable<T>) => Observable<T>;
@@ -38,7 +38,7 @@ export declare const range: (start: number, count: number) => Observable<number>
 export declare const bindCallback: <T>(call: Function, thisArg: any, ...args: any[]) => Observable<T>;
 export declare const bindNodeCallback: <T>(call: Function, thisArg: any, ...args: any[]) => Observable<T>;
 export declare const never: () => Observable<never>;
-export declare const throwError: <T>(e: T) => Observable<T>;
+export declare const throwError: (e: any) => Observable<never>;
 export declare const empty: () => Observable<never>;
 export {};
 //# sourceMappingURL=producer.d.ts.map

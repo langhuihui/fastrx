@@ -92,10 +92,11 @@ class _SwitchMap extends InnerSink {
 }
 class SwitchMap extends Maps {
     next(data) {
-        if (this.currentSink) {
-            this.currentSink.dispose();
-        }
         this.subInner(data, _SwitchMap);
+        this.next = (data) => {
+            this.currentSink.dispose();
+            this.subInner(data, _SwitchMap);
+        };
     }
 }
 export const switchMap = deliver(SwitchMap);

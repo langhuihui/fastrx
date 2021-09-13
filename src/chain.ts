@@ -9,8 +9,8 @@ import * as transformation from './transformation';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest, ...combinations } = combination;
 const observables = { zip, merge, race, concat, combineLatest, ...producer };
-const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
-
+//const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
+const operators = {tap,delay}
 function inspect() {
     return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
 }
@@ -19,14 +19,14 @@ type Operators<T> = {
     [Key in keyof typeof operators]: (typeof operators)[Key] extends (...arg: any[]) => Operator<T, any> ? (typeof operators)[Key] : never
 };
 const rxProxy = {
-    get: <T>(target: Observable<T>, prop: keyof Operators<T> | "subscribe" | "toPromise"): (Subscribe<T> | Promise<T> | InstanceType<ProxyConstructor>) => {
+    get: <T,PROP extends keyof typeof operators>(target: Observable<T>, prop: PROP | "subscribe" | "toPromise"): (Subscribe<T> | Promise<T> | InstanceType<ProxyConstructor>) => {
         switch (prop) {
             case "subscribe":
                 return (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
             case "toPromise":
                 return () => toPromise<T>()(target);
             default:
-                return (<R>(operator: (...args: any[]) => Operator<T, R>) => (...args: any[]) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);
+                return (<R>(operator: (...args: Parameters<(typeof operators)[PROP]>) => Operator<T, R>) => (...args: Parameters<(typeof operators)[PROP]>) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);
         }
     }
 };

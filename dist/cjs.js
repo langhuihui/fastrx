@@ -772,6 +772,7 @@ var race = function race() {
         }); //其他所有流全部取消订阅
 
         r.resetNext();
+        r.resetComplete();
         r.next(data);
       };
     });
@@ -1119,15 +1120,6 @@ var sum = function sum() {
     return aac + c;
   }, 0);
 };
-
-var mathematical = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  reduce: reduce,
-  count: count,
-  max: max,
-  min: min,
-  sum: sum
-});
 
 var Filter = /*#__PURE__*/function (_Sink) {
   _inherits(Filter, _Sink);
@@ -1765,29 +1757,6 @@ var Every = /*#__PURE__*/function (_Sink17) {
 
 var every = deliver(Every);
 
-var filtering = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  filter: filter,
-  ignoreElements: ignoreElements,
-  take: take,
-  takeUntil: takeUntil,
-  takeWhile: takeWhile,
-  takeLast: takeLast,
-  skip: skip,
-  skipUntil: skipUntil,
-  skipWhile: skipWhile,
-  throttle: throttle,
-  audit: audit,
-  debounce: debounce,
-  debounceTime: debounceTime,
-  elementAt: elementAt,
-  find: find,
-  findIndex: findIndex,
-  first: first,
-  last: last,
-  every: every
-});
-
 function pipe(first) {
   for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
     cbs[_key - 1] = arguments[_key];
@@ -2300,11 +2269,15 @@ var SwitchMap = /*#__PURE__*/function (_Maps) {
   _createClass(SwitchMap, [{
     key: "next",
     value: function next(data) {
-      if (this.currentSink) {
-        this.currentSink.dispose();
-      }
+      var _this6 = this;
 
       this.subInner(data, _SwitchMap);
+
+      this.next = function (data) {
+        _this6.currentSink.dispose();
+
+        _this6.subInner(data, _SwitchMap);
+      };
     }
   }]);
 
@@ -2357,14 +2330,14 @@ var ConcatMap = /*#__PURE__*/function (_Maps2) {
   var _super9 = _createSuper(ConcatMap);
 
   function ConcatMap() {
-    var _this6;
+    var _this7;
 
     _classCallCheck(this, ConcatMap);
 
-    _this6 = _super9.apply(this, arguments);
-    _this6.sources = [];
-    _this6.next2 = _this6.sources.push.bind(_this6.sources);
-    return _this6;
+    _this7 = _super9.apply(this, arguments);
+    _this7.sources = [];
+    _this7.next2 = _this7.sources.push.bind(_this7.sources);
+    return _this7;
   }
 
   _createClass(ConcatMap, [{
@@ -2433,13 +2406,13 @@ var MergeMap = /*#__PURE__*/function (_Maps3) {
   var _super11 = _createSuper(MergeMap);
 
   function MergeMap() {
-    var _this7;
+    var _this8;
 
     _classCallCheck(this, MergeMap);
 
-    _this7 = _super11.apply(this, arguments);
-    _this7.inners = new Set();
-    return _this7;
+    _this8 = _super11.apply(this, arguments);
+    _this8.inners = new Set();
+    return _this8;
   }
 
   _createClass(MergeMap, [{
@@ -2518,13 +2491,13 @@ var TimeInterval = /*#__PURE__*/function (_Sink6) {
   var _super14 = _createSuper(TimeInterval);
 
   function TimeInterval() {
-    var _this8;
+    var _this9;
 
     _classCallCheck(this, TimeInterval);
 
-    _this8 = _super14.apply(this, arguments);
-    _this8.start = new Date();
-    return _this8;
+    _this9 = _super14.apply(this, arguments);
+    _this9.start = new Date();
+    return _this9;
   }
 
   _createClass(TimeInterval, [{
@@ -2549,19 +2522,19 @@ var BufferTime = /*#__PURE__*/function (_Sink7) {
   var _super15 = _createSuper(BufferTime);
 
   function BufferTime(sink, miniseconds) {
-    var _this9;
+    var _this10;
 
     _classCallCheck(this, BufferTime);
 
-    _this9 = _super15.call(this, sink);
-    _this9.miniseconds = miniseconds;
-    _this9.buffer = [];
-    _this9.id = setInterval(function () {
-      _this9.sink.next(_this9.buffer.concat());
+    _this10 = _super15.call(this, sink);
+    _this10.miniseconds = miniseconds;
+    _this10.buffer = [];
+    _this10.id = setInterval(function () {
+      _this10.sink.next(_this10.buffer.concat());
 
-      _this9.buffer.length = 0;
-    }, _this9.miniseconds);
-    return _this9;
+      _this10.buffer.length = 0;
+    }, _this10.miniseconds);
+    return _this10;
   }
 
   _createClass(BufferTime, [{
@@ -2589,24 +2562,6 @@ var BufferTime = /*#__PURE__*/function (_Sink7) {
 }(Sink);
 
 var bufferTime = deliver(BufferTime);
-
-var transformation = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  scan: scan,
-  pairwise: pairwise,
-  map: map,
-  mapTo: mapTo,
-  switchMap: switchMap,
-  switchMapTo: switchMapTo,
-  concatMap: concatMap,
-  concatMapTo: concatMapTo,
-  mergeMap: mergeMap,
-  mergeMapTo: mergeMapTo,
-  exhaustMap: exhaustMap,
-  exhaustMapTo: exhaustMapTo,
-  timeInterval: timeInterval,
-  bufferTime: bufferTime
-});
 
 var subject = function subject(source) {
   var observable = share()(function (sink) {
@@ -3090,8 +3045,8 @@ var zip$1 = zip,
     merge$1 = merge,
     race$1 = race,
     concat$1 = concat,
-    combineLatest$1 = combineLatest,
-    combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
+    combineLatest$1 = combineLatest;
+    __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
 
 var observables = Object.assign({
   zip: zip$1,
@@ -3099,14 +3054,12 @@ var observables = Object.assign({
   race: race$1,
   concat: concat$1,
   combineLatest: combineLatest$1
-}, producer);
-var operators = Object.assign(Object.assign(Object.assign(Object.assign({
+}, producer); //const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
+
+var operators = {
   tap: tap,
-  delay: delay,
-  timeout: timeout,
-  catchError: catchError,
-  groupBy: groupBy
-}, combinations), filtering), mathematical), transformation);
+  delay: delay
+};
 
 function inspect() {
   return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;

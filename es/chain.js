@@ -10,16 +10,14 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 // @ts-nocheck
-import { tap, delay, timeout, catchError, groupBy, subscribe, toPromise } from './pipe';
+import { tap, delay, subscribe, toPromise } from './pipe';
 import { Node } from './devtools';
 import * as producer from './producer';
-import * as filtering from './filtering';
-import * as mathematical from './mathematical';
-import * as transformation from './transformation';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest } = combination, combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
 const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producer);
-const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, delay, timeout, catchError, groupBy }, combinations), filtering), mathematical), transformation);
+//const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
+const operators = { tap, delay };
 function inspect() {
     return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
 }
