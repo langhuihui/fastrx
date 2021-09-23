@@ -4,7 +4,7 @@ export function pipe(first, ...cbs) {
 }
 export const toPromise = () => (source) => new Promise((resolve, reject) => {
     let value;
-    source(new Subscribe((d) => (value = d), reject, () => resolve(value)));
+    (new Subscribe((d) => (value = d), reject, () => resolve(value))).subscribe(source);
 });
 export class Subscribe extends LastSink {
     constructor(next = nothing, _error = nothing, _complete = nothing) {
@@ -24,27 +24,25 @@ export class Subscribe extends LastSink {
     }
 }
 // //SUBSCRIBER
-export const subscribe = (n = nothing, e = nothing, c = nothing) => (source) => {
-    const sink = new Subscribe(n, e, c);
-    source(sink);
-    return sink;
-};
+export const subscribe = (n = nothing, e = nothing, c = nothing) => (new Subscribe(n, e, c)).bindSubscribe;
 // // UTILITY
-export const tap = (ob) => (source) => (sink) => {
-    const observer = new Sink(sink);
-    if (ob instanceof Function) {
-        observer.next = (data) => { ob(data); sink.next(data); };
+class Tap extends Sink {
+    constructor(sink, ob) {
+        super(sink);
+        if (ob instanceof Function) {
+            this.next = (data) => { ob(data); sink.next(data); };
+        }
+        else {
+            if (ob.next)
+                this.next = (data) => { ob.next(data); sink.next(data); };
+            if (ob.complete)
+                this.complete = () => { ob.complete(); sink.complete(); };
+            if (ob.error)
+                this.error = (err) => { ob.error(err); sink.error(err); };
+        }
     }
-    else {
-        if (ob.next)
-            observer.next = (data) => { ob.next(data); sink.next(data); };
-        if (ob.complete)
-            observer.complete = () => { ob.complete(); sink.complete(); };
-        if (ob.error)
-            observer.error = (err) => { ob.error(err); sink.error(err); };
-    }
-    source(observer);
-};
+}
+export const tap = deliver(Tap, "tap");
 class Delay extends Sink {
     constructor(sink, delay) {
         super(sink);
@@ -77,7 +75,7 @@ class Delay extends Sink {
         this.timeoutId = setTimeout(() => super.complete(), this.delayTime);
     }
 }
-export const delay = deliver(Delay);
+export const delay = deliver(Delay, "delay");
 class CatchError extends Sink {
     constructor(sink, selector) {
         super(sink);
@@ -88,7 +86,7 @@ class CatchError extends Sink {
         this.selector(err)(this.sink);
     }
 }
-export const catchError = deliver(CatchError);
+export const catchError = deliver(CatchError, "catchError");
 import { subject } from './producer';
 class GroupBy extends Sink {
     constructor(sink, f) {
@@ -116,7 +114,7 @@ class GroupBy extends Sink {
         super.error(err);
     }
 }
-export const groupBy = deliver(GroupBy);
+export const groupBy = deliver(GroupBy, "groupBy");
 class Timeout extends Sink {
     constructor(sink, timeout) {
         super(sink);
@@ -133,4 +131,4 @@ class Timeout extends Sink {
         super.dispose();
     }
 }
-export const timeout = deliver(Timeout);
+export const timeout = deliver(Timeout, "timeout");

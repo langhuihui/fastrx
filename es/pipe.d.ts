@@ -23,7 +23,7 @@ export declare class Subscribe<T> extends LastSink<T> {
 export declare const subscribe: <T>(n?: (data: T) => void, e?: typeof nothing, c?: typeof nothing) => (source: Observable<T>) => Subscribe<T>;
 export declare const tap: <T>(ob: Partial<Observer<T>> | ((d: T) => void)) => Operator<T, T>;
 export declare const delay: <T>(delay: number) => Operator<T, T>;
-export declare const catchError: <T, R = T>(selector: (err: any) => Observable<R>) => Operator<T | R, R>;
+export declare const catchError: <T, R = T>(selector: (err: any) => Observable<R>) => Operator<T, R>;
 declare type Group = Subject<unknown> & {
     key: any;
 };

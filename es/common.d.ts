@@ -2,26 +2,33 @@ export declare function nothing(...args: any[]): any;
 export declare const call: (f: Function) => any;
 export declare const identity: <T>(x: T) => T;
 export declare function dispose<T>(this: ISink<T>): void;
+export declare const inspect: () => boolean;
 export declare type ObservableInputTuple<T> = {
     [K in keyof T]: Observable<T[K]>;
 };
 export interface Observer<T> {
+    subscribe(source: Observable<T>): void;
     next(data: T): void;
     complete(): void;
     error(err: any): void;
     dispose(): void;
 }
-export interface ISink<T> extends Observer<T> {
-    disposed: boolean;
-    dispose(): void;
-    defer(df: Dispose): void;
-    doDefer(): void;
-    removeDefer(df: Dispose): void;
+export declare class Inspect<T> extends Function {
+    id: number;
+    args: IArguments;
+    streamId: number;
+    source?: InspectObservable<unknown>;
+    toString(): string;
+    pipe(...args: [...Operator<unknown>[], Operator<unknown>]): Observable<unknown>;
+    subscribe(sink: ISink<T>): ISink<T>;
 }
+export declare function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArguments): Observable<T>;
 declare type Dispose = () => any;
 export declare type Observable<T> = (sink: ISink<T>) => void;
+export declare type InspectObservable<T> = Observable<T> & Inspect<T>;
 export declare type Operator<T, R = T> = (source: Observable<T>) => Observable<R>;
-export declare class LastSink<T> implements ISink<T> {
+export declare class LastSink<T> implements Observer<T> {
+    sourceId: number;
     defers: Set<Dispose>;
     disposed: boolean;
     next(data: T): void;
@@ -29,6 +36,8 @@ export declare class LastSink<T> implements ISink<T> {
     error(err: any): void;
     get bindDispose(): () => void;
     dispose(): void;
+    subscribe(source: Observable<T>): this;
+    get bindSubscribe(): (source: Observable<T>) => this;
     doDefer(): void;
     defer(df: Dispose): void;
     removeDefer(df: Dispose): void;
@@ -37,6 +46,7 @@ export declare class LastSink<T> implements ISink<T> {
     resetComplete(): void;
     resetError(): void;
 }
+export declare type ISink<T> = LastSink<T>;
 export declare class Sink<T, R = T> extends LastSink<T> {
     readonly sink: ISink<R>;
     constructor(sink: ISink<R>);
@@ -46,7 +56,7 @@ export declare class Sink<T, R = T> extends LastSink<T> {
 }
 export declare function deliver<T, R, ARG extends any[]>(c: {
     new (sink: ISink<R>, ...args: ARG): ISink<T>;
-}): (...args: ARG) => (Operator<T, R>);
+}, name: string): (...args: ARG) => (Operator<T, R>);
 interface Node {
     id: number;
     toString(): string;

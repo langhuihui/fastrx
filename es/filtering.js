@@ -13,11 +13,11 @@ class Filter extends Sink {
         }
     }
 }
-export const filter = deliver(Filter);
+export const filter = deliver(Filter, "filter");
 class Ignore extends Sink {
     next(_data) { }
 }
-export const ignoreElements = deliver(Ignore);
+export const ignoreElements = deliver(Ignore, "ignoreElements");
 class Take extends Sink {
     constructor(sink, count) {
         super(sink);
@@ -30,19 +30,17 @@ class Take extends Sink {
         }
     }
 }
-export const take = deliver(Take);
+export const take = deliver(Take, "take");
 class TakeUntil extends Sink {
     constructor(sink, control) {
         super(sink);
-        this._takeUntil = new Sink(this.sink);
-        this._takeUntil.next = () => {
-            this.complete();
-        };
-        this._takeUntil.complete = dispose;
-        control(this._takeUntil);
+        const _takeUntil = new Sink(sink);
+        _takeUntil.next = () => sink.complete();
+        _takeUntil.complete = dispose;
+        _takeUntil.subscribe(control);
     }
 }
-export const takeUntil = deliver(TakeUntil);
+export const takeUntil = deliver(TakeUntil, "takeUntil");
 class TakeWhile extends Sink {
     constructor(sink, f) {
         super(sink);
@@ -57,7 +55,7 @@ class TakeWhile extends Sink {
         }
     }
 }
-export const takeWhile = deliver(TakeWhile);
+export const takeWhile = deliver(TakeWhile, "takeWhile");
 export const takeLast = (count) => reduce((buffer, d) => {
     buffer.push(d);
     if (buffer.length > count)
@@ -75,22 +73,21 @@ class Skip extends Sink {
         }
     }
 }
-export const skip = deliver(Skip);
+export const skip = deliver(Skip, "skip");
 class SkipUntil extends Sink {
     constructor(sink, control) {
         super(sink);
-        this._skipUntil = new Sink(this.sink);
-        this._skipUntil.next = () => {
-            this._skipUntil.dispose();
-            this.next = super.next;
+        sink.next = nothing;
+        const _skipUntil = new Sink(sink);
+        _skipUntil.next = () => {
+            _skipUntil.dispose();
+            sink.resetNext();
         };
-        this._skipUntil.complete = dispose;
-        control(this._skipUntil);
-    }
-    next(_data) {
+        _skipUntil.complete = dispose;
+        _skipUntil.subscribe(control);
     }
 }
-export const skipUntil = deliver(SkipUntil);
+export const skipUntil = deliver(SkipUntil, "skipUntil");
 class SkipWhile extends Sink {
     constructor(sink, f) {
         super(sink);
@@ -103,7 +100,7 @@ class SkipWhile extends Sink {
         }
     }
 }
-export const skipWhile = deliver(SkipWhile);
+export const skipWhile = deliver(SkipWhile, "skipWhile");
 const defaultThrottleConfig = {
     leading: true,
     trailing: false,
@@ -128,7 +125,7 @@ class _Throttle extends Sink {
     }
     throttle(data) {
         this.reset();
-        this.durationSelector(data)(this);
+        this.subscribe(this.durationSelector(data));
     }
     next() {
         this.complete();
@@ -162,12 +159,12 @@ class Throttle extends Sink {
         super.complete();
     }
 }
-export const throttle = deliver(Throttle);
+export const throttle = deliver(Throttle, "throttle");
 const defaultAuditConfig = {
     leading: false,
     trailing: true,
 };
-export const audit = (durationSelector) => throttle(durationSelector, defaultAuditConfig);
+export const audit = (durationSelector) => deliver(Throttle, "audit")(durationSelector, defaultAuditConfig);
 class _Debounce extends Sink {
     next() {
         this.complete();
@@ -188,15 +185,15 @@ class Debounce extends Sink {
         this._debounce.dispose();
         this._debounce.reset();
         this._debounce.last = data;
-        this.durationSelector(data)(this._debounce);
+        this._debounce.subscribe(this.durationSelector(data));
     }
     complete() {
         this._debounce.complete();
         super.complete();
     }
 }
-export const debounce = deliver(Debounce);
-export const debounceTime = (period) => debounce((_d) => timer(period));
+export const debounce = deliver(Debounce, "debounce");
+export const debounceTime = (period) => deliver(Debounce, "debounceTime")((_d) => timer(period));
 class ElementAt extends Sink {
     constructor(sink, count, defaultValue) {
         super(sink);
@@ -219,7 +216,7 @@ class ElementAt extends Sink {
         super.complete();
     }
 }
-export const elementAt = deliver(ElementAt);
+export const elementAt = deliver(ElementAt, "elementAt");
 export const find = (f) => (source) => take(1)(skipWhile((d) => !f(d))(source));
 class FindIndex extends Sink {
     constructor(sink, f) {
@@ -237,7 +234,7 @@ class FindIndex extends Sink {
         }
     }
 }
-export const findIndex = deliver(FindIndex);
+export const findIndex = deliver(FindIndex, "findIndex");
 class First extends Sink {
     constructor(sink, f, defaultValue) {
         super(sink);
@@ -261,7 +258,7 @@ class First extends Sink {
         super.complete();
     }
 }
-export const first = deliver(First);
+export const first = deliver(First, "first");
 class Last extends Sink {
     constructor(sink, f, defaultValue) {
         super(sink);
@@ -284,7 +281,7 @@ class Last extends Sink {
         super.complete();
     }
 }
-export const last = deliver(Last);
+export const last = deliver(Last, 'last');
 class Every extends Sink {
     constructor(sink, predicate) {
         super(sink);
@@ -310,4 +307,4 @@ class Every extends Sink {
         super.complete();
     }
 }
-export const every = deliver(Every);
+export const every = deliver(Every, "every");

@@ -10,17 +10,15 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 // @ts-nocheck
-import { tap, delay, subscribe, toPromise } from './pipe';
-import { Node } from './devtools';
+import { tap, delay, timeout, catchError, groupBy, subscribe, toPromise } from './pipe';
 import * as producer from './producer';
+import * as filtering from './filtering';
+import * as mathematical from './mathematical';
+import * as transformation from './transformation';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest } = combination, combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
 const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producer);
-//const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
-const operators = { tap, delay };
-function inspect() {
-    return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
-}
+const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, delay, timeout, catchError, groupBy }, combinations), filtering), mathematical), transformation);
 const rxProxy = {
     get: (target, prop) => {
         switch (prop) {
@@ -33,10 +31,8 @@ const rxProxy = {
         }
     }
 };
-export const rx = new Proxy((f) => (inspect() ? new Node(f).pipe() : new Proxy(f, rxProxy)), {
-    get: (_target, prop) => inspect()
-        ? (...arg) => new Node(prop, arg).pipe()
-        : ((observable) => (...args) => new Proxy(observable(...args), rxProxy))(observables[prop]),
+export const rx = new Proxy((f) => new Proxy(f, rxProxy), {
+    get: (_target, prop) => ((observable) => (...args) => new Proxy(observable(...args), rxProxy))(observables[prop]),
     // @ts-ignore
     set: (_target, prop, value) => (observables[prop] = value),
 });

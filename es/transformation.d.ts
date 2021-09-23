@@ -2,7 +2,7 @@ import { Observable } from "./common";
 export declare const scan: <T, R, ACC extends T | R>(f: (acc: ACC, c: T) => ACC, seed?: ACC | undefined) => import("./common").Operator<T, ACC>;
 export declare const pairwise: <T>() => import("./common").Operator<T, [T, T]>;
 export declare const map: <T, R>(mapper: (data: T) => R, thisArg?: any) => import("./common").Operator<T, R>;
-export declare const mapTo: <T, R>(target: R) => import("./common").Operator<T, R>;
+export declare const mapTo: <R>(target: R) => import("./common").Operator<unknown, R>;
 declare type ResultSelector<T, U, R> = (outter: T, inner: U) => R;
 export declare const switchMap: <T, U, R = U>(makeSource: (data: T, index: number) => Observable<U>, combineResults?: ResultSelector<T, U, R> | undefined) => import("./common").Operator<T, R>;
 export declare const switchMapTo: <T, U, R = U>(innerSource: Observable<U>, combineResults?: ResultSelector<T, U, R> | undefined) => import("./common").Operator<T, R>;

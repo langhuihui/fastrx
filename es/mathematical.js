@@ -23,8 +23,8 @@ class Reduce extends Sink {
         this.acc = this.f(this.acc, data);
     }
 }
-export const reduce = deliver(Reduce);
-export const count = (f) => reduce((aac, c) => (f(c) ? aac + 1 : aac), 0);
-export const max = () => reduce(Math.max);
-export const min = () => reduce(Math.min);
-export const sum = () => reduce((aac, c) => aac + c, 0);
+export const reduce = deliver(Reduce, "reduce");
+export const count = (f) => deliver(Reduce, "count")((aac, c) => (f(c) ? aac + 1 : aac), 0);
+export const max = () => deliver(Reduce, "max")(Math.max);
+export const min = () => deliver(Reduce, "min")(Math.min);
+export const sum = () => deliver(Reduce, "sum")((aac, c) => aac + c, 0);

@@ -4,128 +4,22 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 require('core-js/modules/es.array.concat.js');
 require('core-js/modules/es.array.iterator.js');
+require('core-js/modules/es.array.join.js');
+require('core-js/modules/es.function.name.js');
+require('core-js/modules/es.object.set-prototype-of.js');
 require('core-js/modules/es.object.to-string.js');
 require('core-js/modules/es.regexp.to-string.js');
 require('core-js/modules/es.set.js');
 require('core-js/modules/es.string.iterator.js');
 require('core-js/modules/web.dom-collections.for-each.js');
 require('core-js/modules/web.dom-collections.iterator.js');
+require('core-js/modules/es.map.js');
+require('core-js/modules/es.number.constructor.js');
 require('core-js/modules/es.promise.js');
 require('core-js/modules/es.array.map.js');
-require('core-js/modules/es.map.js');
 require('core-js/modules/es.array.filter.js');
-require('core-js/modules/es.number.constructor.js');
 require('core-js/modules/es.symbol.js');
 require('core-js/modules/es.object.assign.js');
-require('core-js/modules/es.array.join.js');
-require('core-js/modules/es.function.name.js');
-
-var fastrx = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  get nothing () { return nothing; },
-  get call () { return call; },
-  get identity () { return identity; },
-  get dispose () { return dispose; },
-  get LastSink () { return LastSink; },
-  get Sink () { return Sink; },
-  get deliver () { return deliver; },
-  get Events () { return Events; },
-  get TimeoutError () { return TimeoutError; },
-  get subject () { return subject; },
-  get defer () { return defer; },
-  get of () { return of; },
-  get fromArray () { return fromArray; },
-  get interval () { return interval; },
-  get timer () { return timer; },
-  get fromEventPattern () { return fromEventPattern; },
-  get fromEvent () { return fromEvent; },
-  get fromMessageEvent () { return fromMessageEvent; },
-  get fromPromise () { return fromPromise; },
-  get fromFetch () { return fromFetch; },
-  get fromIterable () { return fromIterable; },
-  get fromAnimationFrame () { return fromAnimationFrame; },
-  get range () { return range; },
-  get bindCallback () { return bindCallback; },
-  get bindNodeCallback () { return bindNodeCallback; },
-  get never () { return never; },
-  get throwError () { return throwError; },
-  get empty () { return empty; },
-  get share () { return share; },
-  get merge () { return merge; },
-  get race () { return race; },
-  get concat () { return concat; },
-  get shareReplay () { return shareReplay; },
-  get iif () { return iif; },
-  get combineLatest () { return combineLatest; },
-  get zip () { return zip; },
-  get startWith () { return startWith; },
-  get withLatestFrom () { return withLatestFrom; },
-  get bufferCount () { return bufferCount; },
-  get filter () { return filter; },
-  get ignoreElements () { return ignoreElements; },
-  get take () { return take; },
-  get takeUntil () { return takeUntil; },
-  get takeWhile () { return takeWhile; },
-  get takeLast () { return takeLast; },
-  get skip () { return skip; },
-  get skipUntil () { return skipUntil; },
-  get skipWhile () { return skipWhile; },
-  get throttle () { return throttle; },
-  get audit () { return audit; },
-  get debounce () { return debounce; },
-  get debounceTime () { return debounceTime; },
-  get elementAt () { return elementAt; },
-  get find () { return find; },
-  get findIndex () { return findIndex; },
-  get first () { return first; },
-  get last () { return last; },
-  get every () { return every; },
-  get reduce () { return reduce; },
-  get count () { return count; },
-  get max () { return max; },
-  get min () { return min; },
-  get sum () { return sum; },
-  get scan () { return scan; },
-  get pairwise () { return pairwise; },
-  get map () { return map; },
-  get mapTo () { return mapTo; },
-  get switchMap () { return switchMap; },
-  get switchMapTo () { return switchMapTo; },
-  get concatMap () { return concatMap; },
-  get concatMapTo () { return concatMapTo; },
-  get mergeMap () { return mergeMap; },
-  get mergeMapTo () { return mergeMapTo; },
-  get exhaustMap () { return exhaustMap; },
-  get exhaustMapTo () { return exhaustMapTo; },
-  get timeInterval () { return timeInterval; },
-  get bufferTime () { return bufferTime; },
-  get pipe () { return pipe; },
-  get toPromise () { return toPromise; },
-  get Subscribe () { return Subscribe; },
-  get subscribe () { return subscribe; },
-  get tap () { return tap; },
-  get delay () { return delay; },
-  get catchError () { return catchError; },
-  get groupBy () { return groupBy; },
-  get timeout () { return timeout; },
-  get rx () { return rx; }
-});
-
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    _typeof = function (obj) {
-      return typeof obj;
-    };
-  } else {
-    _typeof = function (obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -405,250 +299,6 @@ function _createForOfIteratorHelper(o, allowArrayLike) {
   };
 }
 
-function nothing() {}
-var call = function call(f) {
-  return f();
-};
-var identity = function identity(x) {
-  return x;
-};
-function dispose() {
-  this.dispose();
-}
-var LastSink = /*#__PURE__*/function () {
-  function LastSink() {
-    _classCallCheck(this, LastSink);
-
-    this.defers = new Set();
-    this.disposed = false;
-  }
-
-  _createClass(LastSink, [{
-    key: "next",
-    value: function next(data) {}
-  }, {
-    key: "complete",
-    value: function complete() {
-      this.dispose();
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-    }
-  }, {
-    key: "bindDispose",
-    get: function get() {
-      var _this = this;
-
-      return function () {
-        return _this.dispose();
-      };
-    }
-  }, {
-    key: "dispose",
-    value: function dispose() {
-      this.disposed = true;
-      this.complete = nothing;
-      this.error = nothing;
-      this.next = nothing;
-      this.dispose = nothing;
-      this.doDefer();
-    }
-  }, {
-    key: "doDefer",
-    value: function doDefer() {
-      this.defers.forEach(call);
-      this.defers.clear();
-    }
-  }, {
-    key: "defer",
-    value: function defer(df) {
-      this.defers.add(df);
-    }
-  }, {
-    key: "removeDefer",
-    value: function removeDefer(df) {
-      this.defers.delete(df);
-    }
-  }, {
-    key: "reset",
-    value: function reset() {
-      this.disposed = false; //@ts-ignore
-
-      delete this.complete; //@ts-ignore
-
-      delete this.next; //@ts-ignore
-
-      delete this.dispose; //@ts-ignore
-
-      delete this.next;
-    }
-  }, {
-    key: "resetNext",
-    value: function resetNext() {
-      //@ts-ignore
-      delete this.next;
-    }
-  }, {
-    key: "resetComplete",
-    value: function resetComplete() {
-      //@ts-ignore
-      delete this.complete;
-    }
-  }, {
-    key: "resetError",
-    value: function resetError() {
-      //@ts-ignore
-      delete this.error;
-    }
-  }]);
-
-  return LastSink;
-}();
-var Sink = /*#__PURE__*/function (_LastSink) {
-  _inherits(Sink, _LastSink);
-
-  var _super = _createSuper(Sink);
-
-  function Sink(sink) {
-    var _this2;
-
-    _classCallCheck(this, Sink);
-
-    _this2 = _super.call(this);
-    _this2.sink = sink;
-    sink.defer(_this2.bindDispose);
-    return _this2;
-  }
-
-  _createClass(Sink, [{
-    key: "next",
-    value: function next(data) {
-      this.sink.next(data);
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      this.sink.complete();
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.sink.error(err);
-    }
-  }]);
-
-  return Sink;
-}(LastSink);
-function deliver(c) {
-  return function () {
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    return function (source) {
-      return function (observer) {
-        return source(_construct(c, [observer].concat(args)));
-      };
-    };
-  };
-}
-
-function send(event, payload) {
-  window.postMessage({
-    source: 'fastrx-devtools-backend',
-    payload: {
-      event: event,
-      payload: payload
-    }
-  });
-}
-
-var Events = {
-  addSource: function addSource(who, source) {
-    send('addSource', {
-      id: who.id,
-      name: who.toString(),
-      source: {
-        id: source.id,
-        name: source.toString()
-      }
-    });
-  },
-  next: function next(who, streamId, data) {
-    send('next', {
-      id: who.id,
-      streamId: streamId,
-      data: data && data.toString()
-    });
-  },
-  subscribe: function subscribe(_ref, sink) {
-    var id = _ref.id,
-        end = _ref.end;
-    send('subscribe', {
-      id: id,
-      end: end,
-      sink: {
-        nodeId: sink && sink.nodeId,
-        streamId: sink && sink.streamId
-      }
-    });
-  },
-  complete: function complete(who, streamId, err) {
-    send('complete', {
-      id: who.id,
-      streamId: streamId,
-      err: err ? err.toString() : null
-    });
-  },
-  defer: function defer(who, streamId) {
-    send('defer', {
-      id: who.id,
-      streamId: streamId
-    });
-  },
-  pipe: function pipe(who) {
-    send('pipe', {
-      name: who.toString(),
-      id: who.id,
-      source: {
-        id: who.source.id,
-        name: who.source.toString()
-      }
-    });
-  },
-  update: function update(who) {
-    send('update', {
-      id: who.id,
-      name: who.toString()
-    });
-  },
-  create: function create(who) {
-    send('create', {
-      name: who.toString(),
-      id: who.id
-    });
-  }
-};
-var TimeoutError = /*#__PURE__*/function (_Error) {
-  _inherits(TimeoutError, _Error);
-
-  var _super2 = _createSuper(TimeoutError);
-
-  function TimeoutError(timeout) {
-    var _this3;
-
-    _classCallCheck(this, TimeoutError);
-
-    _this3 = _super2.call(this, "timeout after ".concat(timeout, "ms"));
-    _this3.timeout = timeout;
-    return _this3;
-  }
-
-  return TimeoutError;
-}( /*#__PURE__*/_wrapNativeSuper(Error));
-
 var Share = /*#__PURE__*/function (_LastSink) {
   _inherits(Share, _LastSink);
 
@@ -676,7 +326,7 @@ var Share = /*#__PURE__*/function (_LastSink) {
 
       if (this.sinks.add(sink).size === 1) {
         this.reset();
-        this.source(this);
+        this.subscribe(this.source);
       }
     }
   }, {
@@ -716,18 +366,19 @@ var Share = /*#__PURE__*/function (_LastSink) {
   return Share;
 }(LastSink);
 
-var share = function share() {
+function share() {
+  var _arguments = arguments;
   return function (source) {
     var share = new Share(source);
-    return share.add.bind(share);
+    return create(share.add.bind(share), "share", _arguments);
   };
-};
-var merge = function merge() {
+}
+function merge() {
   for (var _len = arguments.length, sources = new Array(_len), _key = 0; _key < _len; _key++) {
     sources[_key] = arguments[_key];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var merge = new Sink(sink);
     var nLife = sources.length;
 
@@ -737,17 +388,15 @@ var merge = function merge() {
       }
     };
 
-    sources.forEach(function (source) {
-      return source(merge);
-    });
-  };
-};
-var race = function race() {
+    sources.forEach(merge.bindSubscribe);
+  }, "merge", arguments);
+}
+function race() {
   for (var _len2 = arguments.length, sources = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
     sources[_key2] = arguments[_key2];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var sinks = new Map();
     sources.forEach(function (source) {
       var r = new Sink(sink);
@@ -777,16 +426,16 @@ var race = function race() {
       };
     });
     sources.forEach(function (source) {
-      return source(sinks.get(source));
+      return sinks.get(source).subscribe(source);
     });
-  };
-};
-var concat = function concat() {
+  }, "race", arguments);
+}
+function concat() {
   for (var _len3 = arguments.length, sources = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
     sources[_key3] = arguments[_key3];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var pos = 0;
     var len = sources.length;
     var s = new Sink(sink);
@@ -794,14 +443,15 @@ var concat = function concat() {
     s.complete = function () {
       if (pos < len && !s.disposed) {
         s.doDefer();
-        sources[pos++](s);
+        s.subscribe(sources[pos++]);
       } else sink.complete();
     };
 
     s.complete();
-  };
-};
-var shareReplay = function shareReplay(bufferSize) {
+  }, "concat", arguments);
+}
+function shareReplay(bufferSize) {
+  var _arguments2 = arguments;
   return function (source) {
     var share = new Share(source);
     var buffer = [];
@@ -818,7 +468,7 @@ var shareReplay = function shareReplay(bufferSize) {
       });
     };
 
-    return function (sink) {
+    return create(function (sink) {
       sink.defer(function () {
         return share.remove(sink);
       });
@@ -826,20 +476,20 @@ var shareReplay = function shareReplay(bufferSize) {
         return sink.next(cache);
       });
       share.add(sink);
-    };
+    }, "shareReplay", _arguments2);
   };
-};
-var iif = function iif(condition, trueS, falseS) {
-  return function (sink) {
+}
+function iif(condition, trueS, falseS) {
+  return create(function (sink) {
     return condition() ? trueS(sink) : falseS(sink);
-  };
-};
-var combineLatest = function combineLatest() {
+  }, "iif", arguments);
+}
+function combineLatest() {
   for (var _len4 = arguments.length, sources = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
     sources[_key4] = arguments[_key4];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var nTotal = sources.length;
     var nRun = nTotal; //剩余未发出事件的事件流数量
 
@@ -868,18 +518,18 @@ var combineLatest = function combineLatest() {
       };
 
       ss.complete = onComplete;
-      source(ss);
+      ss.subscribe(source);
     };
 
     sources.forEach(s);
-  };
-};
-var zip = function zip() {
+  }, "combineLatest", arguments);
+}
+function zip() {
   for (var _len5 = arguments.length, sources = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
     sources[_key5] = arguments[_key5];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var nTotal = sources.length;
     var nLife = nTotal; //剩余未完成的事件流数量
 
@@ -907,31 +557,32 @@ var zip = function zip() {
       };
 
       ss.complete = onComplete;
-      source(ss);
+      ss.subscribe(source);
     };
 
     sources.forEach(s);
-  };
-};
-var startWith = function startWith() {
+  }, "zip", arguments);
+}
+function startWith() {
+  var _arguments3 = arguments;
+
   for (var _len6 = arguments.length, xs = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
     xs[_key6] = arguments[_key6];
   }
 
   return function (inputSource) {
-    return function (sink) {
+    return create(function (sink) {
       var pos = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
       var l = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : xs.length;
 
-      while (pos < l) {
-        if (sink.disposed) return;
+      while (pos < l && !sink.disposed) {
         sink.next(xs[pos++]);
       }
 
-      sink.disposed || inputSource(sink);
-    };
+      sink.disposed || sink.subscribe(inputSource);
+    }, "startWith", _arguments3);
   };
-};
+}
 
 var WithLatestFrom = /*#__PURE__*/function (_Sink) {
   _inherits(WithLatestFrom, _Sink);
@@ -956,7 +607,7 @@ var WithLatestFrom = /*#__PURE__*/function (_Sink) {
       sources[_key7 - 1] = arguments[_key7];
     }
 
-    combineLatest.apply(void 0, sources)(s);
+    s.subscribe(combineLatest.apply(void 0, sources));
     return _this3;
   }
 
@@ -972,7 +623,7 @@ var WithLatestFrom = /*#__PURE__*/function (_Sink) {
   return WithLatestFrom;
 }(Sink);
 
-var withLatestFrom = deliver(WithLatestFrom);
+var withLatestFrom = deliver(WithLatestFrom, "withLatestFrom");
 
 var BufferCount = /*#__PURE__*/function (_Sink2) {
   _inherits(BufferCount, _Sink2);
@@ -1042,7 +693,54 @@ var BufferCount = /*#__PURE__*/function (_Sink2) {
   return BufferCount;
 }(Sink);
 
-var bufferCount = deliver(BufferCount);
+var bufferCount = deliver(BufferCount, "bufferCount"); // export function operator<T, R, ARG extends unknown[]>(f: (...args: [ISink<R>, ...ARG]) => ISink<T>) {
+//   return (...args: ARG): (Operator<T, R>) => source => sink => f(sink, ...args).subscribe(source);
+// }
+
+var Buffer = /*#__PURE__*/function (_Sink3) {
+  _inherits(Buffer, _Sink3);
+
+  var _super4 = _createSuper(Buffer);
+
+  function Buffer(sink, closingNotifier) {
+    var _this6;
+
+    _classCallCheck(this, Buffer);
+
+    _this6 = _super4.call(this, sink);
+    _this6.buffer = [];
+    var s = new Sink(sink);
+
+    s.next = function (_data) {
+      sink.next(_this6.buffer);
+      _this6.buffer = [];
+    };
+
+    s.complete = nothing;
+    s.subscribe(closingNotifier);
+    return _this6;
+  }
+
+  _createClass(Buffer, [{
+    key: "next",
+    value: function next(data) {
+      this.buffer.push(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      if (this.buffer.length) {
+        this.sink.next(this.buffer);
+      }
+
+      _get(_getPrototypeOf(Buffer.prototype), "complete", this).call(this);
+    }
+  }]);
+
+  return Buffer;
+}(Sink);
+
+var buffer = deliver(Buffer, "buffer");
 
 var combination = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -1056,7 +754,8 @@ var combination = /*#__PURE__*/Object.freeze({
   zip: zip,
   startWith: startWith,
   withLatestFrom: withLatestFrom,
-  bufferCount: bufferCount
+  bufferCount: bufferCount,
+  buffer: buffer
 });
 
 var Reduce = /*#__PURE__*/function (_Sink) {
@@ -1103,23 +802,32 @@ var Reduce = /*#__PURE__*/function (_Sink) {
   return Reduce;
 }(Sink);
 
-var reduce = deliver(Reduce);
+var reduce = deliver(Reduce, "reduce");
 var count = function count(f) {
-  return reduce(function (aac, c) {
+  return deliver(Reduce, "count")(function (aac, c) {
     return f(c) ? aac + 1 : aac;
   }, 0);
 };
 var max = function max() {
-  return reduce(Math.max);
+  return deliver(Reduce, "max")(Math.max);
 };
 var min = function min() {
-  return reduce(Math.min);
+  return deliver(Reduce, "min")(Math.min);
 };
 var sum = function sum() {
-  return reduce(function (aac, c) {
+  return deliver(Reduce, "sum")(function (aac, c) {
     return aac + c;
   }, 0);
 };
+
+var mathematical = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  reduce: reduce,
+  count: count,
+  max: max,
+  min: min,
+  sum: sum
+});
 
 var Filter = /*#__PURE__*/function (_Sink) {
   _inherits(Filter, _Sink);
@@ -1149,7 +857,7 @@ var Filter = /*#__PURE__*/function (_Sink) {
   return Filter;
 }(Sink);
 
-var filter = deliver(Filter);
+var filter = deliver(Filter, "filter");
 
 var Ignore = /*#__PURE__*/function (_Sink2) {
   _inherits(Ignore, _Sink2);
@@ -1170,7 +878,7 @@ var Ignore = /*#__PURE__*/function (_Sink2) {
   return Ignore;
 }(Sink);
 
-var ignoreElements = deliver(Ignore);
+var ignoreElements = deliver(Ignore, "ignoreElements");
 
 var Take = /*#__PURE__*/function (_Sink3) {
   _inherits(Take, _Sink3);
@@ -1201,48 +909,39 @@ var Take = /*#__PURE__*/function (_Sink3) {
   return Take;
 }(Sink);
 
-var take = deliver(Take);
+var take = deliver(Take, "take");
+function takeUntil(control) {
+  var _arguments = arguments;
+  return function (source) {
+    return create(function (sink) {
+      var _takeUntil = new Sink(sink);
 
-var TakeUntil = /*#__PURE__*/function (_Sink4) {
-  _inherits(TakeUntil, _Sink4);
+      _takeUntil.next = function () {
+        return sink.complete();
+      };
 
-  var _super4 = _createSuper(TakeUntil);
+      _takeUntil.complete = dispose;
 
-  function TakeUntil(sink, control) {
-    var _this3;
+      _takeUntil.subscribe(control);
 
-    _classCallCheck(this, TakeUntil);
+      sink.subscribe(source);
+    }, "takeUntil", _arguments);
+  };
+}
 
-    _this3 = _super4.call(this, sink);
-    _this3._takeUntil = new Sink(_this3.sink);
+var TakeWhile = /*#__PURE__*/function (_Sink4) {
+  _inherits(TakeWhile, _Sink4);
 
-    _this3._takeUntil.next = function () {
-      _this3.complete();
-    };
-
-    _this3._takeUntil.complete = dispose;
-    control(_this3._takeUntil);
-    return _this3;
-  }
-
-  return TakeUntil;
-}(Sink);
-
-var takeUntil = deliver(TakeUntil);
-
-var TakeWhile = /*#__PURE__*/function (_Sink5) {
-  _inherits(TakeWhile, _Sink5);
-
-  var _super5 = _createSuper(TakeWhile);
+  var _super4 = _createSuper(TakeWhile);
 
   function TakeWhile(sink, f) {
-    var _this4;
+    var _this3;
 
     _classCallCheck(this, TakeWhile);
 
-    _this4 = _super5.call(this, sink);
-    _this4.f = f;
-    return _this4;
+    _this3 = _super4.call(this, sink);
+    _this3.f = f;
+    return _this3;
   }
 
   _createClass(TakeWhile, [{
@@ -1259,7 +958,7 @@ var TakeWhile = /*#__PURE__*/function (_Sink5) {
   return TakeWhile;
 }(Sink);
 
-var takeWhile = deliver(TakeWhile);
+var takeWhile = deliver(TakeWhile, "takeWhile");
 var takeLast = function takeLast(count) {
   return reduce(function (buffer, d) {
     buffer.push(d);
@@ -1268,19 +967,19 @@ var takeLast = function takeLast(count) {
   }, []);
 };
 
-var Skip = /*#__PURE__*/function (_Sink6) {
-  _inherits(Skip, _Sink6);
+var Skip = /*#__PURE__*/function (_Sink5) {
+  _inherits(Skip, _Sink5);
 
-  var _super6 = _createSuper(Skip);
+  var _super5 = _createSuper(Skip);
 
   function Skip(sink, count) {
-    var _this5;
+    var _this4;
 
     _classCallCheck(this, Skip);
 
-    _this5 = _super6.call(this, sink);
-    _this5.count = count;
-    return _this5;
+    _this4 = _super5.call(this, sink);
+    _this4.count = count;
+    return _this4;
   }
 
   _createClass(Skip, [{
@@ -1295,55 +994,43 @@ var Skip = /*#__PURE__*/function (_Sink6) {
   return Skip;
 }(Sink);
 
-var skip = deliver(Skip);
+var skip = deliver(Skip, "skip");
+function skipUntil(control) {
+  var _arguments2 = arguments;
+  return function (source) {
+    return create(function (sink) {
+      sink.next = nothing;
 
-var SkipUntil = /*#__PURE__*/function (_Sink7) {
-  _inherits(SkipUntil, _Sink7);
+      var _skipUntil = new Sink(sink);
 
-  var _super7 = _createSuper(SkipUntil);
+      _skipUntil.next = function () {
+        _skipUntil.dispose();
 
-  function SkipUntil(sink, control) {
-    var _thisSuper, _this6;
+        sink.resetNext();
+      };
 
-    _classCallCheck(this, SkipUntil);
+      _skipUntil.complete = dispose;
 
-    _this6 = _super7.call(this, sink);
-    _this6._skipUntil = new Sink(_this6.sink);
+      _skipUntil.subscribe(control);
 
-    _this6._skipUntil.next = function () {
-      _this6._skipUntil.dispose();
+      sink.subscribe(source);
+    }, "skipUntil", _arguments2);
+  };
+}
 
-      _this6.next = _get((_thisSuper = _assertThisInitialized(_this6), _getPrototypeOf(SkipUntil.prototype)), "next", _thisSuper);
-    };
+var SkipWhile = /*#__PURE__*/function (_Sink6) {
+  _inherits(SkipWhile, _Sink6);
 
-    _this6._skipUntil.complete = dispose;
-    control(_this6._skipUntil);
-    return _this6;
-  }
-
-  _createClass(SkipUntil, [{
-    key: "next",
-    value: function next(_data) {}
-  }]);
-
-  return SkipUntil;
-}(Sink);
-
-var skipUntil = deliver(SkipUntil);
-
-var SkipWhile = /*#__PURE__*/function (_Sink8) {
-  _inherits(SkipWhile, _Sink8);
-
-  var _super8 = _createSuper(SkipWhile);
+  var _super6 = _createSuper(SkipWhile);
 
   function SkipWhile(sink, f) {
-    var _this7;
+    var _this5;
 
     _classCallCheck(this, SkipWhile);
 
-    _this7 = _super8.call(this, sink);
-    _this7.f = f;
-    return _this7;
+    _this5 = _super6.call(this, sink);
+    _this5.f = f;
+    return _this5;
   }
 
   _createClass(SkipWhile, [{
@@ -1359,26 +1046,26 @@ var SkipWhile = /*#__PURE__*/function (_Sink8) {
   return SkipWhile;
 }(Sink);
 
-var skipWhile = deliver(SkipWhile);
+var skipWhile = deliver(SkipWhile, "skipWhile");
 var defaultThrottleConfig = {
   leading: true,
   trailing: false
 };
 
-var _Throttle = /*#__PURE__*/function (_Sink9) {
-  _inherits(_Throttle, _Sink9);
+var _Throttle = /*#__PURE__*/function (_Sink7) {
+  _inherits(_Throttle, _Sink7);
 
-  var _super9 = _createSuper(_Throttle);
+  var _super7 = _createSuper(_Throttle);
 
   function _Throttle(sink, durationSelector, trailing) {
-    var _this8;
+    var _this6;
 
     _classCallCheck(this, _Throttle);
 
-    _this8 = _super9.call(this, sink);
-    _this8.durationSelector = durationSelector;
-    _this8.trailing = trailing;
-    return _this8;
+    _this6 = _super7.call(this, sink);
+    _this6.durationSelector = durationSelector;
+    _this6.trailing = trailing;
+    return _this6;
   }
 
   _createClass(_Throttle, [{
@@ -1400,7 +1087,7 @@ var _Throttle = /*#__PURE__*/function (_Sink9) {
     key: "throttle",
     value: function throttle(data) {
       this.reset();
-      this.durationSelector(data)(this);
+      this.subscribe(this.durationSelector(data));
     }
   }, {
     key: "next",
@@ -1421,26 +1108,26 @@ var _Throttle = /*#__PURE__*/function (_Sink9) {
   return _Throttle;
 }(Sink);
 
-var Throttle = /*#__PURE__*/function (_Sink10) {
-  _inherits(Throttle, _Sink10);
+var Throttle = /*#__PURE__*/function (_Sink8) {
+  _inherits(Throttle, _Sink8);
 
-  var _super10 = _createSuper(Throttle);
+  var _super8 = _createSuper(Throttle);
 
   function Throttle(sink, durationSelector) {
-    var _this9;
+    var _this7;
 
     var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultThrottleConfig;
 
     _classCallCheck(this, Throttle);
 
-    _this9 = _super10.call(this, sink);
-    _this9.durationSelector = durationSelector;
-    _this9.config = config;
-    _this9._throttle = new _Throttle(_this9.sink, _this9.durationSelector, _this9.config.trailing);
+    _this7 = _super8.call(this, sink);
+    _this7.durationSelector = durationSelector;
+    _this7.config = config;
+    _this7._throttle = new _Throttle(_this7.sink, _this7.durationSelector, _this7.config.trailing);
 
-    _this9._throttle.dispose();
+    _this7._throttle.dispose();
 
-    return _this9;
+    return _this7;
   }
 
   _createClass(Throttle, [{
@@ -1466,24 +1153,24 @@ var Throttle = /*#__PURE__*/function (_Sink10) {
   return Throttle;
 }(Sink);
 
-var throttle = deliver(Throttle);
+var throttle = deliver(Throttle, "throttle");
 var defaultAuditConfig = {
   leading: false,
   trailing: true
 };
 var audit = function audit(durationSelector) {
-  return throttle(durationSelector, defaultAuditConfig);
+  return deliver(Throttle, "audit")(durationSelector, defaultAuditConfig);
 };
 
-var _Debounce = /*#__PURE__*/function (_Sink11) {
-  _inherits(_Debounce, _Sink11);
+var _Debounce = /*#__PURE__*/function (_Sink9) {
+  _inherits(_Debounce, _Sink9);
 
-  var _super11 = _createSuper(_Debounce);
+  var _super9 = _createSuper(_Debounce);
 
   function _Debounce() {
     _classCallCheck(this, _Debounce);
 
-    return _super11.apply(this, arguments);
+    return _super9.apply(this, arguments);
   }
 
   _createClass(_Debounce, [{
@@ -1502,23 +1189,23 @@ var _Debounce = /*#__PURE__*/function (_Sink11) {
   return _Debounce;
 }(Sink);
 
-var Debounce = /*#__PURE__*/function (_Sink12) {
-  _inherits(Debounce, _Sink12);
+var Debounce = /*#__PURE__*/function (_Sink10) {
+  _inherits(Debounce, _Sink10);
 
-  var _super12 = _createSuper(Debounce);
+  var _super10 = _createSuper(Debounce);
 
   function Debounce(sink, durationSelector) {
-    var _this10;
+    var _this8;
 
     _classCallCheck(this, Debounce);
 
-    _this10 = _super12.call(this, sink);
-    _this10.durationSelector = durationSelector;
-    _this10._debounce = new _Debounce(_this10.sink);
+    _this8 = _super10.call(this, sink);
+    _this8.durationSelector = durationSelector;
+    _this8._debounce = new _Debounce(_this8.sink);
 
-    _this10._debounce.dispose();
+    _this8._debounce.dispose();
 
-    return _this10;
+    return _this8;
   }
 
   _createClass(Debounce, [{
@@ -1529,7 +1216,8 @@ var Debounce = /*#__PURE__*/function (_Sink12) {
       this._debounce.reset();
 
       this._debounce.last = data;
-      this.durationSelector(data)(this._debounce);
+
+      this._debounce.subscribe(this.durationSelector(data));
     }
   }, {
     key: "complete",
@@ -1543,27 +1231,27 @@ var Debounce = /*#__PURE__*/function (_Sink12) {
   return Debounce;
 }(Sink);
 
-var debounce = deliver(Debounce);
+var debounce = deliver(Debounce, "debounce");
 var debounceTime = function debounceTime(period) {
-  return debounce(function (_d) {
+  return deliver(Debounce, "debounceTime")(function (_d) {
     return timer(period);
   });
 };
 
-var ElementAt = /*#__PURE__*/function (_Sink13) {
-  _inherits(ElementAt, _Sink13);
+var ElementAt = /*#__PURE__*/function (_Sink11) {
+  _inherits(ElementAt, _Sink11);
 
-  var _super13 = _createSuper(ElementAt);
+  var _super11 = _createSuper(ElementAt);
 
   function ElementAt(sink, count, defaultValue) {
-    var _this11;
+    var _this9;
 
     _classCallCheck(this, ElementAt);
 
-    _this11 = _super13.call(this, sink);
-    _this11.count = count;
-    _this11.defaultValue = defaultValue;
-    return _this11;
+    _this9 = _super11.call(this, sink);
+    _this9.count = count;
+    _this9.defaultValue = defaultValue;
+    return _this9;
   }
 
   _createClass(ElementAt, [{
@@ -1589,7 +1277,7 @@ var ElementAt = /*#__PURE__*/function (_Sink13) {
   return ElementAt;
 }(Sink);
 
-var elementAt = deliver(ElementAt);
+var elementAt = deliver(ElementAt, "elementAt");
 var find = function find(f) {
   return function (source) {
     return take(1)(skipWhile(function (d) {
@@ -1598,20 +1286,20 @@ var find = function find(f) {
   };
 };
 
-var FindIndex = /*#__PURE__*/function (_Sink14) {
-  _inherits(FindIndex, _Sink14);
+var FindIndex = /*#__PURE__*/function (_Sink12) {
+  _inherits(FindIndex, _Sink12);
 
-  var _super14 = _createSuper(FindIndex);
+  var _super12 = _createSuper(FindIndex);
 
   function FindIndex(sink, f) {
-    var _this12;
+    var _this10;
 
     _classCallCheck(this, FindIndex);
 
-    _this12 = _super14.call(this, sink);
-    _this12.f = f;
-    _this12.i = 0;
-    return _this12;
+    _this10 = _super12.call(this, sink);
+    _this10.f = f;
+    _this10.i = 0;
+    return _this10;
   }
 
   _createClass(FindIndex, [{
@@ -1629,23 +1317,23 @@ var FindIndex = /*#__PURE__*/function (_Sink14) {
   return FindIndex;
 }(Sink);
 
-var findIndex = deliver(FindIndex);
+var findIndex = deliver(FindIndex, "findIndex");
 
-var First = /*#__PURE__*/function (_Sink15) {
-  _inherits(First, _Sink15);
+var First = /*#__PURE__*/function (_Sink13) {
+  _inherits(First, _Sink13);
 
-  var _super15 = _createSuper(First);
+  var _super13 = _createSuper(First);
 
   function First(sink, f, defaultValue) {
-    var _this13;
+    var _this11;
 
     _classCallCheck(this, First);
 
-    _this13 = _super15.call(this, sink);
-    _this13.f = f;
-    _this13.defaultValue = defaultValue;
-    _this13.index = 0;
-    return _this13;
+    _this11 = _super13.call(this, sink);
+    _this11.f = f;
+    _this11.defaultValue = defaultValue;
+    _this11.index = 0;
+    return _this11;
   }
 
   _createClass(First, [{
@@ -1671,23 +1359,23 @@ var First = /*#__PURE__*/function (_Sink15) {
   return First;
 }(Sink);
 
-var first = deliver(First);
+var first = deliver(First, "first");
 
-var Last = /*#__PURE__*/function (_Sink16) {
-  _inherits(Last, _Sink16);
+var Last = /*#__PURE__*/function (_Sink14) {
+  _inherits(Last, _Sink14);
 
-  var _super16 = _createSuper(Last);
+  var _super14 = _createSuper(Last);
 
   function Last(sink, f, defaultValue) {
-    var _this14;
+    var _this12;
 
     _classCallCheck(this, Last);
 
-    _this14 = _super16.call(this, sink);
-    _this14.f = f;
-    _this14.defaultValue = defaultValue;
-    _this14.index = 0;
-    return _this14;
+    _this12 = _super14.call(this, sink);
+    _this12.f = f;
+    _this12.defaultValue = defaultValue;
+    _this12.index = 0;
+    return _this12;
   }
 
   _createClass(Last, [{
@@ -1712,22 +1400,22 @@ var Last = /*#__PURE__*/function (_Sink16) {
   return Last;
 }(Sink);
 
-var last = deliver(Last);
+var last = deliver(Last, 'last');
 
-var Every = /*#__PURE__*/function (_Sink17) {
-  _inherits(Every, _Sink17);
+var Every = /*#__PURE__*/function (_Sink15) {
+  _inherits(Every, _Sink15);
 
-  var _super17 = _createSuper(Every);
+  var _super15 = _createSuper(Every);
 
   function Every(sink, predicate) {
-    var _this15;
+    var _this13;
 
     _classCallCheck(this, Every);
 
-    _this15 = _super17.call(this, sink);
-    _this15.predicate = predicate;
-    _this15.index = 0;
-    return _this15;
+    _this13 = _super15.call(this, sink);
+    _this13.predicate = predicate;
+    _this13.index = 0;
+    return _this13;
   }
 
   _createClass(Every, [{
@@ -1755,308 +1443,30 @@ var Every = /*#__PURE__*/function (_Sink17) {
   return Every;
 }(Sink);
 
-var every = deliver(Every);
+var every = deliver(Every, "every");
 
-function pipe(first) {
-  for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    cbs[_key - 1] = arguments[_key];
-  }
-
-  return cbs.reduce(function (aac, c) {
-    return c(aac);
-  }, first);
-}
-var toPromise = function toPromise() {
-  return function (source) {
-    return new Promise(function (resolve, reject) {
-      var value;
-      source(new Subscribe(function (d) {
-        return value = d;
-      }, reject, function () {
-        return resolve(value);
-      }));
-    });
-  };
-};
-var Subscribe = /*#__PURE__*/function (_LastSink) {
-  _inherits(Subscribe, _LastSink);
-
-  var _super = _createSuper(Subscribe);
-
-  function Subscribe() {
-    var _this;
-
-    var next = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
-
-    var _error = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
-
-    var _complete = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
-
-    _classCallCheck(this, Subscribe);
-
-    _this = _super.call(this);
-    _this.next = next;
-    _this._error = _error;
-    _this._complete = _complete;
-    _this.then = nothing;
-    return _this;
-  }
-
-  _createClass(Subscribe, [{
-    key: "complete",
-    value: function complete() {
-      this.dispose();
-
-      this._complete();
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-
-      this._error(err);
-    }
-  }]);
-
-  return Subscribe;
-}(LastSink); // //SUBSCRIBER
-
-var subscribe = function subscribe() {
-  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
-  var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
-  var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
-  return function (source) {
-    var sink = new Subscribe(n, e, c);
-    source(sink);
-    return sink;
-  };
-}; // // UTILITY
-
-var tap = function tap(ob) {
-  return function (source) {
-    return function (sink) {
-      var observer = new Sink(sink);
-
-      if (ob instanceof Function) {
-        observer.next = function (data) {
-          ob(data);
-          sink.next(data);
-        };
-      } else {
-        if (ob.next) observer.next = function (data) {
-          ob.next(data);
-          sink.next(data);
-        };
-        if (ob.complete) observer.complete = function () {
-          ob.complete();
-          sink.complete();
-        };
-        if (ob.error) observer.error = function (err) {
-          ob.error(err);
-          sink.error(err);
-        };
-      }
-
-      source(observer);
-    };
-  };
-};
-
-var Delay = /*#__PURE__*/function (_Sink) {
-  _inherits(Delay, _Sink);
-
-  var _super2 = _createSuper(Delay);
-
-  function Delay(sink, delay) {
-    var _this2;
-
-    _classCallCheck(this, Delay);
-
-    _this2 = _super2.call(this, sink);
-    _this2.buffer = [];
-    _this2.delayTime = delay;
-    return _this2;
-  }
-
-  _createClass(Delay, [{
-    key: "dispose",
-    value: function dispose() {
-      clearTimeout(this.timeoutId);
-
-      _get(_getPrototypeOf(Delay.prototype), "dispose", this).call(this);
-    }
-  }, {
-    key: "delay",
-    value: function delay(_delay) {
-      var _this3 = this;
-
-      this.timeoutId = setTimeout(function () {
-        var d = _this3.buffer.shift();
-
-        if (d) {
-          var lastTime = d.time,
-              data = d.data;
-
-          _get(_getPrototypeOf(Delay.prototype), "next", _this3).call(_this3, data);
-
-          if (_this3.buffer.length) {
-            _this3.delay(Number(_this3.buffer[0].time) - Number(lastTime));
-          }
-        }
-      }, _delay);
-    }
-  }, {
-    key: "next",
-    value: function next(data) {
-      if (!this.buffer.length) {
-        this.delay(this.delayTime);
-      }
-
-      this.buffer.push({
-        time: new Date(),
-        data: data
-      });
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      var _this4 = this;
-
-      this.timeoutId = setTimeout(function () {
-        return _get(_getPrototypeOf(Delay.prototype), "complete", _this4).call(_this4);
-      }, this.delayTime);
-    }
-  }]);
-
-  return Delay;
-}(Sink);
-
-var delay = deliver(Delay);
-
-var CatchError = /*#__PURE__*/function (_Sink2) {
-  _inherits(CatchError, _Sink2);
-
-  var _super3 = _createSuper(CatchError);
-
-  function CatchError(sink, selector) {
-    var _this5;
-
-    _classCallCheck(this, CatchError);
-
-    _this5 = _super3.call(this, sink);
-    _this5.selector = selector;
-    return _this5;
-  }
-
-  _createClass(CatchError, [{
-    key: "error",
-    value: function error(err) {
-      this.dispose();
-      this.selector(err)(this.sink);
-    }
-  }]);
-
-  return CatchError;
-}(Sink);
-
-var catchError = deliver(CatchError);
-
-var GroupBy = /*#__PURE__*/function (_Sink3) {
-  _inherits(GroupBy, _Sink3);
-
-  var _super4 = _createSuper(GroupBy);
-
-  function GroupBy(sink, f) {
-    var _this6;
-
-    _classCallCheck(this, GroupBy);
-
-    _this6 = _super4.call(this, sink);
-    _this6.f = f;
-    _this6.groups = new Map();
-    return _this6;
-  }
-
-  _createClass(GroupBy, [{
-    key: "next",
-    value: function next(data) {
-      var key = this.f(data);
-      var group = this.groups.get(key);
-
-      if (typeof group === 'undefined') {
-        group = subject();
-        group.key = key;
-        this.groups.set(key, group);
-
-        _get(_getPrototypeOf(GroupBy.prototype), "next", this).call(this, group);
-      }
-
-      group.next(data);
-    }
-  }, {
-    key: "complete",
-    value: function complete() {
-      this.groups.forEach(function (group) {
-        return group.complete();
-      });
-
-      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this);
-    }
-  }, {
-    key: "error",
-    value: function error(err) {
-      this.groups.forEach(function (group) {
-        return group.error(err);
-      });
-
-      _get(_getPrototypeOf(GroupBy.prototype), "error", this).call(this, err);
-    }
-  }]);
-
-  return GroupBy;
-}(Sink);
-
-var groupBy = deliver(GroupBy);
-
-var Timeout = /*#__PURE__*/function (_Sink4) {
-  _inherits(Timeout, _Sink4);
-
-  var _super5 = _createSuper(Timeout);
-
-  function Timeout(sink, timeout) {
-    var _this7;
-
-    _classCallCheck(this, Timeout);
-
-    _this7 = _super5.call(this, sink);
-    _this7.timeout = timeout;
-    _this7.id = setTimeout(function () {
-      return _this7.error(new TimeoutError(_this7.timeout));
-    }, _this7.timeout);
-    return _this7;
-  }
-
-  _createClass(Timeout, [{
-    key: "next",
-    value: function next(data) {
-      _get(_getPrototypeOf(Timeout.prototype), "next", this).call(this, data);
-
-      clearTimeout(this.id);
-      this.next = _get(_getPrototypeOf(Timeout.prototype), "next", this);
-    }
-  }, {
-    key: "dispose",
-    value: function dispose() {
-      clearTimeout(this.id);
-
-      _get(_getPrototypeOf(Timeout.prototype), "dispose", this).call(this);
-    }
-  }]);
-
-  return Timeout;
-}(Sink);
-
-var timeout = deliver(Timeout);
+var filtering = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  filter: filter,
+  ignoreElements: ignoreElements,
+  take: take,
+  takeUntil: takeUntil,
+  takeWhile: takeWhile,
+  takeLast: takeLast,
+  skip: skip,
+  skipUntil: skipUntil,
+  skipWhile: skipWhile,
+  throttle: throttle,
+  audit: audit,
+  debounce: debounce,
+  debounceTime: debounceTime,
+  elementAt: elementAt,
+  find: find,
+  findIndex: findIndex,
+  first: first,
+  last: last,
+  every: every
+});
 
 var Scan = /*#__PURE__*/function (_Sink) {
   _inherits(Scan, _Sink);
@@ -2096,7 +1506,7 @@ var Scan = /*#__PURE__*/function (_Sink) {
   return Scan;
 }(Sink);
 
-var scan = deliver(Scan);
+var scan = deliver(Scan, "scan");
 
 var Pairwise = /*#__PURE__*/function (_Sink2) {
   _inherits(Pairwise, _Sink2);
@@ -2129,7 +1539,7 @@ var Pairwise = /*#__PURE__*/function (_Sink2) {
   return Pairwise;
 }(Sink);
 
-var pairwise = deliver(Pairwise);
+var pairwise = deliver(Pairwise, "pairwise");
 
 var MapObserver = /*#__PURE__*/function (_Sink3) {
   _inherits(MapObserver, _Sink3);
@@ -2157,7 +1567,7 @@ var MapObserver = /*#__PURE__*/function (_Sink3) {
   return MapObserver;
 }(Sink);
 
-var map = deliver(MapObserver);
+var map = deliver(MapObserver, "map");
 var mapTo = function mapTo(target) {
   return map(function (_x) {
     return target;
@@ -2284,7 +1694,7 @@ var SwitchMap = /*#__PURE__*/function (_Maps) {
   return SwitchMap;
 }(Maps);
 
-var switchMap = deliver(SwitchMap);
+var switchMap = deliver(SwitchMap, "switchMap");
 
 function makeMapTo(f) {
   return function (innerSource, combineResults) {
@@ -2370,7 +1780,7 @@ var ConcatMap = /*#__PURE__*/function (_Maps2) {
   return ConcatMap;
 }(Maps);
 
-var concatMap = deliver(ConcatMap);
+var concatMap = deliver(ConcatMap, "concatMap");
 var concatMapTo = makeMapTo(concatMap);
 
 var _MergeMap = /*#__PURE__*/function (_InnerSink3) {
@@ -2434,7 +1844,7 @@ var MergeMap = /*#__PURE__*/function (_Maps3) {
   return MergeMap;
 }(Maps);
 
-var mergeMap = deliver(MergeMap);
+var mergeMap = deliver(MergeMap, "mergeMap");
 var mergeMapTo = makeMapTo(mergeMap);
 
 var _ExhaustMap = /*#__PURE__*/function (_InnerSink4) {
@@ -2482,7 +1892,7 @@ var ExhaustMap = /*#__PURE__*/function (_Maps4) {
   return ExhaustMap;
 }(Maps);
 
-var exhaustMap = deliver(ExhaustMap);
+var exhaustMap = deliver(ExhaustMap, "exhaustMap");
 var exhaustMapTo = makeMapTo(exhaustMap);
 
 var TimeInterval = /*#__PURE__*/function (_Sink6) {
@@ -2514,7 +1924,7 @@ var TimeInterval = /*#__PURE__*/function (_Sink6) {
   return TimeInterval;
 }(Sink);
 
-var timeInterval = deliver(TimeInterval);
+var timeInterval = deliver(TimeInterval, "timeInterval");
 
 var BufferTime = /*#__PURE__*/function (_Sink7) {
   _inherits(BufferTime, _Sink7);
@@ -2561,10 +1971,29 @@ var BufferTime = /*#__PURE__*/function (_Sink7) {
   return BufferTime;
 }(Sink);
 
-var bufferTime = deliver(BufferTime);
+var bufferTime = deliver(BufferTime, "bufferTime");
 
-var subject = function subject(source) {
-  var observable = share()(function (sink) {
+var transformation = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  scan: scan,
+  pairwise: pairwise,
+  map: map,
+  mapTo: mapTo,
+  switchMap: switchMap,
+  switchMapTo: switchMapTo,
+  concatMap: concatMap,
+  concatMapTo: concatMapTo,
+  mergeMap: mergeMap,
+  mergeMapTo: mergeMapTo,
+  exhaustMap: exhaustMap,
+  exhaustMapTo: exhaustMapTo,
+  timeInterval: timeInterval,
+  bufferTime: bufferTime
+});
+
+function subject(source) {
+  var args = arguments;
+  var observable = share()(create(function (sink) {
     observable.next = function (data) {
       return sink.next(data);
     };
@@ -2577,56 +2006,45 @@ var subject = function subject(source) {
       return sink.error(err);
     };
 
-    source && source(sink);
-  });
+    source && sink.subscribe(source);
+  }, "subject", args));
   observable.next = nothing;
   observable.complete = nothing;
   observable.error = nothing;
   return observable;
-};
-var defer = function defer(f) {
-  return function (sink) {
-    return f()(sink);
-  };
-};
-var of = function of() {
+}
+function defer(f) {
+  return create(function (sink) {
+    return sink.subscribe(f());
+  }, "defer", arguments);
+}
+function of() {
   for (var _len = arguments.length, data = new Array(_len), _key = 0; _key < _len; _key++) {
     data[_key] = arguments[_key];
   }
 
-  return fromArray(data);
-};
+  return create(fromArray(data), "of", arguments);
+}
 
 var asap = function asap(f) {
   return function (sink) {
-    return setTimeout(function () {
+    setTimeout(function () {
       return f(sink);
     });
   };
 };
 
-var fromArray = function fromArray(data) {
-  return asap(function (sink) {
-    var _iterator = _createForOfIteratorHelper(data),
-        _step;
-
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var d = _step.value;
-        if (sink.disposed) return;
-        sink.next(d);
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
+function fromArray(data) {
+  return create(asap(function (sink) {
+    for (var i = 0; !sink.disposed && i < data.length; i++) {
+      sink.next(data[i]);
     }
 
     sink.complete();
-  });
-};
-var interval = function interval(period) {
-  return function (sink) {
+  }), "fromArray", arguments);
+}
+function interval(period) {
+  return create(function (sink) {
     var i = 0;
     var id = setInterval(function () {
       return sink.next(i++);
@@ -2634,11 +2052,11 @@ var interval = function interval(period) {
     sink.defer(function () {
       clearInterval(id);
     });
-  };
-};
-var timer = function timer(delay) {
-  var period = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-  return function (sink) {
+    return "interval";
+  }, "interval", arguments);
+}
+function timer(delay, period) {
+  return create(function (sink) {
     var i = 0;
     var id = setTimeout(function () {
       sink.removeDefer(deferF);
@@ -2662,10 +2080,10 @@ var timer = function timer(delay) {
     };
 
     sink.defer(deferF);
-  };
-};
-var fromEventPattern = function fromEventPattern(add, remove) {
-  return function (sink) {
+  }, "timer", arguments);
+}
+function fromEventPattern(add, remove) {
+  return create(function (sink) {
     var n = function n(d) {
       return sink.next(d);
     };
@@ -2674,99 +2092,96 @@ var fromEventPattern = function fromEventPattern(add, remove) {
       return remove(n);
     });
     add(n);
-  };
-};
-var fromEvent = function fromEvent(target, name) {
+    return name;
+  }, "fromEventPattern", arguments);
+}
+function fromEvent(target, name) {
   if ("on" in target) {
-    return fromEventPattern(function (h) {
+    return create(fromEventPattern(function (h) {
       return target.on(name, h);
     }, function (h) {
       return target.off(name, h);
-    });
+    }), "fromEvent", arguments);
   } else if ("addListener" in target) {
-    return fromEventPattern(function (h) {
+    return create(fromEventPattern(function (h) {
       return target.addListener(name, h);
     }, function (h) {
       return target.removeListener(name, h);
-    });
+    }), "fromEvent", arguments);
   } else if ("addEventListener" in target) {
-    return fromEventPattern(function (h) {
+    return create(fromEventPattern(function (h) {
       return target.addEventListener(name, h);
     }, function (h) {
       return target.removeEventListener(name, h);
-    });
+    }), "fromEvent", arguments);
   } else throw 'target is not a EventDispachter';
-};
+}
 /**
  *
  * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target
  * @returns
  */
 
-var fromMessageEvent = function fromMessageEvent(target) {
-  return function (sink) {
+function fromMessageEvent(target) {
+  return create(function (sink) {
     var closeOb = fromEvent(target, 'close');
     var messageOb = fromEvent(target, 'message');
     var errorOb = fromEvent(target, 'error');
-    pipe(merge(messageOb, switchMap(throwError)(errorOb)), takeUntil(closeOb))(sink);
     sink.defer(function () {
       return target.close();
     });
-  };
-};
-var fromPromise = function fromPromise(promise) {
-  return function (sink) {
+    sink.subscribe(pipe(merge(messageOb, switchMap(throwError)(errorOb)), takeUntil(closeOb)));
+  }, "fromMessageEvent", arguments);
+}
+function fromPromise(promise) {
+  return create(function (sink) {
     promise.then(sink.next.bind(sink), sink.error.bind(sink));
-  };
-};
-var fromFetch = function fromFetch(input, init) {
-  return defer(function () {
+  }, "fromPromise", arguments);
+}
+function fromFetch(input, init) {
+  return create(defer(function () {
     return fromPromise(fetch(input, init));
-  });
-};
-var fromIterable = function fromIterable(source) {
-  return asap(function (sink) {
+  }), "fromFetch", arguments);
+}
+function fromIterable(source) {
+  return create(asap(function (sink) {
     try {
-      var _iterator2 = _createForOfIteratorHelper(source),
-          _step2;
+      var _iterator = _createForOfIteratorHelper(source),
+          _step;
 
       try {
-        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-          var data = _step2.value;
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var data = _step.value;
           if (sink.disposed) return;
           sink.next(data);
         }
       } catch (err) {
-        _iterator2.e(err);
+        _iterator.e(err);
       } finally {
-        _iterator2.f();
+        _iterator.f();
       }
 
       sink.complete();
     } catch (err) {
       sink.error(err);
     }
-  });
-};
-var fromAnimationFrame = function fromAnimationFrame() {
-  return function (sink) {
-    var id;
-
-    function next(t) {
+  }), "fromIterable", arguments);
+}
+function fromAnimationFrame() {
+  return create(function (sink) {
+    var id = requestAnimationFrame(function next(t) {
       if (!sink.disposed) {
         sink.next(t);
         id = requestAnimationFrame(next);
       }
-    }
-
-    id = requestAnimationFrame(next);
+    });
     sink.defer(function () {
       return cancelAnimationFrame(id);
     });
-  };
-};
-var range = function range(start, count) {
-  return function (sink) {
+  }, "fromAnimationFrame", arguments);
+}
+function range(start, count) {
+  return create(function (sink) {
     var pos = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : start;
     var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : count + start;
 
@@ -2775,45 +2190,46 @@ var range = function range(start, count) {
     }
 
     sink.complete();
-  };
-};
-var bindCallback = function bindCallback(call, thisArg) {
+    return "range";
+  }, "range", arguments);
+}
+function bindCallback(call, thisArg) {
   for (var _len2 = arguments.length, args = new Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
     args[_key2 - 2] = arguments[_key2];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var inArgs = args.concat(function (res) {
       return sink.next(res), sink.complete();
     });
     call.apply(thisArg, inArgs);
-  };
-};
-var bindNodeCallback = function bindNodeCallback(call, thisArg) {
+  }, "bindCallback", arguments);
+}
+function bindNodeCallback(call, thisArg) {
   for (var _len3 = arguments.length, args = new Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
     args[_key3 - 2] = arguments[_key3];
   }
 
-  return function (sink) {
+  return create(function (sink) {
     var inArgs = args.concat(function (err, res) {
       return err ? sink.error(err) : (sink.next(res), sink.complete());
     });
     call.apply(thisArg, inArgs);
-  };
-};
-var never = function never() {
-  return nothing;
-};
-var throwError = function throwError(e) {
-  return function (sink) {
+  }, "bindNodeCallback", arguments);
+}
+function never() {
+  return create(function () {}, "never", arguments);
+}
+function throwError(e) {
+  return create(function (sink) {
     return sink.error(e);
-  };
-};
-var empty = function empty() {
-  return function (sink) {
+  }, "throwError", arguments);
+}
+function empty() {
+  return create(function (sink) {
     return sink.complete();
-  };
-};
+  }, "empty", arguments);
+}
 
 var producer = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -2838,195 +2254,710 @@ var producer = /*#__PURE__*/Object.freeze({
   empty: empty
 });
 
-var COUNT = 0;
-var Node = /*#__PURE__*/function () {
-  function Node() {
-    var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-    var arg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-
-    _classCallCheck(this, Node);
-
-    this.name = name;
-    this.arg = arg;
-    this.id = COUNT++;
-
-    switch (name) {
-      case 'subscribe':
-      case 'toPromise':
-      case 'toRef':
-        this.end = true;
-        break;
-
-      default:
-        this.end = false;
-    }
-
-    Events.create(this);
-
-    if (arg.length) {
-      this.args = arg;
-    }
+function pipe(first) {
+  for (var _len = arguments.length, cbs = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    cbs[_key - 1] = arguments[_key];
   }
 
-  _createClass(Node, [{
-    key: "toString",
-    value: function toString() {
-      return "".concat(typeof this.name == 'string' ? this.name : this.name.name, "(").concat(this.arg.map(function (x) {
-        return _typeof(x) == 'object' || typeof x == 'function' ? (typeof x.name == 'function' ? x.name.name : x.name) || '...' : x;
-      }).join(','), ")");
+  return cbs.reduce(function (aac, c) {
+    return c(aac);
+  }, first);
+}
+var toPromise = function toPromise() {
+  return function (source) {
+    return new Promise(function (resolve, reject) {
+      var value;
+      new Subscribe(function (d) {
+        return value = d;
+      }, reject, function () {
+        return resolve(value);
+      }).subscribe(source);
+    });
+  };
+};
+var Subscribe = /*#__PURE__*/function (_LastSink) {
+  _inherits(Subscribe, _LastSink);
+
+  var _super = _createSuper(Subscribe);
+
+  function Subscribe() {
+    var _this;
+
+    var next = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
+
+    var _error = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
+
+    var _complete = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
+
+    _classCallCheck(this, Subscribe);
+
+    _this = _super.call(this);
+    _this.next = next;
+    _this._error = _error;
+    _this._complete = _complete;
+    _this.then = nothing;
+    return _this;
+  }
+
+  _createClass(Subscribe, [{
+    key: "complete",
+    value: function complete() {
+      this.dispose();
+
+      this._complete();
     }
   }, {
-    key: "unProxy",
-    get: function get() {
-      return this;
-    } //是否属于子流
+    key: "error",
+    value: function error(err) {
+      this.dispose();
 
-  }, {
-    key: "checkSubNode",
-    value: function checkSubNode(x) {
-      var _this = this;
+      this._error(err);
+    }
+  }]);
 
-      if ("unProxy" in x) {
-        var isNode = x.unProxy;
-        Events.addSource(this, isNode), function (s) {
-          s.nodeId = _this.id;
-          s.streamId = 0;
-          isNode.subscribe(s);
+  return Subscribe;
+}(LastSink); // //SUBSCRIBER
+
+var subscribe = function subscribe() {
+  var n = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : nothing;
+  var e = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : nothing;
+  var c = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : nothing;
+  return new Subscribe(n, e, c).bindSubscribe;
+}; // // UTILITY
+
+function tap(ob) {
+  var _arguments = arguments;
+  return function (source) {
+    return create(function (sink) {
+      var observer = new Sink(sink);
+
+      if (ob instanceof Function) {
+        observer.next = function (data) {
+          ob(data);
+          sink.next(data);
+        };
+      } else {
+        if (ob.next) observer.next = function (data) {
+          ob.next(data);
+          sink.next(data);
+        };
+        if (ob.complete) observer.complete = function () {
+          ob.complete();
+          sink.complete();
+        };
+        if (ob.error) observer.error = function (err) {
+          ob.error(err);
+          sink.error(err);
         };
       }
 
-      return x;
-    } //过滤子事件流，放入sources数组中，就能显示
+      observer.subscribe(source);
+    }, "tap", _arguments);
+  };
+}
 
+var Delay = /*#__PURE__*/function (_Sink) {
+  _inherits(Delay, _Sink);
+
+  var _super2 = _createSuper(Delay);
+
+  function Delay(sink, delay) {
+    var _this2;
+
+    _classCallCheck(this, Delay);
+
+    _this2 = _super2.call(this, sink);
+    _this2.buffer = [];
+    _this2.delayTime = delay;
+    return _this2;
+  }
+
+  _createClass(Delay, [{
+    key: "dispose",
+    value: function dispose() {
+      clearTimeout(this.timeoutId);
+
+      _get(_getPrototypeOf(Delay.prototype), "dispose", this).call(this);
+    }
   }, {
-    key: "args",
-    set: function set(value) {
-      var _this2 = this;
-
-      this.arg = value.map(function (x) {
-        return _this2.checkSubNode(x);
-      });
-    } // 通过返回proxy产生链式调用
-
-  }, {
-    key: "pipe",
-    value: function pipe() {
+    key: "delay",
+    value: function delay(_delay) {
       var _this3 = this;
 
-      if (this.end) {
-        return this.subscribe();
+      this.timeoutId = setTimeout(function () {
+        var d = _this3.buffer.shift();
+
+        if (d) {
+          var lastTime = d.time,
+              data = d.data;
+
+          _get(_getPrototypeOf(Delay.prototype), "next", _this3).call(_this3, data);
+
+          if (_this3.buffer.length) {
+            _this3.delay(Number(_this3.buffer[0].time) - Number(lastTime));
+          }
+        }
+      }, _delay);
+    }
+  }, {
+    key: "next",
+    value: function next(data) {
+      if (!this.buffer.length) {
+        this.delay(this.delayTime);
       }
 
-      var target = this;
-      return new Proxy(function (sink) {
-        return _this3.subscribe(sink);
-      }, {
-        get: function get(_, prop) {
-          if (prop != 'subscribe' && prop in target) // @ts-ignore
-            return target[prop];
-          if (prop == 'subscribe' && target.subscribeSink) return target.subscribeSink;
-          var sink = target.createSink(prop);
-          return target.subscribeSink = function () {
-            for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-              args[_key] = arguments[_key];
-            }
-
-            sink.args = args;
-            Events.update(sink);
-            return sink.pipe();
-          };
-        }
+      this.buffer.push({
+        time: new Date(),
+        data: data
       });
     }
   }, {
-    key: "createSink",
-    value: function createSink(name) {
-      var sink = new Node(name);
-      sink.source = this;
-      Events.pipe(sink);
-      return sink;
+    key: "complete",
+    value: function complete() {
+      var _this4 = this;
+
+      this.timeoutId = setTimeout(function () {
+        return _get(_getPrototypeOf(Delay.prototype), "complete", _this4).call(_this4);
+      }, this.delayTime);
+    }
+  }]);
+
+  return Delay;
+}(Sink);
+
+var delay = deliver(Delay, "delay");
+
+var CatchError = /*#__PURE__*/function (_Sink2) {
+  _inherits(CatchError, _Sink2);
+
+  var _super3 = _createSuper(CatchError);
+
+  function CatchError(sink, selector) {
+    var _this5;
+
+    _classCallCheck(this, CatchError);
+
+    _this5 = _super3.call(this, sink);
+    _this5.selector = selector;
+    return _this5;
+  }
+
+  _createClass(CatchError, [{
+    key: "error",
+    value: function error(err) {
+      this.dispose();
+      this.selector(err)(this.sink);
+    }
+  }]);
+
+  return CatchError;
+}(Sink);
+
+var catchError = deliver(CatchError, "catchError");
+
+var GroupBy = /*#__PURE__*/function (_Sink3) {
+  _inherits(GroupBy, _Sink3);
+
+  var _super4 = _createSuper(GroupBy);
+
+  function GroupBy(sink, f) {
+    var _this6;
+
+    _classCallCheck(this, GroupBy);
+
+    _this6 = _super4.call(this, sink);
+    _this6.f = f;
+    _this6.groups = new Map();
+    return _this6;
+  }
+
+  _createClass(GroupBy, [{
+    key: "next",
+    value: function next(data) {
+      var key = this.f(data);
+      var group = this.groups.get(key);
+
+      if (typeof group === 'undefined') {
+        group = subject();
+        group.key = key;
+        this.groups.set(key, group);
+
+        _get(_getPrototypeOf(GroupBy.prototype), "next", this).call(this, group);
+      }
+
+      group.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      this.groups.forEach(function (group) {
+        return group.complete();
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "complete", this).call(this);
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.groups.forEach(function (group) {
+        return group.error(err);
+      });
+
+      _get(_getPrototypeOf(GroupBy.prototype), "error", this).call(this, err);
+    }
+  }]);
+
+  return GroupBy;
+}(Sink);
+
+var groupBy = deliver(GroupBy, "groupBy");
+
+var Timeout = /*#__PURE__*/function (_Sink4) {
+  _inherits(Timeout, _Sink4);
+
+  var _super5 = _createSuper(Timeout);
+
+  function Timeout(sink, timeout) {
+    var _this7;
+
+    _classCallCheck(this, Timeout);
+
+    _this7 = _super5.call(this, sink);
+    _this7.timeout = timeout;
+    _this7.id = setTimeout(function () {
+      return _this7.error(new TimeoutError(_this7.timeout));
+    }, _this7.timeout);
+    return _this7;
+  }
+
+  _createClass(Timeout, [{
+    key: "next",
+    value: function next(data) {
+      _get(_getPrototypeOf(Timeout.prototype), "next", this).call(this, data);
+
+      clearTimeout(this.id);
+      this.next = _get(_getPrototypeOf(Timeout.prototype), "next", this);
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      clearTimeout(this.id);
+
+      _get(_getPrototypeOf(Timeout.prototype), "dispose", this).call(this);
+    }
+  }]);
+
+  return Timeout;
+}(Sink);
+
+var timeout = deliver(Timeout, "timeout");
+
+function nothing() {}
+var call = function call(f) {
+  return f();
+};
+var identity = function identity(x) {
+  return x;
+};
+function dispose() {
+  this.dispose();
+} // @ts-ignore
+
+var inspect = function inspect() {
+  return typeof __FASTRX_DEVTOOLS__ !== 'undefined';
+};
+var obids = 0;
+
+var InspectObservable = /*#__PURE__*/function (_Function) {
+  _inherits(InspectObservable, _Function);
+
+  var _super = _createSuper(InspectObservable);
+
+  function InspectObservable() {
+    _classCallCheck(this, InspectObservable);
+
+    return _super.apply(this, arguments);
+  }
+
+  _createClass(InspectObservable, [{
+    key: "toString",
+    value: function toString() {
+      return "".concat(this.name, "(").concat(this.args.length ? _toConsumableArray(this.args).join(', ') : "", ")");
+    }
+  }, {
+    key: "pipe",
+    value: function pipe$1() {
+      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
+      }
+
+      return pipe.apply(void 0, [this].concat(args));
     }
   }, {
     key: "subscribe",
     value: function subscribe(sink) {
-      var _this4 = this;
+      var notEnd = sink instanceof Sink;
 
-      var source = this.source,
-          name = this.name,
-          arg = this.arg; // @ts-ignore
-
-      var realrx = typeof name == 'string' ? fastrx[name].apply(fastrx, _toConsumableArray(arg)) : name;
-      var f = source && !this.end ? realrx(function (s) {
-        s.streamId = streamCount - 1;
-        s.nodeId = _this4.id;
-        source.subscribe(s);
-      }) : realrx;
-      var streamCount = 0;
-
-      this.subscribe = function (sink) {
-        var _this5 = this;
-
-        var streamId = streamCount++;
-
-        if (sink) {
-          var newSink = new Sink(sink);
-
-          newSink.next = function (data) {
-            Events.next(_this5, streamId, data);
-            sink.next(data);
-          };
-
-          newSink.complete = function () {
-            Events.complete(_this5, streamId);
-            sink.complete();
-          };
-
-          newSink.error = function (err) {
-            Events.complete(_this5, streamId, err);
-            sink.error(err);
-          };
-
-          newSink.defer(function () {
-            Events.defer(_this5, streamId);
-          });
-          Events.subscribe(this, sink);
-          f(newSink);
-          return newSink;
-        }
-
-        return f(function (s) {
-          var next = s.next,
-              complete = s.complete,
-              error = s.error;
-
-          s.next = function (data) {
-            Events.next(_this5, streamId, data);
-            next(data);
-          };
-
-          s.error = function (err) {
-            Events.complete(_this5, streamId, err);
-            error(err);
-          };
-
-          s.complete = function () {
-            Events.complete(_this5, streamId);
-            complete();
-          };
-
-          s.streamId = streamId;
-          s.nodeId = _this5.id;
-          Events.subscribe(_this5);
-          source.subscribe(s);
+      if (notEnd) {
+        var ns = new NodeSink(sink, this, this.streamId++);
+        Events.subscribe({
+          id: this.id,
+          end: false
+        }, {
+          nodeId: ns.sourceId,
+          streamId: ns.id
         });
-      };
-
-      return this.subscribe(sink);
+        this(ns);
+        return ns;
+      } else {
+        Events.subscribe({
+          id: this.id,
+          end: true
+        });
+        this(sink);
+        return sink;
+      }
     }
   }]);
 
-  return Node;
+  return InspectObservable;
+}( /*#__PURE__*/_wrapNativeSuper(Function));
+function create(ob, name, args) {
+  if (inspect()) {
+    var result = Object.defineProperties(Object.setPrototypeOf(ob, InspectObservable.prototype), {
+      streamId: {
+        value: 0,
+        writable: true
+      },
+      name: {
+        value: name
+      },
+      args: {
+        value: args
+      },
+      id: {
+        value: obids++
+      }
+    });
+    Events.create(result);
+    return result;
+  } // @ts-ignore
+
+
+  return ob;
+}
+var LastSink = /*#__PURE__*/function () {
+  function LastSink() {
+    _classCallCheck(this, LastSink);
+
+    this.defers = new Set();
+    this.disposed = false;
+  }
+
+  _createClass(LastSink, [{
+    key: "next",
+    value: function next(data) {}
+  }, {
+    key: "complete",
+    value: function complete() {
+      this.dispose();
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.dispose();
+    }
+  }, {
+    key: "bindDispose",
+    get: function get() {
+      var _this = this;
+
+      return function () {
+        return _this.dispose();
+      };
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this.disposed = true;
+      this.complete = nothing;
+      this.error = nothing;
+      this.next = nothing;
+      this.dispose = nothing;
+      this.subscribe = nothing;
+      this.doDefer();
+    }
+  }, {
+    key: "subscribe",
+    value: function subscribe(source) {
+      if (inspect()) return source.subscribe(this);else source(this);
+      return this;
+    }
+  }, {
+    key: "bindSubscribe",
+    get: function get() {
+      var _this2 = this;
+
+      return function (source) {
+        return _this2.subscribe(source);
+      };
+    }
+  }, {
+    key: "doDefer",
+    value: function doDefer() {
+      this.defers.forEach(call);
+      this.defers.clear();
+    }
+  }, {
+    key: "defer",
+    value: function defer(df) {
+      this.defers.add(df);
+    }
+  }, {
+    key: "removeDefer",
+    value: function removeDefer(df) {
+      this.defers.delete(df);
+    }
+  }, {
+    key: "reset",
+    value: function reset() {
+      this.disposed = false; //@ts-ignore
+
+      delete this.complete; //@ts-ignore
+
+      delete this.next; //@ts-ignore
+
+      delete this.dispose; //@ts-ignore
+
+      delete this.next; //@ts-ignore
+
+      delete this.subscribe;
+    }
+  }, {
+    key: "resetNext",
+    value: function resetNext() {
+      //@ts-ignore
+      delete this.next;
+    }
+  }, {
+    key: "resetComplete",
+    value: function resetComplete() {
+      //@ts-ignore
+      delete this.complete;
+    }
+  }, {
+    key: "resetError",
+    value: function resetError() {
+      //@ts-ignore
+      delete this.error;
+    }
+  }]);
+
+  return LastSink;
 }();
+var Sink = /*#__PURE__*/function (_LastSink) {
+  _inherits(Sink, _LastSink);
+
+  var _super2 = _createSuper(Sink);
+
+  function Sink(sink) {
+    var _this3;
+
+    _classCallCheck(this, Sink);
+
+    _this3 = _super2.call(this);
+    _this3.sink = sink;
+    sink.defer(_this3.bindDispose);
+    return _this3;
+  }
+
+  _createClass(Sink, [{
+    key: "next",
+    value: function next(data) {
+      this.sink.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      this.sink.complete();
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      this.sink.error(err);
+    }
+  }]);
+
+  return Sink;
+}(LastSink);
+function deliver(c, name) {
+  return function () {
+    var _arguments = arguments;
+
+    for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+      args[_key3] = arguments[_key3];
+    }
+
+    if (inspect()) {
+      return function (source) {
+        var ob = create(function (observer) {
+          var deliverSink = _construct(c, [observer].concat(args));
+
+          deliverSink.sourceId = ob.id;
+          return deliverSink.subscribe(source);
+        }, name, _arguments);
+        ob.source = source;
+        Events.pipe(ob);
+        return ob;
+      };
+    }
+
+    return function (source) {
+      return create(function (observer) {
+        return _construct(c, [observer].concat(args)).subscribe(source);
+      }, name, _arguments);
+    };
+  };
+}
+
+function send(event, payload) {
+  window.postMessage({
+    source: 'fastrx-devtools-backend',
+    payload: {
+      event: event,
+      payload: payload
+    }
+  });
+}
+
+var NodeSink = /*#__PURE__*/function (_Sink) {
+  _inherits(NodeSink, _Sink);
+
+  var _super3 = _createSuper(NodeSink);
+
+  function NodeSink(sink, source, id) {
+    var _this4;
+
+    _classCallCheck(this, NodeSink);
+
+    _this4 = _super3.call(this, sink);
+    _this4.source = source;
+    _this4.id = id;
+
+    _this4.defer(function () {
+      Events.defer(_this4.source, _this4.id);
+    });
+
+    return _this4;
+  }
+
+  _createClass(NodeSink, [{
+    key: "next",
+    value: function next(data) {
+      Events.next(this.source, this.id, data);
+      this.sink.next(data);
+    }
+  }, {
+    key: "complete",
+    value: function complete() {
+      Events.complete(this.source, this.id);
+      this.sink.complete();
+    }
+  }, {
+    key: "error",
+    value: function error(err) {
+      Events.complete(this.source, this.id, err);
+      this.sink.error(err);
+    }
+  }]);
+
+  return NodeSink;
+}(Sink);
+
+NodeSink.Observables = {};
+var Events = {
+  addSource: function addSource(who, source) {
+    send('addSource', {
+      id: who.id,
+      name: who.toString(),
+      source: {
+        id: source.id,
+        name: source.toString()
+      }
+    });
+  },
+  next: function next(who, streamId, data) {
+    send('next', {
+      id: who.id,
+      streamId: streamId,
+      data: data && data.toString()
+    });
+  },
+  subscribe: function subscribe(_ref, sink) {
+    var id = _ref.id,
+        end = _ref.end;
+    send('subscribe', {
+      id: id,
+      end: end,
+      sink: {
+        nodeId: sink && sink.nodeId,
+        streamId: sink && sink.streamId
+      }
+    });
+  },
+  complete: function complete(who, streamId, err) {
+    send('complete', {
+      id: who.id,
+      streamId: streamId,
+      err: err ? err.toString() : null
+    });
+  },
+  defer: function defer(who, streamId) {
+    send('defer', {
+      id: who.id,
+      streamId: streamId
+    });
+  },
+  pipe: function pipe(who) {
+    send('pipe', {
+      name: who.toString(),
+      id: who.id,
+      source: {
+        id: who.source.id,
+        name: who.source.toString()
+      }
+    });
+  },
+  update: function update(who) {
+    send('update', {
+      id: who.id,
+      name: who.toString()
+    });
+  },
+  create: function create(who) {
+    send('create', {
+      name: who.toString(),
+      id: who.id
+    });
+  }
+};
+var TimeoutError = /*#__PURE__*/function (_Error) {
+  _inherits(TimeoutError, _Error);
+
+  var _super4 = _createSuper(TimeoutError);
+
+  function TimeoutError(timeout) {
+    var _this5;
+
+    _classCallCheck(this, TimeoutError);
+
+    _this5 = _super4.call(this, "timeout after ".concat(timeout, "ms"));
+    _this5.timeout = timeout;
+    return _this5;
+  }
+
+  return TimeoutError;
+}( /*#__PURE__*/_wrapNativeSuper(Error));
 
 var __rest = undefined && undefined.__rest || function (s, e) {
   var t = {};
@@ -3045,8 +2976,8 @@ var zip$1 = zip,
     merge$1 = merge,
     race$1 = race,
     concat$1 = concat,
-    combineLatest$1 = combineLatest;
-    __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
+    combineLatest$1 = combineLatest,
+    combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
 
 var observables = Object.assign({
   zip: zip$1,
@@ -3054,17 +2985,14 @@ var observables = Object.assign({
   race: race$1,
   concat: concat$1,
   combineLatest: combineLatest$1
-}, producer); //const operators = { tap, delay, timeout, catchError, groupBy, ...combinations, ...filtering, ...mathematical, ...transformation };
-
-var operators = {
+}, producer);
+var operators = Object.assign(Object.assign(Object.assign(Object.assign({
   tap: tap,
-  delay: delay
-};
-
-function inspect() {
-  return typeof window != 'undefined' && window.__FASTRX_DEVTOOLS__;
-}
-
+  delay: delay,
+  timeout: timeout,
+  catchError: catchError,
+  groupBy: groupBy
+}, combinations), filtering), mathematical), transformation);
 var rxProxy = {
   get: function get(target, prop) {
     switch (prop) {
@@ -3088,16 +3016,10 @@ var rxProxy = {
   }
 };
 var rx = new Proxy(function (f) {
-  return inspect() ? new Node(f).pipe() : new Proxy(f, rxProxy);
+  return new Proxy(f, rxProxy);
 }, {
   get: function get(_target, prop) {
-    return inspect() ? function () {
-      for (var _len = arguments.length, arg = new Array(_len), _key = 0; _key < _len; _key++) {
-        arg[_key] = arguments[_key];
-      }
-
-      return new Node(prop, arg).pipe();
-    } : function (observable) {
+    return function (observable) {
       return function () {
         return new Proxy(observable.apply(void 0, arguments), rxProxy);
       };
@@ -3110,6 +3032,7 @@ var rx = new Proxy(function (f) {
 });
 
 exports.Events = Events;
+exports.InspectObservable = InspectObservable;
 exports.LastSink = LastSink;
 exports.Sink = Sink;
 exports.Subscribe = Subscribe;
@@ -3117,6 +3040,7 @@ exports.TimeoutError = TimeoutError;
 exports.audit = audit;
 exports.bindCallback = bindCallback;
 exports.bindNodeCallback = bindNodeCallback;
+exports.buffer = buffer;
 exports.bufferCount = bufferCount;
 exports.bufferTime = bufferTime;
 exports.call = call;
@@ -3126,6 +3050,7 @@ exports.concat = concat;
 exports.concatMap = concatMap;
 exports.concatMapTo = concatMapTo;
 exports.count = count;
+exports.create = create;
 exports.debounce = debounce;
 exports.debounceTime = debounceTime;
 exports.defer = defer;
@@ -3153,6 +3078,7 @@ exports.groupBy = groupBy;
 exports.identity = identity;
 exports.ignoreElements = ignoreElements;
 exports.iif = iif;
+exports.inspect = inspect;
 exports.interval = interval;
 exports.last = last;
 exports.map = map;

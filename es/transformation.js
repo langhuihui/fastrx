@@ -18,7 +18,7 @@ class Scan extends Sink {
         this.sink.next(this.acc = this.f(this.acc, data));
     }
 }
-export const scan = deliver(Scan);
+export const scan = deliver(Scan, "scan");
 class Pairwise extends Sink {
     constructor() {
         super(...arguments);
@@ -34,7 +34,7 @@ class Pairwise extends Sink {
         this.last = data;
     }
 }
-export const pairwise = deliver(Pairwise);
+export const pairwise = deliver(Pairwise, "pairwise");
 class MapObserver extends Sink {
     constructor(sink, mapper, thisArg) {
         super(sink);
@@ -45,8 +45,8 @@ class MapObserver extends Sink {
         super.next(this.mapper.call(this.thisArg, data));
     }
 }
-export const map = deliver(MapObserver);
-export const mapTo = (target) => map((_x) => target);
+export const map = deliver(MapObserver, "map");
+export const mapTo = (target) => deliver(MapObserver, "mapTo")((_x) => target);
 class InnerSink extends Sink {
     constructor(sink, data, context) {
         super(sink);
@@ -99,7 +99,7 @@ class SwitchMap extends Maps {
         };
     }
 }
-export const switchMap = deliver(SwitchMap);
+export const switchMap = deliver(SwitchMap, "switchMap");
 function makeMapTo(f) {
     return (innerSource, combineResults) => f(() => innerSource, combineResults);
 }
@@ -141,7 +141,7 @@ class ConcatMap extends Maps {
         this.dispose();
     }
 }
-export const concatMap = deliver(ConcatMap);
+export const concatMap = deliver(ConcatMap, "concatMap");
 export const concatMapTo = makeMapTo(concatMap);
 class _MergeMap extends InnerSink {
     tryComplete() {
@@ -170,7 +170,7 @@ class MergeMap extends Maps {
             this.dispose();
     }
 }
-export const mergeMap = deliver(MergeMap);
+export const mergeMap = deliver(MergeMap, "mergeMap");
 export const mergeMapTo = makeMapTo(mergeMap);
 class _ExhaustMap extends InnerSink {
     dispose() {
@@ -184,7 +184,7 @@ class ExhaustMap extends Maps {
         this.subInner(data, _ExhaustMap);
     }
 }
-export const exhaustMap = deliver(ExhaustMap);
+export const exhaustMap = deliver(ExhaustMap, "exhaustMap");
 export const exhaustMapTo = makeMapTo(exhaustMap);
 class TimeInterval extends Sink {
     constructor() {
@@ -196,7 +196,7 @@ class TimeInterval extends Sink {
         this.start = new Date();
     }
 }
-export const timeInterval = deliver(TimeInterval);
+export const timeInterval = deliver(TimeInterval, "timeInterval");
 class BufferTime extends Sink {
     constructor(sink, miniseconds) {
         super(sink);
@@ -219,4 +219,4 @@ class BufferTime extends Sink {
         super.dispose();
     }
 }
-export const bufferTime = deliver(BufferTime);
+export const bufferTime = deliver(BufferTime, "bufferTime");
