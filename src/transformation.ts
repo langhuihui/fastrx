@@ -80,7 +80,7 @@ class Maps<T, U, R, CS extends InnerSink<T, U, R, MapContext<T, U, R>>> extends 
     const sink = this.currentSink = new c(this.sink, data, this);
     this.complete = this.tryComplete;
     sink.complete = sink.tryComplete;
-    this.makeSource(data, this.index++)(sink);
+    sink.subscribe(this.makeSource(data, this.index++))
   }
   // 如果complete先于inner的complete触发，则不传播complete
   tryComplete() {

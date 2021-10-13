@@ -3,11 +3,11 @@ import * as producer from './producer';
 import * as filtering from './filtering';
 import * as mathematical from './mathematical';
 import * as transformation from './transformation';
-import * as utils from './utils'
+import { subscribe, toPromise, tap, timeout } from './utils';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest, ...combinations } = combination;
 const observables = { zip, merge, race, concat, combineLatest, ...producer };
-const operators = { ...utils, ...combinations, ...filtering, ...mathematical, ...transformation };
+const operators = { tap, timeout, ...combinations, ...filtering, ...mathematical, ...transformation };
 
 // (typeof operators)[keyof typeof operators] extends (...arg:any[])=>Operator<number,number>?
 type Operators<T> = {
@@ -17,9 +17,9 @@ const rxProxy = {
   get: <T, PROP extends keyof typeof operators>(target: Observable<T>, prop: PROP | "subscribe" | "toPromise"): (Subscribe<T> | Promise<T> | InstanceType<ProxyConstructor>) => {
     switch (prop) {
       case "subscribe":
-        return (...args: Parameters<typeof utils.subscribe>) => utils.subscribe<T>(...args)(target);
+        return (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
       case "toPromise":
-        return () => utils.toPromise<T>()(target);
+        return () => toPromise<T>()(target);
       default:
         //@ts-ignore
         return (<R>(operator: (...args: Parameters<(typeof operators)[PROP]>) => Operator<T, R>) => (...args: Parameters<(typeof operators)[PROP]>) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);
@@ -27,8 +27,8 @@ const rxProxy = {
   }
 };
 type Obs = {
-  subscribe: typeof utils.subscribe;
-  toPromise: typeof utils.toPromise;
+  subscribe: typeof subscribe;
+  toPromise: typeof toPromise;
 };
 type Op = {
   [key in keyof (typeof operators)]: (...args: Parameters<((typeof operators))[key]>) => Op;

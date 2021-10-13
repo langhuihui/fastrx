@@ -1,4 +1,5 @@
 import { Sink, deliver, nothing } from "./common";
+import { subject } from "./producer";
 class Scan extends Sink {
     constructor(sink, f, seed) {
         super(sink);
@@ -79,7 +80,7 @@ class Maps extends Sink {
         const sink = this.currentSink = new c(this.sink, data, this);
         this.complete = this.tryComplete;
         sink.complete = sink.tryComplete;
-        this.makeSource(data, this.index++)(sink);
+        sink.subscribe(this.makeSource(data, this.index++));
     }
     // 如果complete先于inner的complete触发，则不传播complete
     tryComplete() {
@@ -103,7 +104,7 @@ export const switchMap = deliver(SwitchMap, "switchMap");
 function makeMapTo(f) {
     return (innerSource, combineResults) => f(() => innerSource, combineResults);
 }
-export const switchMapTo = makeMapTo(switchMap);
+export const switchMapTo = makeMapTo(deliver(SwitchMap, "switchMapTo"));
 class _ConcatMap extends InnerSink {
     tryComplete() {
         this.dispose();
@@ -142,7 +143,7 @@ class ConcatMap extends Maps {
     }
 }
 export const concatMap = deliver(ConcatMap, "concatMap");
-export const concatMapTo = makeMapTo(concatMap);
+export const concatMapTo = makeMapTo(deliver(ConcatMap, "concatMapTo"));
 class _MergeMap extends InnerSink {
     tryComplete() {
         this.context.inners.delete(this);
@@ -171,7 +172,7 @@ class MergeMap extends Maps {
     }
 }
 export const mergeMap = deliver(MergeMap, "mergeMap");
-export const mergeMapTo = makeMapTo(mergeMap);
+export const mergeMapTo = makeMapTo(deliver(MergeMap, "mergeMapTo"));
 class _ExhaustMap extends InnerSink {
     dispose() {
         this.context.resetNext();
@@ -185,7 +186,34 @@ class ExhaustMap extends Maps {
     }
 }
 export const exhaustMap = deliver(ExhaustMap, "exhaustMap");
-export const exhaustMapTo = makeMapTo(exhaustMap);
+export const exhaustMapTo = makeMapTo(deliver(ExhaustMap, "exhaustMapTo"));
+class GroupBy extends Sink {
+    constructor(sink, f) {
+        super(sink);
+        this.f = f;
+        this.groups = new Map();
+    }
+    next(data) {
+        const key = this.f(data);
+        let group = this.groups.get(key);
+        if (typeof group === 'undefined') {
+            group = subject();
+            group.key = key;
+            this.groups.set(key, group);
+            super.next(group);
+        }
+        group.next(data);
+    }
+    complete() {
+        this.groups.forEach((group) => group.complete());
+        super.complete();
+    }
+    error(err) {
+        this.groups.forEach((group) => group.error(err));
+        super.error(err);
+    }
+}
+export const groupBy = deliver(GroupBy, "groupBy");
 class TimeInterval extends Sink {
     constructor() {
         super(...arguments);
@@ -220,3 +248,47 @@ class BufferTime extends Sink {
     }
 }
 export const bufferTime = deliver(BufferTime, "bufferTime");
+class Delay extends Sink {
+    constructor(sink, delay) {
+        super(sink);
+        this.buffer = [];
+        this.delayTime = delay;
+    }
+    dispose() {
+        clearTimeout(this.timeoutId);
+        super.dispose();
+    }
+    delay(delay) {
+        this.timeoutId = setTimeout(() => {
+            const d = this.buffer.shift();
+            if (d) {
+                const { time: lastTime, data } = d;
+                super.next(data);
+                if (this.buffer.length) {
+                    this.delay(Number(this.buffer[0].time) - Number(lastTime));
+                }
+            }
+        }, delay);
+    }
+    next(data) {
+        if (!this.buffer.length) {
+            this.delay(this.delayTime);
+        }
+        this.buffer.push({ time: new Date(), data });
+    }
+    complete() {
+        this.timeoutId = setTimeout(() => super.complete(), this.delayTime);
+    }
+}
+export const delay = deliver(Delay, "delay");
+class CatchError extends Sink {
+    constructor(sink, selector) {
+        super(sink);
+        this.selector = selector;
+    }
+    error(err) {
+        this.dispose();
+        this.selector(err)(this.sink);
+    }
+}
+export const catchError = deliver(CatchError, "catchError");

@@ -4,6 +4,5 @@ export * from './combination';
 export * from './filtering';
 export * from './mathematical';
 export * from './transformation';
-export * from './pipe';
-export * from './chain';
+export * from './utils';
 //# sourceMappingURL=index.d.ts.map

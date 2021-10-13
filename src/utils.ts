@@ -1,16 +1,15 @@
-import { Observable, nothing, Sink, ISink, Observer, deliver, TimeoutError, Subscribe } from "./common";
+import { Observable, nothing, Sink, ISink, Observer, deliver, TimeoutError, Subscribe, Events, inspect, InspectObservable, Inspect } from "./common";
 
 export const toPromise = <T>() => (source: Observable<T>) =>
   new Promise<T>((resolve, reject) => {
     let value: T;
-    (new Subscribe<T>((d) => (value = d), reject, () => resolve(value))).subscribe(source);
+    new Subscribe<T>(source, (d) => (value = d), reject, () => resolve(value));
   });
 
 
 // //SUBSCRIBER
 export const subscribe =
-  <T>(n: (data: T) => void = nothing, e = nothing, c = nothing) =>
-    (new Subscribe<T>(n, e, c)).bindSubscribe;
+  <T>(n: (data: T) => void = nothing, e = nothing, c = nothing) => (source: Observable<T>) => new Subscribe<T>(source, n, e, c);
 // // UTILITY
 
 class Tap<T> extends Sink<T> {

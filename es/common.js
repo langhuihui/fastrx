@@ -1,4 +1,3 @@
-import { pipe } from "./pipe";
 export function nothing(...args) { }
 export const call = (f) => f();
 export const identity = (x) => x;
@@ -7,44 +6,23 @@ export function dispose() {
 }
 // @ts-ignore
 export const inspect = () => typeof __FASTRX_DEVTOOLS__ !== 'undefined';
-let obids = 0;
-function pp(...args) {
-    return pipe(this, ...args);
-}
+let obids = 1;
+// function pp(this: Observable<unknown>, ...args: [...Operator<unknown>[], Operator<unknown>]) {
+//   return pipe(this, ...args);
+// }
 export class Inspect extends Function {
     toString() {
         return `${this.name}(${this.args.length ? [...this.args].join(', ') : ""})`;
     }
-    pipe(...args) {
-        return pipe(this, ...args);
-    }
+    // pipe(...args: [...Operator<unknown>[], Operator<unknown>]): Observable<unknown> {
+    //   return pipe(this as unknown as Observable<T>, ...args);
+    // }
     subscribe(sink) {
-        const notEnd = sink instanceof Sink;
-        if (notEnd) {
-            const ns = new NodeSink(sink, this, this.streamId++);
-            Events.subscribe({ id: this.id, end: false }, { nodeId: ns.sourceId, streamId: ns.id });
-            this(ns);
-            return ns;
-        }
-        else {
-            Events.subscribe({ id: this.id, end: true });
-            this(sink);
-            return sink;
-        }
+        const ns = new NodeSink(sink, this, this.streamId++);
+        Events.subscribe({ id: this.id, end: false }, { nodeId: ns.sourceId, streamId: ns.id });
+        this(ns);
+        return ns;
     }
-}
-export function create(ob, name, args) {
-    if (inspect()) {
-        const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
-            streamId: { value: 0, writable: true },
-            name: { value: name },
-            args: { value: args },
-            id: { value: obids++ },
-        });
-        Events.create(result);
-        return result;
-    }
-    return ob;
 }
 export class LastSink {
     constructor() {
@@ -133,6 +111,92 @@ export class Sink extends LastSink {
         this.sink.error(err);
     }
 }
+export class Subscribe extends LastSink {
+    constructor(source, _next = nothing, _error = nothing, _complete = nothing) {
+        super();
+        this._next = _next;
+        this._error = _error;
+        this._complete = _complete;
+        this.then = nothing;
+        if (source instanceof Inspect) {
+            const id = source.streamId++;
+            this.defer(() => {
+                Events.defer(source, id);
+            });
+            const node = { toString: () => 'Subscribe', id: 0, source };
+            Events.create(node);
+            Events.pipe(node);
+            Events.subscribe({ id: node.id, end: true }, { nodeId: this.sourceId, streamId: id });
+            if (_next == nothing) {
+                this._next = data => Events.next(source, id, data);
+            }
+            else {
+                this.next = data => {
+                    Events.next(source, id, data);
+                    _next(data);
+                };
+            }
+            if (_complete == nothing) {
+                this._complete = () => Events.complete(source, id);
+            }
+            else {
+                this.complete = () => {
+                    this.dispose();
+                    Events.complete(source, id);
+                    _complete();
+                };
+            }
+            if (_error == nothing) {
+                this._error = err => Events.complete(source, id, err);
+            }
+            else {
+                this.error = err => {
+                    this.dispose();
+                    Events.complete(source, id, err);
+                    _error();
+                };
+            }
+        }
+        this.subscribe(source);
+    }
+    next(data) {
+        this._next(data);
+    }
+    complete() {
+        this.dispose();
+        this._complete();
+    }
+    error(err) {
+        this.dispose();
+        this._error(err);
+    }
+}
+export function pipe(first, ...cbs) {
+    return cbs.reduce((aac, c) => c(aac), first);
+}
+export function create(ob, name, args) {
+    if (inspect()) {
+        const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
+            streamId: { value: 0, writable: true },
+            name: { value: name },
+            args: { value: args },
+            id: { value: obids++ },
+        });
+        Events.create(result);
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+            if (typeof arg === 'function') {
+                if (arg instanceof Inspect) {
+                    Events.addSource(arg, result);
+                }
+                else {
+                }
+            }
+        }
+        return result;
+    }
+    return ob;
+}
 export function deliver(c, name) {
     return function (...args) {
         return source => {
@@ -160,6 +224,7 @@ class NodeSink extends Sink {
         super(sink);
         this.source = source;
         this.id = id;
+        this.sourceId = sink.sourceId;
         this.defer(() => {
             Events.defer(this.source, this.id);
         });
@@ -212,6 +277,8 @@ export const Events = {
         send('update', { id: who.id, name: who.toString() });
     },
     create(who) {
+        if (!who.id)
+            who.id = obids++;
         send('create', { name: who.toString(), id: who.id });
     },
 };

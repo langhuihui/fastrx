@@ -9,16 +9,15 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
-// @ts-nocheck
-import { tap, delay, timeout, catchError, groupBy, subscribe, toPromise } from './pipe';
 import * as producer from './producer';
 import * as filtering from './filtering';
 import * as mathematical from './mathematical';
 import * as transformation from './transformation';
+import { subscribe, toPromise, tap, timeout } from './utils';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest } = combination, combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
 const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producer);
-const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, delay, timeout, catchError, groupBy }, combinations), filtering), mathematical), transformation);
+const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, timeout }, combinations), filtering), mathematical), transformation);
 const rxProxy = {
     get: (target, prop) => {
         switch (prop) {
@@ -27,6 +26,7 @@ const rxProxy = {
             case "toPromise":
                 return () => toPromise()(target);
             default:
+                //@ts-ignore
                 return ((operator) => (...args) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);
         }
     }

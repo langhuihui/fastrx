@@ -1,7 +1,6 @@
 import { merge, share } from "./combination";
-import { ISink, Observable, nothing, Observer, create } from "./common";
+import { ISink, Observable, nothing, Observer, create, pipe } from "./common";
 import { takeUntil } from "./filtering";
-import { pipe } from "./pipe";
 import { switchMap } from "./transformation";
 export type Subject<T> = Observable<T> & Observer<T>;
 export function subject<T>(source?: Observable<T>) {

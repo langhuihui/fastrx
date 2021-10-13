@@ -1,5 +1,3 @@
-// import { pipe } from "./pipe";
-
 export function nothing(...args: any[]): any { }
 export const call = (f: Function) => f();
 export const identity = <T>(x: T): T => x;
@@ -19,7 +17,7 @@ export interface Observer<T> {
   error(err: any): void;
   dispose(): void;
 }
-let obids = 0;
+let obids = 1;
 // function pp(this: Observable<unknown>, ...args: [...Operator<unknown>[], Operator<unknown>]) {
 //   return pipe(this, ...args);
 // }
@@ -35,32 +33,13 @@ export class Inspect<T> extends Function {
   //   return pipe(this as unknown as Observable<T>, ...args);
   // }
   subscribe(sink: ISink<T>): ISink<T> {
-    const notEnd = sink instanceof Sink;
-    if (notEnd) {
-      const ns = new NodeSink<T>(sink, this, this.streamId++);
-      Events.subscribe({ id: this.id, end: false }, { nodeId: ns.sourceId, streamId: ns.id });
-      this(ns);
-      return ns;
-    } else {
-      Events.subscribe({ id: this.id, end: true });
-      this(sink);
-      return sink;
-    }
+    const ns = new NodeSink<T>(sink, this, this.streamId++);
+    Events.subscribe({ id: this.id, end: false }, { nodeId: ns.sourceId, streamId: ns.id });
+    this(ns);
+    return ns;
   }
 }
-export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArguments): Observable<T> {
-  if (inspect()) {
-    const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
-      streamId: { value: 0, writable: true },
-      name: { value: name },
-      args: { value: args },
-      id: { value: obids++ },
-    });
-    Events.create(result);
-    return result as InspectObservable<T>;
-  }
-  return ob;
-}
+
 declare type Dispose = () => any;
 export type Observable<T> = (sink: ISink<T>) => void;
 export type InspectObservable<T> = Observable<T> & Inspect<T>;
@@ -154,8 +133,48 @@ export class Sink<T, R = T> extends LastSink<T> {
 }
 export class Subscribe<T> extends LastSink<T> {
   then = nothing;
-  constructor(public next = nothing, public _error = nothing, public _complete = nothing) {
+  constructor(source: Observable<T> | InspectObservable<T>, public _next = nothing, public _error = nothing, public _complete = nothing) {
     super();
+    if (source instanceof Inspect) {
+      const id = source.streamId++;
+      this.defer(() => {
+        Events.defer(source, id);
+      });
+      const node = { toString: () => 'Subscribe', id: 0, source };
+      Events.create(node);
+      Events.pipe(node);
+      Events.subscribe({ id: node.id, end: true }, { nodeId: this.sourceId, streamId: id });
+      if (_next == nothing) {
+        this._next = data => Events.next(source, id, data);
+      } else {
+        this.next = data => {
+          Events.next(source, id, data);
+          _next(data);
+        };
+      }
+      if (_complete == nothing) {
+        this._complete = () => Events.complete(source, id);
+      } else {
+        this.complete = () => {
+          this.dispose();
+          Events.complete(source, id);
+          _complete();
+        };
+      }
+      if (_error == nothing) {
+        this._error = err => Events.complete(source, id, err);
+      } else {
+        this.error = err => {
+          this.dispose();
+          Events.complete(source, id, err);
+          _error();
+        };
+      }
+    }
+    this.subscribe(source);
+  }
+  next(data: T) {
+    this._next(data);
   }
   complete() {
     this.dispose();
@@ -165,6 +184,45 @@ export class Subscribe<T> extends LastSink<T> {
     this.dispose();
     this._error(err);
   }
+}
+type Subscription<T, R = T> = Subscribe<T> | Promise<T> | Observable<R>;
+//type Operators<T, S> = T extends [Operator<S, infer A>, ...infer R] ? R extends [(source: Observable<A>) => Subscribe<A> | Promise<A>] ? T : (R extends Operators<R, A> ? T : never) : never;
+//export function pipe<S, LL, LLL extends Subscription<LL>, T extends [...Operators<T, S>, (source: Observable<LL>) => LLL]>(first: Observable<S>, ...arg: T): LLL;
+
+export function pipe<T, L extends Subscription<T>>(first: Observable<T>, sub: (source: Observable<T>) => L): L;
+export function pipe<T, T1, L extends Subscription<T1>>(first: Observable<T>, op1: Operator<T, T1>, sub: (source: Observable<T1>) => L): L;
+export function pipe<T, T1, T2, L extends Subscription<T2>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, sub: (source: Observable<T2>) => L): L;
+export function pipe<T, T1, T2, T3, L extends Subscription<T3>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, sub: (source: Observable<T3>) => L): L;
+export function pipe<T, T1, T2, T3, T4, L extends Subscription<T4>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, sub: (source: Observable<T4>) => L): L;
+export function pipe<T, T1, T2, T3, T4, T5, L extends Subscription<T5>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, sub: (source: Observable<T5>) => L): L;
+export function pipe<T, T1, T2, T3, T4, T5, T6, L extends Subscription<T6>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, op6: Operator<T5, T6>, sub: (source: Observable<T6>) => L): L;
+export function pipe<T, T1, T2, T3, T4, T5, T6, T7, L extends Subscription<T7>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, op6: Operator<T5, T6>, op7: Operator<T6, T7>, sub: (source: Observable<T7>) => L): L;
+export function pipe<L extends Subscription<unknown>>(...cbs: [Observable<unknown>, ...any, (source: Observable<unknown>) => L]): L;
+export function pipe<L extends Subscription<unknown>>(first: Observable<unknown>, ...cbs: [...any, (source: Observable<unknown>) => L]): L {
+  return cbs.reduce((aac, c) => c(aac), first);
+}
+export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArguments): Observable<T> {
+  if (inspect()) {
+    const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
+      streamId: { value: 0, writable: true },
+      name: { value: name },
+      args: { value: args },
+      id: { value: obids++ },
+    });
+    Events.create(result);
+    for(let i = 0; i < args.length; i++) {
+      const arg = args[i];
+      if (typeof arg === 'function') {
+        if(arg instanceof Inspect){
+          Events.addSource(arg, result)
+        } else {
+          
+        }
+      }
+    }
+    return result as InspectObservable<T>;
+  }
+  return ob;
 }
 export function deliver<T, R, ARG extends any[]>(c: { new(sink: ISink<R>, ...args: ARG): ISink<T>; }, name: string) {
   return function (...args: ARG): (Operator<T, R>) {
@@ -191,6 +249,7 @@ function send(event: string, payload: any) {
 class NodeSink<T> extends Sink<T> {
   constructor(sink: ISink<T>, public readonly source: Inspect<T>, public readonly id: number) {
     super(sink);
+    this.sourceId = sink.sourceId;
     this.defer(() => {
       Events.defer(this.source, this.id);
     });
@@ -248,6 +307,7 @@ export const Events = {
     send('update', { id: who.id, name: who.toString() });
   },
   create(who: Node) {
+    if (!who.id) who.id = obids++;
     send('create', { name: who.toString(), id: who.id });
   },
 };

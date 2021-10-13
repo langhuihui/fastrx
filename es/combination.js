@@ -35,9 +35,7 @@ export function share() {
         const share = new Share(source);
         if (source instanceof Inspect) {
             const ob = create((observer) => {
-                const deliverSink = new Sink(observer);
-                deliverSink.sourceId = ob.id;
-                share.add(deliverSink);
+                share.add(observer);
             }, "share", arguments);
             share.sourceId = ob.id;
             ob.source = source;

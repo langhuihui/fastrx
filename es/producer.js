@@ -1,7 +1,6 @@
 import { merge, share } from "./combination";
-import { nothing, create } from "./common";
+import { nothing, create, pipe } from "./common";
 import { takeUntil } from "./filtering";
-import { pipe } from "./pipe";
 import { switchMap } from "./transformation";
 export function subject(source) {
     const args = arguments;
