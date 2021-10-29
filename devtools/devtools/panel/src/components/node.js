@@ -37,6 +37,7 @@ export class Node {
         this.cdData = CoolDown(0.1)
         this.cdSub = CoolDown(0)
         this.source = null
+        this.sinkNode = null
         this.stopCoolDown = true
     }
     pickColor() {

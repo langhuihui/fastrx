@@ -136,42 +136,44 @@ export class Subscribe<T> extends LastSink<T> {
   constructor(source: Observable<T> | InspectObservable<T>, public _next = nothing, public _error = nothing, public _complete = nothing) {
     super();
     if (source instanceof Inspect) {
-      const id = source.streamId++;
+      const node = { toString: () => 'subscribe', id: 0, source };
       this.defer(() => {
-        Events.defer(source, id);
+        Events.defer(node, 0);
       });
-      const node = { toString: () => 'Subscribe', id: 0, source };
       Events.create(node);
       Events.pipe(node);
-      Events.subscribe({ id: node.id, end: true }, { nodeId: this.sourceId, streamId: id });
+      this.sourceId = node.id;
+      this.subscribe(source);
+      Events.subscribe({ id: node.id, end: true });
       if (_next == nothing) {
-        this._next = data => Events.next(source, id, data);
+        this._next = data => Events.next(node, 0, data);
       } else {
         this.next = data => {
-          Events.next(source, id, data);
+          Events.next(node, 0, data);
           _next(data);
         };
       }
       if (_complete == nothing) {
-        this._complete = () => Events.complete(source, id);
+        this._complete = () => Events.complete(node, 0);
       } else {
         this.complete = () => {
           this.dispose();
-          Events.complete(source, id);
+          Events.complete(node, 0);
           _complete();
         };
       }
       if (_error == nothing) {
-        this._error = err => Events.complete(source, id, err);
+        this._error = err => Events.complete(node, 0, err);
       } else {
         this.error = err => {
           this.dispose();
-          Events.complete(source, id, err);
+          Events.complete(node, 0, err);
           _error();
         };
       }
+    } else {
+      this.subscribe(source);
     }
-    this.subscribe(source);
   }
   next(data: T) {
     this._next(data);
@@ -207,14 +209,14 @@ export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArg
       streamId: { value: 0, writable: true },
       name: { value: name },
       args: { value: args },
-      id: { value: obids++ },
+      id: { value: 0, writable: true },
     });
     Events.create(result);
     for(let i = 0; i < args.length; i++) {
       const arg = args[i];
       if (typeof arg === 'function') {
         if(arg instanceof Inspect){
-          Events.addSource(arg, result)
+          Events.addSource(result,arg)
         } else {
           
         }

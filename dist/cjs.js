@@ -519,36 +519,36 @@ var Subscribe = /*#__PURE__*/function (_LastSink2) {
     _this4.then = nothing;
 
     if (source instanceof Inspect) {
-      var id = source.streamId++;
-
-      _this4.defer(function () {
-        Events.defer(source, id);
-      });
-
       var node = {
         toString: function toString() {
-          return 'Subscribe';
+          return 'subscribe';
         },
         id: 0,
         source: source
       };
+
+      _this4.defer(function () {
+        Events.defer(node, 0);
+      });
+
       Events.create(node);
       Events.pipe(node);
+      _this4.sourceId = node.id;
+
+      _this4.subscribe(source);
+
       Events.subscribe({
         id: node.id,
         end: true
-      }, {
-        nodeId: _this4.sourceId,
-        streamId: id
       });
 
       if (_next == nothing) {
         _this4._next = function (data) {
-          return Events.next(source, id, data);
+          return Events.next(node, 0, data);
         };
       } else {
         _this4.next = function (data) {
-          Events.next(source, id, data);
+          Events.next(node, 0, data);
 
           _next(data);
         };
@@ -556,13 +556,13 @@ var Subscribe = /*#__PURE__*/function (_LastSink2) {
 
       if (_complete == nothing) {
         _this4._complete = function () {
-          return Events.complete(source, id);
+          return Events.complete(node, 0);
         };
       } else {
         _this4.complete = function () {
           _this4.dispose();
 
-          Events.complete(source, id);
+          Events.complete(node, 0);
 
           _complete();
         };
@@ -570,20 +570,20 @@ var Subscribe = /*#__PURE__*/function (_LastSink2) {
 
       if (_error == nothing) {
         _this4._error = function (err) {
-          return Events.complete(source, id, err);
+          return Events.complete(node, 0, err);
         };
       } else {
         _this4.error = function (err) {
           _this4.dispose();
 
-          Events.complete(source, id, err);
+          Events.complete(node, 0, err);
 
           _error();
         };
       }
+    } else {
+      _this4.subscribe(source);
     }
-
-    _this4.subscribe(source);
 
     return _this4;
   }
@@ -634,7 +634,8 @@ function create(ob, name, args) {
         value: args
       },
       id: {
-        value: obids++
+        value: 0,
+        writable: true
       }
     });
     Events.create(result);

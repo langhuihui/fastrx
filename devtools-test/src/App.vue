@@ -1,10 +1,10 @@
 <script setup lang="ts">
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
-import { pipe,interval,take,subscribe } from "../../src/index";
+import { pipe,interval,take,subscribe,race } from "../../src/index";
 function onClick(){
   window.onmessage = evt=>console.log(evt.data.payload);
-  pipe(interval(1000),take(100),subscribe(console.log))
+  pipe(race(interval(1000),interval(2000)),take(3),subscribe(console.log))
 }
 
 </script>

@@ -99,6 +99,7 @@ export default {
               if (nodes[payload.id]) {
                 // const ob = new Node(payload.source.name);
                 // nodes[payload.source.id] = ob;
+                nodes[payload.source.id].sinkNode = nodes[payload.id];
                 nodes[payload.id].sources.push(nodes[payload.source.id]);
               }
               break;
@@ -110,6 +111,7 @@ export default {
               const sink = new Node(payload.name);
               nodes[payload.id] = sink;
               sink.source = nodes[payload.source.id];
+              nodes[payload.source.id].sinkNode = sink;
               break;
             case "update":
               if (nodes[payload.id]) {
@@ -121,7 +123,6 @@ export default {
               if (!node) break;
               if (payload.end) {
                 pipelines.unshift(node);
-
                 // const pipeline = [node];
                 // while (node.source) {
                 //   pipeline.unshift(node.source);
@@ -129,10 +130,8 @@ export default {
                 // }
                 // pipelines.push(pipeline);
               }
-              node.subscribe(
-                nodes[payload.sink.nodeId] &&
-                  nodes[payload.sink.nodeId].streams[payload.sink.streamId]
-              );
+              const s = nodes[payload.sink.nodeId] || node.sinkNode;
+              node.subscribe( s && s.streams[payload.sink.streamId]);
           }
         });
       };
