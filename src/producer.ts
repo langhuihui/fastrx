@@ -1,7 +1,5 @@
-import { merge, share } from "./combination";
-import { ISink, Observable, nothing, Observer, create, pipe } from "./common";
-import { takeUntil } from "./filtering";
-import { switchMap } from "./transformation";
+import { share } from "./combination";
+import { ISink, Observable, nothing, Observer, create, EventHandler, EventDispachter } from "./common";
 export type Subject<T> = Observable<T> & Observer<T>;
 export function subject<T>(source?: Observable<T>) {
   const args = arguments;
@@ -19,21 +17,23 @@ export function subject<T>(source?: Observable<T>) {
 export function defer<T>(f: () => Observable<T>): Observable<T> {
   return create(sink => sink.subscribe(f()), "defer", arguments);
 }
-export function of<T>(...data: T[]) {
-  return create(fromArray(data), "of", arguments);
-}
-
 const asap = <T>(f: (sink: ISink<T>) => void) => (sink: ISink<T>) => {
   setTimeout(() => f(sink));
 };
 
+const _fromArray = <T>(data: ArrayLike<T>) => asap((sink: ISink<T>) => {
+  for (let i = 0; !sink.disposed && i < data.length; i++) {
+    sink.next(data[i]);
+  }
+  sink.complete();
+});
+
+export function of<T>(...data: T[]) {
+  return create(_fromArray(data), "of", arguments);
+}
+
 export function fromArray<T>(data: ArrayLike<T>): Observable<T> {
-  return create(asap((sink: ISink<T>) => {
-    for (let i = 0; !sink.disposed && i < data.length; i++) {
-      sink.next(data[i]);
-    }
-    sink.complete();
-  }), "fromArray", arguments);
+  return create(_fromArray(data), "fromArray", arguments);
 }
 
 export function interval(period: number): Observable<number> {
@@ -62,60 +62,34 @@ export function timer(delay: number, period?: number): Observable<number> {
     sink.defer(deferF);
   }, "timer", arguments);
 };
-export function fromEventPattern<T>(add: (n: EventHandler<T>) => void, remove: (n: EventHandler<T>) => void): Observable<T> {
-  return create((sink: ISink<T>) => {
+function _fromEventPattern<T>(add: (n: EventHandler<T>) => void, remove: (n: EventHandler<T>) => void): Observable<T> {
+  return (sink: ISink<T>) => {
     const n: EventHandler<T> = (d) => sink.next(d);
     sink.defer(() => remove(n));
     add(n);
-    return name;
-  }, "fromEventPattern", arguments);
+  };
+}
+export function fromEventPattern<T>(add: (n: EventHandler<T>) => void, remove: (n: EventHandler<T>) => void): Observable<T> {
+  return create(_fromEventPattern(add, remove), "fromEventPattern", arguments);
 };
-type EventHandler<T> = (event: T) => void;
-type EventMethod<N, T> = (name: N, handler: EventHandler<T>) => void;
-type EventDispachter<N, T> = {
-  on: EventMethod<N, T>;
-  off: EventMethod<N, T>;
-} | {
-  addListener: EventMethod<N, T>;
-  removeListener: EventMethod<N, T>;
-} | {
-  addEventListener: EventMethod<N, T>;
-  removeEventListener: EventMethod<N, T>;
-};
+
 export function fromEvent<T, N>(target: EventDispachter<N, T>, name: N) {
   if ("on" in target) {
-    return create(fromEventPattern<T>(
+    return create(_fromEventPattern<T>(
       (h) => target.on(name, h),
       (h) => target.off(name, h)), "fromEvent", arguments);
   } else if ("addListener" in target) {
-    return create(fromEventPattern<T>(
+    return create(_fromEventPattern<T>(
       (h) => target.addListener(name, h),
       (h) => target.removeListener(name, h)), "fromEvent", arguments);
   } else if ("addEventListener" in target) {
-    return create(fromEventPattern<T>(
+    return create(_fromEventPattern<T>(
       (h) => target.addEventListener(name, h),
       (h) => target.removeEventListener(name, h)), "fromEvent", arguments);
   }
   else throw 'target is not a EventDispachter';
 };
-type Messager<T> = {
-  onmessage: (event: T) => void;
-  close: () => void;
-};
-/**
- * 
- * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target 
- * @returns
- */
-export function fromMessageEvent<T>(target: Messager<T> & EventDispachter<string, T>): Observable<T> {
-  return create((sink: ISink<T>) => {
-    const closeOb = fromEvent(target, 'close');
-    const messageOb = fromEvent(target, 'message');
-    const errorOb = fromEvent(target, 'error');
-    sink.defer(() => target.close());
-    sink.subscribe(pipe(merge(messageOb, switchMap(throwError)(errorOb)), takeUntil(closeOb)));
-  }, "fromMessageEvent", arguments);
-};
+
 export function fromPromise<T>(promise: Promise<T>): Observable<T> {
   return create((sink: ISink<T>) => {
     promise.then(sink.next.bind(sink), sink.error.bind(sink));

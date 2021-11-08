@@ -7,7 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { LastSink } from "./common";
+import { merge } from "./combination";
+import { create, LastSink, pipe } from "./common";
+import { takeUntil } from "./filtering";
+import { fromEvent, throwError } from "./producer";
+import { switchMap } from "./transformation";
 export const koaEventStream = function (ctx, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const sink = new LastSink();
@@ -28,3 +32,18 @@ export const koaEventStream = function (ctx, next) {
         req.on('close', () => sink.dispose());
     });
 };
+/**
+ *
+ * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target
+ * @returns
+ */
+export function fromMessageEvent(target) {
+    return create((sink) => {
+        const closeOb = fromEvent(target, 'close');
+        const messageOb = fromEvent(target, 'message');
+        const errorOb = fromEvent(target, 'error');
+        sink.defer(() => target.close());
+        sink.subscribe(pipe(merge(messageOb, switchMap(throwError)(errorOb)), takeUntil(closeOb)));
+    }, "fromMessageEvent", arguments);
+}
+;

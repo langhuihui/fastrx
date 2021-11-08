@@ -9,37 +9,15 @@ declare const observables: {
     fromArray<T_3>(data: ArrayLike<T_3>): Observable<T_3>;
     interval(period: number): Observable<number>;
     timer(delay: number, period?: number | undefined): Observable<number>;
-    fromEventPattern<T_4>(add: (n: (event: T_4) => void) => void, remove: (n: (event: T_4) => void) => void): Observable<T_4>;
-    fromEvent<T_5, N>(target: {
-        on: (name: N, handler: (event: T_5) => void) => void;
-        off: (name: N, handler: (event: T_5) => void) => void;
-    } | {
-        addListener: (name: N, handler: (event: T_5) => void) => void;
-        removeListener: (name: N, handler: (event: T_5) => void) => void;
-    } | {
-        addEventListener: (name: N, handler: (event: T_5) => void) => void;
-        removeEventListener: (name: N, handler: (event: T_5) => void) => void;
-    }, name: N): Observable<T_5>;
-    fromMessageEvent<T_6>(target: {
-        onmessage: (event: T_6) => void;
-        close: () => void;
-    } & ({
-        on: (name: string, handler: (event: T_6) => void) => void;
-        off: (name: string, handler: (event: T_6) => void) => void;
-    } | {
-        addListener: (name: string, handler: (event: T_6) => void) => void;
-        removeListener: (name: string, handler: (event: T_6) => void) => void;
-    } | {
-        addEventListener: (name: string, handler: (event: T_6) => void) => void;
-        removeEventListener: (name: string, handler: (event: T_6) => void) => void;
-    })): Observable<T_6>;
-    fromPromise<T_7>(promise: Promise<T_7>): Observable<T_7>;
+    fromEventPattern<T_4>(add: (n: import("./common").EventHandler<T_4>) => void, remove: (n: import("./common").EventHandler<T_4>) => void): Observable<T_4>;
+    fromEvent<T_5, N>(target: import("./common").EventDispachter<N, T_5>, name: N): Observable<T_5>;
+    fromPromise<T_6>(promise: Promise<T_6>): Observable<T_6>;
     fromFetch(input: RequestInfo, init?: RequestInit | undefined): Observable<Response>;
-    fromIterable<T_8>(source: Iterable<T_8>): Observable<T_8>;
+    fromIterable<T_7>(source: Iterable<T_7>): Observable<T_7>;
     fromAnimationFrame(): Observable<number>;
     range(start: number, count: number): Observable<number>;
-    bindCallback<T_9>(call: Function, thisArg: any, ...args: any[]): Observable<T_9>;
-    bindNodeCallback<T_10>(call: Function, thisArg: any, ...args: any[]): Observable<T_10>;
+    bindCallback<T_8>(call: Function, thisArg: any, ...args: any[]): Observable<T_8>;
+    bindNodeCallback<T_9>(call: Function, thisArg: any, ...args: any[]): Observable<T_9>;
     never(): Observable<never>;
     throwError(e: any): Observable<never>;
     empty(): Observable<never>;

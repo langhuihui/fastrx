@@ -6,6 +6,18 @@ export declare const inspect: () => boolean;
 export declare type ObservableInputTuple<T> = {
     [K in keyof T]: Observable<T[K]>;
 };
+export declare type EventHandler<T> = (event: T) => void;
+declare type EventMethod<N, T> = (name: N, handler: EventHandler<T>) => void;
+export declare type EventDispachter<N, T> = {
+    on: EventMethod<N, T>;
+    off: EventMethod<N, T>;
+} | {
+    addListener: EventMethod<N, T>;
+    removeListener: EventMethod<N, T>;
+} | {
+    addEventListener: EventMethod<N, T>;
+    removeEventListener: EventMethod<N, T>;
+};
 export interface Observer<T> {
     subscribe(source: Observable<T>): void;
     next(data: T): void;

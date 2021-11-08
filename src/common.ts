@@ -10,6 +10,18 @@ export type ObservableInputTuple<T> = {
   [K in keyof T]: Observable<T[K]>;
 };
 type ObservedValueOf<O> = O extends Observable<infer T> ? T : never;
+export type EventHandler<T> = (event: T) => void;
+type EventMethod<N, T> = (name: N, handler: EventHandler<T>) => void;
+export type EventDispachter<N, T> = {
+  on: EventMethod<N, T>;
+  off: EventMethod<N, T>;
+} | {
+  addListener: EventMethod<N, T>;
+  removeListener: EventMethod<N, T>;
+} | {
+  addEventListener: EventMethod<N, T>;
+  removeEventListener: EventMethod<N, T>;
+};
 export interface Observer<T> {
   subscribe(source: Observable<T>): void;
   next(data: T): void;
@@ -206,19 +218,19 @@ export function pipe<L extends Subscription<unknown>>(first: Observable<unknown>
 export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArguments): Observable<T> {
   if (inspect()) {
     const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
-      streamId: { value: 0, writable: true },
-      name: { value: name },
-      args: { value: args },
-      id: { value: 0, writable: true },
+      streamId: { value: 0, writable: true, configurable: true },
+      name: { value: name, writable: true, configurable: true },
+      args: { value: args, writable: true, configurable: true },
+      id: { value: 0, writable: true, configurable: true },
     });
     Events.create(result);
-    for(let i = 0; i < args.length; i++) {
+    for (let i = 0; i < args.length; i++) {
       const arg = args[i];
       if (typeof arg === 'function') {
-        if(arg instanceof Inspect){
-          Events.addSource(result,arg)
+        if (arg instanceof Inspect) {
+          Events.addSource(result, arg);
         } else {
-          
+
         }
       }
     }

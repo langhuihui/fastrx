@@ -1,7 +1,5 @@
-import { merge, share } from "./combination";
-import { nothing, create, pipe } from "./common";
-import { takeUntil } from "./filtering";
-import { switchMap } from "./transformation";
+import { share } from "./combination";
+import { nothing, create } from "./common";
 export function subject(source) {
     const args = arguments;
     const observable = share()(create((sink) => {
@@ -19,19 +17,20 @@ export function subject(source) {
 export function defer(f) {
     return create(sink => sink.subscribe(f()), "defer", arguments);
 }
-export function of(...data) {
-    return create(fromArray(data), "of", arguments);
-}
 const asap = (f) => (sink) => {
     setTimeout(() => f(sink));
 };
+const _fromArray = (data) => asap((sink) => {
+    for (let i = 0; !sink.disposed && i < data.length; i++) {
+        sink.next(data[i]);
+    }
+    sink.complete();
+});
+export function of(...data) {
+    return create(_fromArray(data), "of", arguments);
+}
 export function fromArray(data) {
-    return create(asap((sink) => {
-        for (let i = 0; !sink.disposed && i < data.length; i++) {
-            sink.next(data[i]);
-        }
-        sink.complete();
-    }), "fromArray", arguments);
+    return create(_fromArray(data), "fromArray", arguments);
 }
 export function interval(period) {
     return create((sink) => {
@@ -60,42 +59,29 @@ export function timer(delay, period) {
     }, "timer", arguments);
 }
 ;
-export function fromEventPattern(add, remove) {
-    return create((sink) => {
+function _fromEventPattern(add, remove) {
+    return (sink) => {
         const n = (d) => sink.next(d);
         sink.defer(() => remove(n));
         add(n);
-        return name;
-    }, "fromEventPattern", arguments);
+    };
+}
+export function fromEventPattern(add, remove) {
+    return create(_fromEventPattern(add, remove), "fromEventPattern", arguments);
 }
 ;
 export function fromEvent(target, name) {
     if ("on" in target) {
-        return create(fromEventPattern((h) => target.on(name, h), (h) => target.off(name, h)), "fromEvent", arguments);
+        return create(_fromEventPattern((h) => target.on(name, h), (h) => target.off(name, h)), "fromEvent", arguments);
     }
     else if ("addListener" in target) {
-        return create(fromEventPattern((h) => target.addListener(name, h), (h) => target.removeListener(name, h)), "fromEvent", arguments);
+        return create(_fromEventPattern((h) => target.addListener(name, h), (h) => target.removeListener(name, h)), "fromEvent", arguments);
     }
     else if ("addEventListener" in target) {
-        return create(fromEventPattern((h) => target.addEventListener(name, h), (h) => target.removeEventListener(name, h)), "fromEvent", arguments);
+        return create(_fromEventPattern((h) => target.addEventListener(name, h), (h) => target.removeEventListener(name, h)), "fromEvent", arguments);
     }
     else
         throw 'target is not a EventDispachter';
-}
-;
-/**
- *
- * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target
- * @returns
- */
-export function fromMessageEvent(target) {
-    return create((sink) => {
-        const closeOb = fromEvent(target, 'close');
-        const messageOb = fromEvent(target, 'message');
-        const errorOb = fromEvent(target, 'error');
-        sink.defer(() => target.close());
-        sink.subscribe(pipe(merge(messageOb, switchMap(throwError)(errorOb)), takeUntil(closeOb)));
-    }, "fromMessageEvent", arguments);
 }
 ;
 export function fromPromise(promise) {

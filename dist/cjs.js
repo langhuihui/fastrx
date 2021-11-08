@@ -625,17 +625,23 @@ function create(ob, name, args) {
     var result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
       streamId: {
         value: 0,
-        writable: true
+        writable: true,
+        configurable: true
       },
       name: {
-        value: name
+        value: name,
+        writable: true,
+        configurable: true
       },
       args: {
-        value: args
+        value: args,
+        writable: true,
+        configurable: true
       },
       id: {
         value: 0,
-        writable: true
+        writable: true,
+        configurable: true
       }
     });
     Events.create(result);
@@ -645,7 +651,7 @@ function create(ob, name, args) {
 
       if (typeof arg === 'function') {
         if (arg instanceof Inspect) {
-          Events.addSource(arg, result);
+          Events.addSource(result, arg);
         }
       }
     }
@@ -1276,6 +1282,237 @@ var Buffer = /*#__PURE__*/function (_Sink3) {
 }(Sink);
 
 var buffer = deliver(Buffer, "buffer");
+
+function subject(source) {
+  var args = arguments;
+  var observable = share()(create(function (sink) {
+    observable.next = function (data) {
+      return sink.next(data);
+    };
+
+    observable.complete = function () {
+      return sink.complete();
+    };
+
+    observable.error = function (err) {
+      return sink.error(err);
+    };
+
+    source && sink.subscribe(source);
+  }, "subject", args));
+  observable.next = nothing;
+  observable.complete = nothing;
+  observable.error = nothing;
+  return observable;
+}
+function defer(f) {
+  return create(function (sink) {
+    return sink.subscribe(f());
+  }, "defer", arguments);
+}
+
+var asap = function asap(f) {
+  return function (sink) {
+    setTimeout(function () {
+      return f(sink);
+    });
+  };
+};
+
+var _fromArray = function _fromArray(data) {
+  return asap(function (sink) {
+    for (var i = 0; !sink.disposed && i < data.length; i++) {
+      sink.next(data[i]);
+    }
+
+    sink.complete();
+  });
+};
+
+function of() {
+  for (var _len = arguments.length, data = new Array(_len), _key = 0; _key < _len; _key++) {
+    data[_key] = arguments[_key];
+  }
+
+  return create(_fromArray(data), "of", arguments);
+}
+function fromArray(data) {
+  return create(_fromArray(data), "fromArray", arguments);
+}
+function interval(period) {
+  return create(function (sink) {
+    var i = 0;
+    var id = setInterval(function () {
+      return sink.next(i++);
+    }, period);
+    sink.defer(function () {
+      clearInterval(id);
+    });
+    return "interval";
+  }, "interval", arguments);
+}
+function timer(delay, period) {
+  return create(function (sink) {
+    var i = 0;
+    var id = setTimeout(function () {
+      sink.removeDefer(deferF);
+      sink.next(i++);
+
+      if (period) {
+        var _id = setInterval(function () {
+          return sink.next(i++);
+        }, period);
+
+        sink.defer(function () {
+          clearInterval(_id);
+        });
+      } else {
+        sink.complete();
+      }
+    }, delay);
+
+    var deferF = function deferF() {
+      clearTimeout(id);
+    };
+
+    sink.defer(deferF);
+  }, "timer", arguments);
+}
+
+function _fromEventPattern(add, remove) {
+  return function (sink) {
+    var n = function n(d) {
+      return sink.next(d);
+    };
+
+    sink.defer(function () {
+      return remove(n);
+    });
+    add(n);
+  };
+}
+
+function fromEventPattern(add, remove) {
+  return create(_fromEventPattern(add, remove), "fromEventPattern", arguments);
+}
+function fromEvent(target, name) {
+  if ("on" in target) {
+    return create(_fromEventPattern(function (h) {
+      return target.on(name, h);
+    }, function (h) {
+      return target.off(name, h);
+    }), "fromEvent", arguments);
+  } else if ("addListener" in target) {
+    return create(_fromEventPattern(function (h) {
+      return target.addListener(name, h);
+    }, function (h) {
+      return target.removeListener(name, h);
+    }), "fromEvent", arguments);
+  } else if ("addEventListener" in target) {
+    return create(_fromEventPattern(function (h) {
+      return target.addEventListener(name, h);
+    }, function (h) {
+      return target.removeEventListener(name, h);
+    }), "fromEvent", arguments);
+  } else throw 'target is not a EventDispachter';
+}
+function fromPromise(promise) {
+  return create(function (sink) {
+    promise.then(sink.next.bind(sink), sink.error.bind(sink));
+  }, "fromPromise", arguments);
+}
+function fromFetch(input, init) {
+  return create(defer(function () {
+    return fromPromise(fetch(input, init));
+  }), "fromFetch", arguments);
+}
+function fromIterable(source) {
+  return create(asap(function (sink) {
+    try {
+      var _iterator = _createForOfIteratorHelper(source),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var data = _step.value;
+          if (sink.disposed) return;
+          sink.next(data);
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+
+      sink.complete();
+    } catch (err) {
+      sink.error(err);
+    }
+  }), "fromIterable", arguments);
+}
+function fromAnimationFrame() {
+  return create(function (sink) {
+    var id = requestAnimationFrame(function next(t) {
+      if (!sink.disposed) {
+        sink.next(t);
+        id = requestAnimationFrame(next);
+      }
+    });
+    sink.defer(function () {
+      return cancelAnimationFrame(id);
+    });
+  }, "fromAnimationFrame", arguments);
+}
+function range(start, count) {
+  return create(function (sink) {
+    var pos = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : start;
+    var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : count + start;
+
+    while (pos < end && !sink.disposed) {
+      sink.next(pos++);
+    }
+
+    sink.complete();
+    return "range";
+  }, "range", arguments);
+}
+function bindCallback(call, thisArg) {
+  for (var _len2 = arguments.length, args = new Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
+    args[_key2 - 2] = arguments[_key2];
+  }
+
+  return create(function (sink) {
+    var inArgs = args.concat(function (res) {
+      return sink.next(res), sink.complete();
+    });
+    call.apply(thisArg, inArgs);
+  }, "bindCallback", arguments);
+}
+function bindNodeCallback(call, thisArg) {
+  for (var _len3 = arguments.length, args = new Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+    args[_key3 - 2] = arguments[_key3];
+  }
+
+  return create(function (sink) {
+    var inArgs = args.concat(function (err, res) {
+      return err ? sink.error(err) : (sink.next(res), sink.complete());
+    });
+    call.apply(thisArg, inArgs);
+  }, "bindNodeCallback", arguments);
+}
+function never() {
+  return create(function () {}, "never", arguments);
+}
+function throwError(e) {
+  return create(function (sink) {
+    return sink.error(e);
+  }, "throwError", arguments);
+}
+function empty() {
+  return create(function (sink) {
+    return sink.complete();
+  }, "empty", arguments);
+}
 
 var Reduce = /*#__PURE__*/function (_Sink) {
   _inherits(Reduce, _Sink);
@@ -2639,246 +2876,6 @@ var CatchError = /*#__PURE__*/function (_Sink10) {
 
 var catchError = deliver(CatchError, "catchError");
 
-function subject(source) {
-  var args = arguments;
-  var observable = share()(create(function (sink) {
-    observable.next = function (data) {
-      return sink.next(data);
-    };
-
-    observable.complete = function () {
-      return sink.complete();
-    };
-
-    observable.error = function (err) {
-      return sink.error(err);
-    };
-
-    source && sink.subscribe(source);
-  }, "subject", args));
-  observable.next = nothing;
-  observable.complete = nothing;
-  observable.error = nothing;
-  return observable;
-}
-function defer(f) {
-  return create(function (sink) {
-    return sink.subscribe(f());
-  }, "defer", arguments);
-}
-function of() {
-  for (var _len = arguments.length, data = new Array(_len), _key = 0; _key < _len; _key++) {
-    data[_key] = arguments[_key];
-  }
-
-  return create(fromArray(data), "of", arguments);
-}
-
-var asap = function asap(f) {
-  return function (sink) {
-    setTimeout(function () {
-      return f(sink);
-    });
-  };
-};
-
-function fromArray(data) {
-  return create(asap(function (sink) {
-    for (var i = 0; !sink.disposed && i < data.length; i++) {
-      sink.next(data[i]);
-    }
-
-    sink.complete();
-  }), "fromArray", arguments);
-}
-function interval(period) {
-  return create(function (sink) {
-    var i = 0;
-    var id = setInterval(function () {
-      return sink.next(i++);
-    }, period);
-    sink.defer(function () {
-      clearInterval(id);
-    });
-    return "interval";
-  }, "interval", arguments);
-}
-function timer(delay, period) {
-  return create(function (sink) {
-    var i = 0;
-    var id = setTimeout(function () {
-      sink.removeDefer(deferF);
-      sink.next(i++);
-
-      if (period) {
-        var _id = setInterval(function () {
-          return sink.next(i++);
-        }, period);
-
-        sink.defer(function () {
-          clearInterval(_id);
-        });
-      } else {
-        sink.complete();
-      }
-    }, delay);
-
-    var deferF = function deferF() {
-      clearTimeout(id);
-    };
-
-    sink.defer(deferF);
-  }, "timer", arguments);
-}
-function fromEventPattern(add, remove) {
-  return create(function (sink) {
-    var n = function n(d) {
-      return sink.next(d);
-    };
-
-    sink.defer(function () {
-      return remove(n);
-    });
-    add(n);
-    return name;
-  }, "fromEventPattern", arguments);
-}
-function fromEvent(target, name) {
-  if ("on" in target) {
-    return create(fromEventPattern(function (h) {
-      return target.on(name, h);
-    }, function (h) {
-      return target.off(name, h);
-    }), "fromEvent", arguments);
-  } else if ("addListener" in target) {
-    return create(fromEventPattern(function (h) {
-      return target.addListener(name, h);
-    }, function (h) {
-      return target.removeListener(name, h);
-    }), "fromEvent", arguments);
-  } else if ("addEventListener" in target) {
-    return create(fromEventPattern(function (h) {
-      return target.addEventListener(name, h);
-    }, function (h) {
-      return target.removeEventListener(name, h);
-    }), "fromEvent", arguments);
-  } else throw 'target is not a EventDispachter';
-}
-/**
- *
- * @param {window | Worker | EventSource | WebSocket | RTCPeerConnection} target
- * @returns
- */
-
-function fromMessageEvent(target) {
-  return create(function (sink) {
-    var closeOb = fromEvent(target, 'close');
-    var messageOb = fromEvent(target, 'message');
-    var errorOb = fromEvent(target, 'error');
-    sink.defer(function () {
-      return target.close();
-    });
-    sink.subscribe(pipe(merge(messageOb, switchMap(throwError)(errorOb)), takeUntil(closeOb)));
-  }, "fromMessageEvent", arguments);
-}
-function fromPromise(promise) {
-  return create(function (sink) {
-    promise.then(sink.next.bind(sink), sink.error.bind(sink));
-  }, "fromPromise", arguments);
-}
-function fromFetch(input, init) {
-  return create(defer(function () {
-    return fromPromise(fetch(input, init));
-  }), "fromFetch", arguments);
-}
-function fromIterable(source) {
-  return create(asap(function (sink) {
-    try {
-      var _iterator = _createForOfIteratorHelper(source),
-          _step;
-
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var data = _step.value;
-          if (sink.disposed) return;
-          sink.next(data);
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-
-      sink.complete();
-    } catch (err) {
-      sink.error(err);
-    }
-  }), "fromIterable", arguments);
-}
-function fromAnimationFrame() {
-  return create(function (sink) {
-    var id = requestAnimationFrame(function next(t) {
-      if (!sink.disposed) {
-        sink.next(t);
-        id = requestAnimationFrame(next);
-      }
-    });
-    sink.defer(function () {
-      return cancelAnimationFrame(id);
-    });
-  }, "fromAnimationFrame", arguments);
-}
-function range(start, count) {
-  return create(function (sink) {
-    var pos = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : start;
-    var end = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : count + start;
-
-    while (pos < end && !sink.disposed) {
-      sink.next(pos++);
-    }
-
-    sink.complete();
-    return "range";
-  }, "range", arguments);
-}
-function bindCallback(call, thisArg) {
-  for (var _len2 = arguments.length, args = new Array(_len2 > 2 ? _len2 - 2 : 0), _key2 = 2; _key2 < _len2; _key2++) {
-    args[_key2 - 2] = arguments[_key2];
-  }
-
-  return create(function (sink) {
-    var inArgs = args.concat(function (res) {
-      return sink.next(res), sink.complete();
-    });
-    call.apply(thisArg, inArgs);
-  }, "bindCallback", arguments);
-}
-function bindNodeCallback(call, thisArg) {
-  for (var _len3 = arguments.length, args = new Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
-    args[_key3 - 2] = arguments[_key3];
-  }
-
-  return create(function (sink) {
-    var inArgs = args.concat(function (err, res) {
-      return err ? sink.error(err) : (sink.next(res), sink.complete());
-    });
-    call.apply(thisArg, inArgs);
-  }, "bindNodeCallback", arguments);
-}
-function never() {
-  return create(function () {}, "never", arguments);
-}
-function throwError(e) {
-  return create(function (sink) {
-    return sink.error(e);
-  }, "throwError", arguments);
-}
-function empty() {
-  return create(function (sink) {
-    return sink.complete();
-  }, "empty", arguments);
-}
-
 var toPromise = function toPromise() {
   return function (source) {
     return new Promise(function (resolve, reject) {
@@ -3022,7 +3019,6 @@ exports.fromEvent = fromEvent;
 exports.fromEventPattern = fromEventPattern;
 exports.fromFetch = fromFetch;
 exports.fromIterable = fromIterable;
-exports.fromMessageEvent = fromMessageEvent;
 exports.fromPromise = fromPromise;
 exports.groupBy = groupBy;
 exports.identity = identity;

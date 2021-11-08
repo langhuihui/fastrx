@@ -180,17 +180,17 @@ export function pipe(first, ...cbs) {
 export function create(ob, name, args) {
     if (inspect()) {
         const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
-            streamId: { value: 0, writable: true },
-            name: { value: name },
-            args: { value: args },
-            id: { value: 0, writable: true },
+            streamId: { value: 0, writable: true, configurable: true },
+            name: { value: name, writable: true, configurable: true },
+            args: { value: args, writable: true, configurable: true },
+            id: { value: 0, writable: true, configurable: true },
         });
         Events.create(result);
         for (let i = 0; i < args.length; i++) {
             const arg = args[i];
             if (typeof arg === 'function') {
                 if (arg instanceof Inspect) {
-                    Events.addSource(arg, result);
+                    Events.addSource(result, arg);
                 }
                 else {
                 }

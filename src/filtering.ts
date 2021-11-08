@@ -1,4 +1,4 @@
-import { Sink, deliver, ISink, Observable, nothing, dispose, Operator, create } from "./common";
+import { Sink, deliver, ISink, Observable, nothing, dispose } from "./common";
 import { reduce } from "./mathematical";
 import { timer } from "./producer";
 class Filter<T> extends Sink<T> {
