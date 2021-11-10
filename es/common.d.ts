@@ -84,7 +84,10 @@ export declare function pipe<T, T1, T2, T3, T4, T5, L extends Subscription<T5>>(
 export declare function pipe<T, T1, T2, T3, T4, T5, T6, L extends Subscription<T6>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, op6: Operator<T5, T6>, sub: (source: Observable<T6>) => L): L;
 export declare function pipe<T, T1, T2, T3, T4, T5, T6, T7, L extends Subscription<T7>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, op3: Operator<T2, T3>, op4: Operator<T3, T4>, op5: Operator<T4, T5>, op6: Operator<T5, T6>, op7: Operator<T6, T7>, sub: (source: Observable<T7>) => L): L;
 export declare function pipe<L extends Subscription<unknown>>(...cbs: [Observable<unknown>, ...any, (source: Observable<unknown>) => L]): L;
-export declare function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArguments): Observable<T>;
+export declare function create<T>(ob: (sink: ISink<T>) => void, name: string, args: {
+    [index: number]: any;
+    length: number;
+}): Observable<T>;
 export declare function deliver<T, R, ARG extends any[]>(c: {
     new (sink: ISink<R>, ...args: ARG): ISink<T>;
 }, name: string): (...args: ARG) => (Operator<T, R>);

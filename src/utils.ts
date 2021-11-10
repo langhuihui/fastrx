@@ -1,4 +1,4 @@
-import { Observable, nothing, Sink, ISink, Observer, deliver, TimeoutError, Subscribe, Events, inspect, InspectObservable, Inspect } from "./common";
+import { Observable, nothing, Sink, ISink, Observer, deliver, TimeoutError, Subscribe, Events, inspect, InspectObservable, Inspect, create } from "./common";
 
 export const toPromise = <T>() => (source: Observable<T>) =>
   new Promise<T>((resolve, reject) => {
@@ -43,3 +43,37 @@ class Timeout<T> extends Sink<T> {
   }
 }
 export const timeout = deliver(Timeout, "timeout");
+
+export const retry = (count: number = Infinity) => <T>(source: Observable<T>) => {
+  if (source instanceof Inspect) {
+    const ob = create((observer: ISink<T>) => {
+      let remain = count;
+      const deliverSink = new Sink(observer);
+      deliverSink.error = (err) => {
+        if (remain-- > 0) {
+          deliverSink.subscribe(source);
+        } else {
+          observer.error(err);
+        }
+      };
+      deliverSink.sourceId = ob.id;
+      deliverSink.subscribe(source);
+    }, 'retry', [count]) as InspectObservable<T>;
+    ob.source = source;
+    Events.pipe(ob);
+    return ob;
+  } else {
+    return (observer: ISink<T>) => {
+      let remain = count;
+      const deliverSink = new Sink(observer);
+      deliverSink.error = (err) => {
+        if (remain-- > 0) {
+          source(deliverSink);
+        } else {
+          observer.error(err);
+        }
+      };
+      source(deliverSink);
+    };
+  }
+};

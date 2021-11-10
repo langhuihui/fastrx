@@ -215,7 +215,10 @@ export function pipe<L extends Subscription<unknown>>(...cbs: [Observable<unknow
 export function pipe<L extends Subscription<unknown>>(first: Observable<unknown>, ...cbs: [...any, (source: Observable<unknown>) => L]): L {
   return cbs.reduce((aac, c) => c(aac), first);
 }
-export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: IArguments): Observable<T> {
+export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: {
+  [index: number]: any;
+  length: number;
+}): Observable<T> {
   if (inspect()) {
     const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
       streamId: { value: 0, writable: true, configurable: true },

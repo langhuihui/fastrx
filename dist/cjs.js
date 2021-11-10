@@ -2977,6 +2977,46 @@ var Timeout = /*#__PURE__*/function (_Sink2) {
 }(Sink);
 
 var timeout = deliver(Timeout, "timeout");
+var retry = function retry() {
+  var count = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : Infinity;
+  return function (source) {
+    if (source instanceof Inspect) {
+      var ob = create(function (observer) {
+        var remain = count;
+        var deliverSink = new Sink(observer);
+
+        deliverSink.error = function (err) {
+          if (remain-- > 0) {
+            deliverSink.subscribe(source);
+          } else {
+            observer.error(err);
+          }
+        };
+
+        deliverSink.sourceId = ob.id;
+        deliverSink.subscribe(source);
+      }, 'retry', [count]);
+      ob.source = source;
+      Events.pipe(ob);
+      return ob;
+    } else {
+      return function (observer) {
+        var remain = count;
+        var deliverSink = new Sink(observer);
+
+        deliverSink.error = function (err) {
+          if (remain-- > 0) {
+            source(deliverSink);
+          } else {
+            observer.error(err);
+          }
+        };
+
+        source(deliverSink);
+      };
+    }
+  };
+};
 
 exports.Events = Events;
 exports.Inspect = Inspect;
@@ -3042,6 +3082,7 @@ exports.pipe = pipe;
 exports.race = race;
 exports.range = range;
 exports.reduce = reduce;
+exports.retry = retry;
 exports.scan = scan;
 exports.share = share;
 exports.shareReplay = shareReplay;
