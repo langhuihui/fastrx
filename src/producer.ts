@@ -119,7 +119,7 @@ export function fromReader<T>(source: ReadableStreamDefaultReader<T>): Observabl
       return;
     } else {
       sink.next(value!);
-      read(sink);
+      await read(sink);
     }
   };
   return create((sink: ISink<T>) => {
