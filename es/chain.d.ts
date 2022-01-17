@@ -14,10 +14,11 @@ declare const observables: {
     fromPromise<T_6>(promise: Promise<T_6>): Observable<T_6>;
     fromFetch(input: RequestInfo, init?: RequestInit | undefined): Observable<Response>;
     fromIterable<T_7>(source: Iterable<T_7>): Observable<T_7>;
+    fromReader<T_8>(source: ReadableStreamDefaultReader<T_8>): Observable<T_8>;
     fromAnimationFrame(): Observable<number>;
     range(start: number, count: number): Observable<number>;
-    bindCallback<T_8>(call: Function, thisArg: any, ...args: any[]): Observable<T_8>;
-    bindNodeCallback<T_9>(call: Function, thisArg: any, ...args: any[]): Observable<T_9>;
+    bindCallback<T_9>(call: Function, thisArg: any, ...args: any[]): Observable<T_9>;
+    bindNodeCallback<T_10>(call: Function, thisArg: any, ...args: any[]): Observable<T_10>;
     never(): Observable<never>;
     throwError(e: any): Observable<never>;
     empty(): Observable<never>;

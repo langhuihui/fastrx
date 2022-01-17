@@ -111,6 +111,21 @@ export function fromIterable<T>(source: Iterable<T>): Observable<T> {
     }
   }), "fromIterable", arguments);
 }
+export function fromReader<T>(source: ReadableStreamDefaultReader<T>): Observable<T> {
+  const read = async (sink: ISink<T>) => {
+    const { done, value } = await source.read();
+    if (done) {
+      sink.complete();
+      return;
+    } else {
+      sink.next(value!);
+      read(sink);
+    }
+  };
+  return create((sink: ISink<T>) => {
+    read(sink);
+  }, "fromReader", arguments);
+}
 export function fromAnimationFrame(): Observable<DOMHighResTimeStamp> {
   return create((sink) => {
     let id = requestAnimationFrame(function next(t: DOMHighResTimeStamp) {

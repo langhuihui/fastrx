@@ -1,4 +1,27 @@
 const rx = require('../dist');
+const { pipe, range, subscribe, timer, map, concatMap, identity, tap } = require('../dist');
+
+
+function fibonacci(n, ac1 = 1, ac2 = 1) {
+  if (n <= 1) {
+    return ac2;
+  }
+
+  return fibonacci(n - 1, ac2, ac1 + ac2);
+}
+
+function getReconnectionTimeout(reconnectionCount) {
+  // 最小间隔2s，2,3,5,8 间隔各尝试2次
+  const n = Math.round(reconnectionCount / 2) + 1;
+  // 最大间隔 13s
+  // fibonacci(6) = 13
+  if (n > 6) {
+    return 13 * 1000;
+  }
+  return fibonacci(n) * 1000;
+}
+
+
 // takeUntil
 //const b = rx.interval(200).takeUntil(rx.interval(1000)).subscribe(console.log, console.error, () => console.log("??"))
 //console.log(b.then)
@@ -31,12 +54,22 @@ function groupBy() {
     .subscribe((p) => console.log(p));
 }
 
-concatMap();
-function concatMap() {
-  rx.range(1, 10)
-    .concatMap(
-      (i) => rx.timer(i * 100),
-      (out) => out
-    )
-    .subscribe(console.log);
+_concatMap();
+function _concatMap() {
+  let result = 0;
+  pipe(
+    range(1, 5),
+    map(getReconnectionTimeout),
+    tap(console.log),
+    concatMap(
+      (x) => timer(x),
+      identity
+    ),
+    subscribe((d) => { result = d / 1000; console.log(d); }));
+  // rx.range(1, 10)
+  //   .concatMap(
+  //     (i) => rx.timer(i * 100),
+  //     (out) => out
+  //   )
+  //   .subscribe(console.log);
 }

@@ -14,6 +14,7 @@ require('core-js/modules/es.string.iterator.js');
 require('core-js/modules/web.dom-collections.for-each.js');
 require('core-js/modules/web.dom-collections.iterator.js');
 require('core-js/modules/es.promise.js');
+require('regenerator-runtime/runtime.js');
 require('core-js/modules/es.array.map.js');
 require('core-js/modules/es.map.js');
 require('core-js/modules/es.array.filter.js');
@@ -1283,6 +1284,37 @@ var Buffer = /*#__PURE__*/function (_Sink3) {
 
 var buffer = deliver(Buffer, "buffer");
 
+var __awaiter = undefined && undefined.__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
 function subject(source) {
   var args = arguments;
   var observable = share()(create(function (sink) {
@@ -1449,6 +1481,50 @@ function fromIterable(source) {
       sink.error(err);
     }
   }), "fromIterable", arguments);
+}
+function fromReader(source) {
+  var _this = this;
+
+  var read = function read(sink) {
+    return __awaiter(_this, void 0, void 0, /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+      var _yield$source$read, done, value;
+
+      return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+          switch (_context.prev = _context.next) {
+            case 0:
+              _context.next = 2;
+              return source.read();
+
+            case 2:
+              _yield$source$read = _context.sent;
+              done = _yield$source$read.done;
+              value = _yield$source$read.value;
+
+              if (!done) {
+                _context.next = 10;
+                break;
+              }
+
+              sink.complete();
+              return _context.abrupt("return");
+
+            case 10:
+              sink.next(value);
+              read(sink);
+
+            case 12:
+            case "end":
+              return _context.stop();
+          }
+        }
+      }, _callee);
+    }));
+  };
+
+  return create(function (sink) {
+    read(sink);
+  }, "fromReader", arguments);
 }
 function fromAnimationFrame() {
   return create(function (sink) {
@@ -3060,6 +3136,7 @@ exports.fromEventPattern = fromEventPattern;
 exports.fromFetch = fromFetch;
 exports.fromIterable = fromIterable;
 exports.fromPromise = fromPromise;
+exports.fromReader = fromReader;
 exports.groupBy = groupBy;
 exports.identity = identity;
 exports.ignoreElements = ignoreElements;
