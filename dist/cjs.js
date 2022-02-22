@@ -1519,10 +1519,9 @@ function fromReader(source) {
 
             case 12:
               sink.next(value);
-              _context.next = 15;
-              return read(sink);
+              read(sink);
 
-            case 15:
+            case 14:
             case "end":
               return _context.stop();
           }

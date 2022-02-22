@@ -127,7 +127,7 @@ export function fromReader(source) {
         }
         else {
             sink.next(value);
-            yield read(sink);
+            read(sink);
         }
     });
     return create((sink) => {
