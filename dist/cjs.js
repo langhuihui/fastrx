@@ -1493,27 +1493,36 @@ function fromReader(source) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              _context.next = 2;
-              return source.read();
+              if (!sink.disposed) {
+                _context.next = 2;
+                break;
+              }
+
+              return _context.abrupt("return");
 
             case 2:
+              _context.next = 4;
+              return source.read();
+
+            case 4:
               _yield$source$read = _context.sent;
               done = _yield$source$read.done;
               value = _yield$source$read.value;
 
               if (!done) {
-                _context.next = 10;
+                _context.next = 12;
                 break;
               }
 
               sink.complete();
               return _context.abrupt("return");
 
-            case 10:
-              sink.next(value);
-              read(sink);
-
             case 12:
+              sink.next(value);
+              _context.next = 15;
+              return read(sink);
+
+            case 15:
             case "end":
               return _context.stop();
           }

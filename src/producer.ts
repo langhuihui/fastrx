@@ -113,6 +113,7 @@ export function fromIterable<T>(source: Iterable<T>): Observable<T> {
 }
 export function fromReader<T>(source: ReadableStreamDefaultReader<T>): Observable<T> {
   const read = async (sink: ISink<T>) => {
+    if (sink.disposed) return;
     const { done, value } = await source.read();
     if (done) {
       sink.complete();

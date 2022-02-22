@@ -118,6 +118,8 @@ export function fromIterable(source) {
 }
 export function fromReader(source) {
     const read = (sink) => __awaiter(this, void 0, void 0, function* () {
+        if (sink.disposed)
+            return;
         const { done, value } = yield source.read();
         if (done) {
             sink.complete();
