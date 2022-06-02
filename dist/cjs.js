@@ -1925,15 +1925,12 @@ var _Throttle = /*#__PURE__*/function (_Sink9) {
   _createClass(_Throttle, [{
     key: "cacheValue",
     value: function cacheValue(value) {
-      this.last = value; // @ts-ignore
-
-      delete this.send;
+      this.last = value;
       if (this.disposed) this.throttle(value);
     }
   }, {
     key: "send",
     value: function send(data) {
-      this.send = nothing;
       this.sink.next(data);
       this.throttle(data);
     }

@@ -113,13 +113,10 @@ class _Throttle extends Sink {
     }
     cacheValue(value) {
         this.last = value;
-        // @ts-ignore
-        delete this.send;
         if (this.disposed)
             this.throttle(value);
     }
     send(data) {
-        this.send = nothing;
         this.sink.next(data);
         this.throttle(data);
     }
