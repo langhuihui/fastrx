@@ -3,7 +3,7 @@ import * as producer from './producer';
 import * as filtering from './filtering';
 import * as mathematical from './mathematical';
 import * as transformation from './transformation';
-import { subscribe, toPromise, tap, timeout } from './utils';
+import { subscribe, toPromise, tap, timeout, toReadableStream } from './utils';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest, ...combinations } = combination;
 const observables = { zip, merge, race, concat, combineLatest, ...producer };
@@ -20,6 +20,8 @@ const rxProxy = {
         return (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
       case "toPromise":
         return () => toPromise<T>()(target);
+      case "toReadableStream":
+        return () => toReadableStream<T>()(target);
       default:
         //@ts-ignore
         return (<R>(operator: (...args: Parameters<(typeof operators)[PROP]>) => Operator<T, R>) => (...args: Parameters<(typeof operators)[PROP]>) => new Proxy(operator(...args)(target), rxProxy))(operators[prop]);

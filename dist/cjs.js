@@ -2968,6 +2968,19 @@ var toPromise = function toPromise() {
       });
     });
   };
+};
+var toReadableStream = function toReadableStream() {
+  return function (source) {
+    var subscriber;
+    return new ReadableStream({
+      start: function start(controller) {
+        subscriber = new Subscribe(source, controller.enqueue.bind(controller), controller.error.bind(controller), controller.close.bind(controller));
+      },
+      cancel: function cancel() {
+        subscriber.dispose();
+      }
+    });
+  };
 }; // //SUBSCRIBER
 
 var subscribe = function subscribe() {
@@ -3188,6 +3201,7 @@ exports.timeInterval = timeInterval;
 exports.timeout = timeout;
 exports.timer = timer;
 exports.toPromise = toPromise;
+exports.toReadableStream = toReadableStream;
 exports.withLatestFrom = withLatestFrom;
 exports.zip = zip;
 //# sourceMappingURL=cjs.js.map

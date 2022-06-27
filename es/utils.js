@@ -3,6 +3,17 @@ export const toPromise = () => (source) => new Promise((resolve, reject) => {
     let value;
     new Subscribe(source, (d) => (value = d), reject, () => resolve(value));
 });
+export const toReadableStream = () => (source) => {
+    let subscriber;
+    return new ReadableStream({
+        start(controller) {
+            subscriber = new Subscribe(source, controller.enqueue.bind(controller), controller.error.bind(controller), controller.close.bind(controller));
+        },
+        cancel() {
+            subscriber.dispose();
+        }
+    });
+};
 // //SUBSCRIBER
 export const subscribe = (n = nothing, e = nothing, c = nothing) => (source) => new Subscribe(source, n, e, c);
 // // UTILITY

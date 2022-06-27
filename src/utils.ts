@@ -6,6 +6,19 @@ export const toPromise = <T>() => (source: Observable<T>) =>
     new Subscribe<T>(source, (d) => (value = d), reject, () => resolve(value));
   });
 
+export const toReadableStream = <T>() => (source: Observable<T>) => {
+  let subscriber: Subscribe<T>;
+  return new ReadableStream<T>({
+    start(controller) {
+      subscriber = new Subscribe<T>(source, controller.enqueue.bind(controller), controller.error.bind(controller), controller.close.bind(controller));
+    },
+    cancel() {
+      subscriber.dispose();
+    }
+  });
+};
+
+
 
 // //SUBSCRIBER
 export const subscribe =
