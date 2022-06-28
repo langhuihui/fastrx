@@ -15,10 +15,11 @@ declare const observables: {
     fromFetch(input: RequestInfo, init?: RequestInit | undefined): Observable<Response>;
     fromIterable<T_7>(source: Iterable<T_7>): Observable<T_7>;
     fromReader<T_8>(source: ReadableStreamDefaultReader<T_8>): Observable<T_8>;
+    fromReadableStream<T_9>(source: ReadableStream<T_9>): Observable<T_9>;
     fromAnimationFrame(): Observable<number>;
     range(start: number, count: number): Observable<number>;
-    bindCallback<T_9>(call: Function, thisArg: any, ...args: any[]): Observable<T_9>;
-    bindNodeCallback<T_10>(call: Function, thisArg: any, ...args: any[]): Observable<T_10>;
+    bindCallback<T_10>(call: Function, thisArg: any, ...args: any[]): Observable<T_10>;
+    bindNodeCallback<T_11>(call: Function, thisArg: any, ...args: any[]): Observable<T_11>;
     never(): Observable<never>;
     throwError(e: any): Observable<never>;
     empty(): Observable<never>;

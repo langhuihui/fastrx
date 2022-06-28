@@ -134,6 +134,17 @@ export function fromReader(source) {
         read(sink);
     }, "fromReader", arguments);
 }
+export function fromReadableStream(source) {
+    return create((sink) => {
+        const w = new WritableStream({
+            write(chunk) {
+                sink.next(chunk);
+            }
+        });
+        sink.defer(() => w.abort());
+        source.pipeTo(w).then(() => sink.complete()).catch(err => sink.error(err));
+    }, "fromReadableStream", arguments);
+}
 export function fromAnimationFrame() {
     return create((sink) => {
         let id = requestAnimationFrame(function next(t) {

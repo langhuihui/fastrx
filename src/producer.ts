@@ -127,6 +127,17 @@ export function fromReader<T>(source: ReadableStreamDefaultReader<T>): Observabl
     read(sink);
   }, "fromReader", arguments);
 }
+export function fromReadableStream<T>(source: ReadableStream<T>): Observable<T> {
+  return create((sink: ISink<T>) => {
+    const w = new WritableStream({
+      write(chunk: T) {
+        sink.next(chunk);
+      }
+    });
+    sink.defer(() => w.abort());
+    source.pipeTo(w).then(() => sink.complete()).catch(err => sink.error(err));
+  }, "fromReadableStream", arguments);
+}
 export function fromAnimationFrame(): Observable<DOMHighResTimeStamp> {
   return create((sink) => {
     let id = requestAnimationFrame(function next(t: DOMHighResTimeStamp) {

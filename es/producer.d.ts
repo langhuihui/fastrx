@@ -12,6 +12,7 @@ export declare function fromPromise<T>(promise: Promise<T>): Observable<T>;
 export declare function fromFetch(input: RequestInfo, init?: RequestInit): Observable<Response>;
 export declare function fromIterable<T>(source: Iterable<T>): Observable<T>;
 export declare function fromReader<T>(source: ReadableStreamDefaultReader<T>): Observable<T>;
+export declare function fromReadableStream<T>(source: ReadableStream<T>): Observable<T>;
 export declare function fromAnimationFrame(): Observable<DOMHighResTimeStamp>;
 export declare function range(start: number, count: number): Observable<number>;
 export declare function bindCallback<T>(call: Function, thisArg: any, ...args: any[]): Observable<T>;

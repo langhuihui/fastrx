@@ -1534,6 +1534,23 @@ function fromReader(source) {
     read(sink);
   }, "fromReader", arguments);
 }
+function fromReadableStream(source) {
+  return create(function (sink) {
+    var w = new WritableStream({
+      write: function write(chunk) {
+        sink.next(chunk);
+      }
+    });
+    sink.defer(function () {
+      return w.abort();
+    });
+    source.pipeTo(w).then(function () {
+      return sink.complete();
+    }).catch(function (err) {
+      return sink.error(err);
+    });
+  }, "fromReadableStream", arguments);
+}
 function fromAnimationFrame() {
   return create(function (sink) {
     var id = requestAnimationFrame(function next(t) {
@@ -3154,6 +3171,7 @@ exports.fromEventPattern = fromEventPattern;
 exports.fromFetch = fromFetch;
 exports.fromIterable = fromIterable;
 exports.fromPromise = fromPromise;
+exports.fromReadableStream = fromReadableStream;
 exports.fromReader = fromReader;
 exports.groupBy = groupBy;
 exports.identity = identity;
