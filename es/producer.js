@@ -136,13 +136,21 @@ export function fromReader(source) {
 }
 export function fromReadableStream(source) {
     return create((sink) => {
-        const w = new WritableStream({
+        const controller = new AbortController();
+        const signal = controller.signal;
+        //@ts-ignore
+        sink.defer(() => controller.abort('cancelled'));
+        source.pipeTo(new WritableStream({
             write(chunk) {
                 sink.next(chunk);
+            },
+            close() {
+                sink.complete();
+            },
+            abort(err) {
+                sink.error(err);
             }
-        });
-        sink.defer(() => source.cancel());
-        source.pipeTo(w).then(() => sink.complete()).catch(err => sink.error(err));
+        }), { signal }).then(() => sink.complete(), (err) => sink.error(err));
     }, "fromReadableStream", arguments);
 }
 export function fromAnimationFrame() {

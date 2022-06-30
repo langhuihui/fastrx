@@ -1536,17 +1536,27 @@ function fromReader(source) {
 }
 function fromReadableStream(source) {
   return create(function (sink) {
-    var w = new WritableStream({
+    var controller = new AbortController();
+    var signal = controller.signal; //@ts-ignore
+
+    sink.defer(function () {
+      return controller.abort('cancelled');
+    });
+    source.pipeTo(new WritableStream({
       write: function write(chunk) {
         sink.next(chunk);
+      },
+      close: function close() {
+        sink.complete();
+      },
+      abort: function abort(err) {
+        sink.error(err);
       }
-    });
-    sink.defer(function () {
-      return source.cancel();
-    });
-    source.pipeTo(w).then(function () {
+    }), {
+      signal: signal
+    }).then(function () {
       return sink.complete();
-    }).catch(function (err) {
+    }, function (err) {
       return sink.error(err);
     });
   }, "fromReadableStream", arguments);
