@@ -1542,7 +1542,7 @@ function fromReadableStream(source) {
       }
     });
     sink.defer(function () {
-      return w.abort();
+      return source.cancel();
     });
     source.pipeTo(w).then(function () {
       return sink.complete();

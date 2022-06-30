@@ -141,7 +141,7 @@ export function fromReadableStream(source) {
                 sink.next(chunk);
             }
         });
-        sink.defer(() => w.abort());
+        sink.defer(() => source.cancel());
         source.pipeTo(w).then(() => sink.complete()).catch(err => sink.error(err));
     }, "fromReadableStream", arguments);
 }
