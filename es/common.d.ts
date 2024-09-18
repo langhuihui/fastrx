@@ -3,12 +3,12 @@ export declare const call: (f: Function) => any;
 export declare const identity: <T>(x: T) => T;
 export declare function dispose<T>(this: ISink<T>): void;
 export declare const inspect: () => boolean;
-export declare type ObservableInputTuple<T> = {
+export type ObservableInputTuple<T> = {
     [K in keyof T]: Observable<T[K]>;
 };
-export declare type EventHandler<T> = (event: T) => void;
-declare type EventMethod<N, T> = (name: N, handler: EventHandler<T>) => void;
-export declare type EventDispachter<N, T> = {
+export type EventHandler<T> = (event: T) => void;
+type EventMethod<N, T> = (name: N, handler: EventHandler<T>) => void;
+export type EventDispachter<N, T> = {
     on: EventMethod<N, T>;
     off: EventMethod<N, T>;
 } | {
@@ -34,9 +34,9 @@ export declare class Inspect<T> extends Function {
     subscribe(sink: ISink<T>): ISink<T>;
 }
 declare type Dispose = () => any;
-export declare type Observable<T> = (sink: ISink<T>) => void;
-export declare type InspectObservable<T> = Observable<T> & Inspect<T>;
-export declare type Operator<T, R = T> = (source: Observable<T>) => Observable<R>;
+export type Observable<T> = (sink: ISink<T>) => void;
+export type InspectObservable<T> = Observable<T> & Inspect<T>;
+export type Operator<T, R = T> = (source: Observable<T>) => Observable<R>;
 export declare class LastSink<T> implements Observer<T> {
     sourceId: number;
     defers: Set<Dispose>;
@@ -56,7 +56,7 @@ export declare class LastSink<T> implements Observer<T> {
     resetComplete(): void;
     resetError(): void;
 }
-export declare type ISink<T> = LastSink<T>;
+export type ISink<T> = LastSink<T>;
 export declare class Sink<T, R = T> extends LastSink<T> {
     readonly sink: ISink<R>;
     constructor(sink: ISink<R>);
@@ -74,7 +74,7 @@ export declare class Subscribe<T> extends LastSink<T> {
     complete(): void;
     error(err: any): void;
 }
-declare type Subscription<T, R = T> = Subscribe<T> | Promise<T> | Observable<R>;
+type Subscription<T, R = T> = Subscribe<T> | Promise<T> | Observable<R>;
 export declare function pipe<T, L extends Subscription<T>>(first: Observable<T>, sub: (source: Observable<T>) => L): L;
 export declare function pipe<T, T1, L extends Subscription<T1>>(first: Observable<T>, op1: Operator<T, T1>, sub: (source: Observable<T1>) => L): L;
 export declare function pipe<T, T1, T2, L extends Subscription<T2>>(first: Observable<T>, op1: Operator<T, T1>, op2: Operator<T1, T2>, sub: (source: Observable<T2>) => L): L;
@@ -105,7 +105,7 @@ export declare const Events: {
     }, sink?: {
         nodeId: number;
         streamId: number;
-    } | undefined): void;
+    }): void;
     complete(who: Node, streamId: number, err?: any): void;
     defer(who: Node, streamId: number): void;
     pipe(who: Node): void;

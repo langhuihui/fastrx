@@ -1,5 +1,5 @@
 import { Observable, Observer, EventHandler, EventDispachter } from "./common";
-export declare type Subject<T> = Observable<T> & Observer<T>;
+export type Subject<T> = Observable<T> & Observer<T>;
 export declare function subject<T>(source?: Observable<T>): Subject<T>;
 export declare function defer<T>(f: () => Observable<T>): Observable<T>;
 export declare function of<T>(...data: T[]): Observable<T>;

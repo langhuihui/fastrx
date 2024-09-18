@@ -1,6 +1,6 @@
 import { EventDispachter, Observable } from "./common";
 export declare const koaEventStream: (ctx: any, next: () => Promise<Observable<unknown>>) => Promise<void>;
-declare type Messager<T> = {
+type Messager<T> = {
     onmessage: (event: T) => void;
     close: () => void;
 };

@@ -80,10 +80,10 @@ export function fromEventPattern(add, remove) {
 }
 ;
 export function fromEvent(target, name) {
-    if ("on" in target) {
+    if ("on" in target && "off" in target) {
         return create(_fromEventPattern((h) => target.on(name, h), (h) => target.off(name, h)), "fromEvent", arguments);
     }
-    else if ("addListener" in target) {
+    else if ("addListener" in target && "removeListener" in target) {
         return create(_fromEventPattern((h) => target.addListener(name, h), (h) => target.removeListener(name, h)), "fromEvent", arguments);
     }
     else if ("addEventListener" in target) {

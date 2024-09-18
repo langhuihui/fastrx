@@ -89,14 +89,14 @@ declare const operators: {
     tap: <T_40>(ob: Partial<import("./common").Observer<T_40>> | ((d: T_40) => void)) => Operator<T_40, T_40>;
     timeout: <T_41>(timeout: number) => Operator<T_41, T_41>;
 };
-declare type Obs = {
+type Obs = {
     subscribe: typeof subscribe;
     toPromise: typeof toPromise;
 };
-declare type Op = {
+type Op = {
     [key in keyof (typeof operators)]: (...args: Parameters<((typeof operators))[key]>) => Op;
 } & Obs;
-declare type Rx = {
+type Rx = {
     [key in keyof typeof observables]: (...args: Parameters<(typeof observables)[key]>) => Op;
 };
 export declare const rx: Rx;
