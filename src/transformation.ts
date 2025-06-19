@@ -34,7 +34,7 @@ class Pairwise<T> extends Sink<T, [T, T]> {
   }
 }
 export const pairwise = deliver(Pairwise, "pairwise");
-class MapObserver<T, R> extends Sink<T, R>{
+class MapObserver<T, R> extends Sink<T, R> {
   constructor(sink: ISink<R>, private mapper: (data: T) => R, private thisArg?: any) {
     super(sink);
   }
@@ -80,7 +80,7 @@ class Maps<T, U, R, CS extends InnerSink<T, U, R, MapContext<T, U, R>>> extends 
     const sink = this.currentSink = new c(this.sink, data, this);
     this.complete = this.tryComplete;
     sink.complete = sink.tryComplete;
-    sink.subscribe(this.makeSource(data, this.index++))
+    sink.subscribe(this.makeSource(data, this.index++));
   }
   // 如果complete先于inner的complete触发，则不传播complete
   tryComplete() {
@@ -112,34 +112,44 @@ export const switchMapTo = makeMapTo(deliver(SwitchMap, "switchMapTo"));
 class _ConcatMap<T, U, R> extends InnerSink<T, U, R, ConcatMap<T, U, R>> {
   tryComplete() {
     this.dispose();
-    if (this.context.sources.length) {
-      this.context.subNext();
-    } else {
-      this.context.resetNext();
-      this.context.resetComplete();
-    }
+    this.context.isProcessing = false;
+    this.context.processNext();
   }
 }
 
-class ConcatMap<T, U, R = U> extends Maps<T, U, R, _ConcatMap<T, U, R>>{
+class ConcatMap<T, U, R = U> extends Maps<T, U, R, _ConcatMap<T, U, R>> {
   sources: T[] = [];
-  next2 = this.sources.push.bind(this.sources);
+  isProcessing = false;
+  sourceCompleted = false;
+
   next(data: T) {
-    this.next2(data);
-    this.subNext();
-  }
-  subNext() {
-    this.next = this.next2; //后续直接push，不触发subNext
-    this.subInner(this.sources.shift() as T, _ConcatMap);
-    if (this.disposed && this.sources.length === 0) {
-      // 最后一个innerSink，需要激活其真实的complete
-      this.currentSink.resetComplete();
+    this.sources.push(data);
+    if (!this.isProcessing) {
+      this.processNext();
     }
   }
+
+  processNext() {
+    if (this.sources.length === 0) {
+      this.isProcessing = false;
+      if (this.sourceCompleted) {
+        this.resetNext();
+        this.resetComplete();
+      }
+      return;
+    }
+
+    this.isProcessing = true;
+    const data = this.sources.shift() as T;
+    this.subInner(data, _ConcatMap);
+  }
+
   tryComplete() {
-    if (this.sources.length === 0)
-      // 最后一个innerSink，需要激活其真实的complete
-      this.currentSink.resetComplete();
+    this.sourceCompleted = true;
+    if (!this.isProcessing && this.sources.length === 0) {
+      this.resetNext();
+      this.resetComplete();
+    }
     this.dispose();
   }
 }
@@ -157,7 +167,7 @@ class _MergeMap<T, U, R> extends InnerSink<T, U, R, MergeMap<T, U, R>> {
 }
 // type __Maps<C> = C extends MapContext<infer T, infer U, infer R> ? C : never;
 // type _Maps<C> = C extends InnerSink<infer T, infer U, infer R, infer> ? Maps<T, U, R, C> : never;
-class MergeMap<T, U, R = U> extends Maps<T, U, R, _MergeMap<T, U, R>>{
+class MergeMap<T, U, R = U> extends Maps<T, U, R, _MergeMap<T, U, R>> {
   inners = new Set<_MergeMap<T, U, R>>();
   next(data: T) {
     this.subInner(data, _MergeMap);
@@ -179,7 +189,7 @@ class _ExhaustMap<T, U, R> extends InnerSink<T, U, R, ExhaustMap<T, U, R>> {
     super.dispose();
   }
 }
-class ExhaustMap<T, U, R = U> extends Maps<T, U, R, _ExhaustMap<T, U, R>>{
+class ExhaustMap<T, U, R = U> extends Maps<T, U, R, _ExhaustMap<T, U, R>> {
   next(data: T) {
     this.next = nothing;
     this.subInner(data, _ExhaustMap);
@@ -296,3 +306,71 @@ class CatchError<T, R = T> extends Sink<T, R> {
 }
 
 export const catchError = deliver(CatchError, "catchError");
+class _Expand<T> extends InnerSink<T, T, T, Expand<T>> {
+  tryComplete() {
+    const deleted = this.context.inners.delete(this);
+    super.dispose();
+    // 只有当成功删除时才检查完成，避免重复检查
+    if (deleted) {
+      this.context.checkComplete();
+    }
+  }
+
+  next(data: T) {
+    // 发送数据到输出流
+    this.sink.next(data);
+    // 递归处理：将新数据通过 project 函数产生新的 Observable 并订阅
+    this.context.expandValue(data);
+  }
+}
+
+class Expand<T> extends Maps<T, T, T, _Expand<T>> {
+  inners = new Set<_Expand<T>>();
+  sourceCompleted = false;
+
+  constructor(sink: ISink<T>, private readonly project: (value: T, index: number) => Observable<T>) {
+    super(sink, project);
+  }
+
+  next(data: T) {
+    // 发送原始数据到输出流
+    this.sink.next(data);
+    // 展开数据（递归处理）
+    this.expandValue(data);
+  }
+
+  expandValue(data: T) {
+    // 创建内部 sink 但不立即订阅
+    const innerSink = new _Expand(this.sink, data, this);
+    this.currentSink = innerSink;
+    this.complete = this.tryComplete;
+    innerSink.complete = innerSink.tryComplete;
+
+    // 先添加到 inners，再订阅，避免时序问题
+    this.inners.add(innerSink);
+
+    // 现在订阅 Observable
+    innerSink.subscribe(this.makeSource(data, this.index++));
+  }
+
+  complete() {
+    this.sourceCompleted = true;
+    this.checkComplete();
+  }
+
+  checkComplete() {
+    // 只有当源 Observable 完成且所有内部 Observable 都完成时才完成
+    if (this.sourceCompleted && this.inners.size === 0) {
+      this.resetComplete();
+      super.complete();
+    }
+  }
+
+  tryComplete() {
+    // 当源 Observable 完成时，标记源已完成并检查是否可以完成
+    this.sourceCompleted = true;
+    this.checkComplete();
+  }
+}
+
+export const expand = deliver(Expand, "expand");

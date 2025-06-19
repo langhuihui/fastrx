@@ -2,6 +2,14 @@ import { Observable, Observer, EventHandler, EventDispachter } from "./common";
 export type Subject<T> = Observable<T> & Observer<T>;
 export declare function subject<T>(source?: Observable<T>): Subject<T>;
 export declare function defer<T>(f: () => Observable<T>): Observable<T>;
+type AsyncScheduler = (callback: () => void) => void;
+declare const schedulers: {
+    promise: (callback: () => void) => void;
+    setImmediate: ((callback: () => void) => any) | null;
+    setTimeout: (callback: () => void) => number;
+};
+declare const setAsapScheduler: (schedulerType: keyof typeof schedulers | AsyncScheduler) => void;
+export { setAsapScheduler };
 export declare function of<T>(...data: T[]): Observable<T>;
 export declare function fromArray<T>(data: ArrayLike<T>): Observable<T>;
 export declare function interval(period: number): Observable<number>;

@@ -108,37 +108,42 @@ export const switchMapTo = makeMapTo(deliver(SwitchMap, "switchMapTo"));
 class _ConcatMap extends InnerSink {
     tryComplete() {
         this.dispose();
-        if (this.context.sources.length) {
-            this.context.subNext();
-        }
-        else {
-            this.context.resetNext();
-            this.context.resetComplete();
-        }
+        this.context.isProcessing = false;
+        this.context.processNext();
     }
 }
 class ConcatMap extends Maps {
     constructor() {
         super(...arguments);
         this.sources = [];
-        this.next2 = this.sources.push.bind(this.sources);
+        this.isProcessing = false;
+        this.sourceCompleted = false;
     }
     next(data) {
-        this.next2(data);
-        this.subNext();
-    }
-    subNext() {
-        this.next = this.next2; //后续直接push，不触发subNext
-        this.subInner(this.sources.shift(), _ConcatMap);
-        if (this.disposed && this.sources.length === 0) {
-            // 最后一个innerSink，需要激活其真实的complete
-            this.currentSink.resetComplete();
+        this.sources.push(data);
+        if (!this.isProcessing) {
+            this.processNext();
         }
     }
+    processNext() {
+        if (this.sources.length === 0) {
+            this.isProcessing = false;
+            if (this.sourceCompleted) {
+                this.resetNext();
+                this.resetComplete();
+            }
+            return;
+        }
+        this.isProcessing = true;
+        const data = this.sources.shift();
+        this.subInner(data, _ConcatMap);
+    }
     tryComplete() {
-        if (this.sources.length === 0)
-            // 最后一个innerSink，需要激活其真实的complete
-            this.currentSink.resetComplete();
+        this.sourceCompleted = true;
+        if (!this.isProcessing && this.sources.length === 0) {
+            this.resetNext();
+            this.resetComplete();
+        }
         this.dispose();
     }
 }
@@ -292,3 +297,61 @@ class CatchError extends Sink {
     }
 }
 export const catchError = deliver(CatchError, "catchError");
+class _Expand extends InnerSink {
+    tryComplete() {
+        const deleted = this.context.inners.delete(this);
+        super.dispose();
+        // 只有当成功删除时才检查完成，避免重复检查
+        if (deleted) {
+            this.context.checkComplete();
+        }
+    }
+    next(data) {
+        // 发送数据到输出流
+        this.sink.next(data);
+        // 递归处理：将新数据通过 project 函数产生新的 Observable 并订阅
+        this.context.expandValue(data);
+    }
+}
+class Expand extends Maps {
+    constructor(sink, project) {
+        super(sink, project);
+        this.project = project;
+        this.inners = new Set();
+        this.sourceCompleted = false;
+    }
+    next(data) {
+        // 发送原始数据到输出流
+        this.sink.next(data);
+        // 展开数据（递归处理）
+        this.expandValue(data);
+    }
+    expandValue(data) {
+        // 创建内部 sink 但不立即订阅
+        const innerSink = new _Expand(this.sink, data, this);
+        this.currentSink = innerSink;
+        this.complete = this.tryComplete;
+        innerSink.complete = innerSink.tryComplete;
+        // 先添加到 inners，再订阅，避免时序问题
+        this.inners.add(innerSink);
+        // 现在订阅 Observable
+        innerSink.subscribe(this.makeSource(data, this.index++));
+    }
+    complete() {
+        this.sourceCompleted = true;
+        this.checkComplete();
+    }
+    checkComplete() {
+        // 只有当源 Observable 完成且所有内部 Observable 都完成时才完成
+        if (this.sourceCompleted && this.inners.size === 0) {
+            this.resetComplete();
+            super.complete();
+        }
+    }
+    tryComplete() {
+        // 当源 Observable 完成时，标记源已完成并检查是否可以完成
+        this.sourceCompleted = true;
+        this.checkComplete();
+    }
+}
+export const expand = deliver(Expand, "expand");

@@ -24,5 +24,6 @@ export declare const timeInterval: <T>() => import("./common").Operator<T, {
 export declare const bufferTime: <T>(miniseconds: number) => import("./common").Operator<T, T[]>;
 export declare const delay: <T>(delay: number) => import("./common").Operator<T, T>;
 export declare const catchError: <T, R = T>(selector: (err: any) => Observable<R>) => import("./common").Operator<T, R>;
+export declare const expand: <T>(project: (value: T, index: number) => Observable<T>) => import("./common").Operator<T, T>;
 export {};
 //# sourceMappingURL=transformation.d.ts.map

@@ -16,7 +16,8 @@ import * as transformation from './transformation';
 import { subscribe, toPromise, tap, timeout, toReadableStream } from './utils';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest } = combination, combinations = __rest(combination, ["zip", "merge", "race", "concat", "combineLatest"]);
-const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producer);
+const { setAsapScheduler } = producer, producerObservables = __rest(producer, ["setAsapScheduler"]);
+const observables = Object.assign({ zip, merge, race, concat, combineLatest }, producerObservables);
 const operators = Object.assign(Object.assign(Object.assign(Object.assign({ tap, timeout }, combinations), filtering), mathematical), transformation);
 const rxProxy = {
     get: (target, prop) => {

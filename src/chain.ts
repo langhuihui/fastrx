@@ -6,7 +6,8 @@ import * as transformation from './transformation';
 import { subscribe, toPromise, tap, timeout, toReadableStream } from './utils';
 import * as combination from './combination';
 const { zip, merge, race, concat, combineLatest, ...combinations } = combination;
-const observables = { zip, merge, race, concat, combineLatest, ...producer };
+const { setAsapScheduler, ...producerObservables } = producer;
+const observables = { zip, merge, race, concat, combineLatest, ...producerObservables };
 const operators = { tap, timeout, ...combinations, ...filtering, ...mathematical, ...transformation };
 
 // (typeof operators)[keyof typeof operators] extends (...arg:any[])=>Operator<number,number>?
