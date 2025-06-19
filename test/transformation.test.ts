@@ -30,7 +30,7 @@ test('concatMap', async () => {
     pipe(range(1, 5),
       map(getReconnectionTimeout),
       concatMap(
-        timer,
+        x => timer(x),
         identity
       ),
       subscribe(

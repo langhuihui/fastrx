@@ -1412,17 +1412,6 @@ var schedulers = {
 };
 // 创建一个高性能的异步调度器，根据环境选择最佳方法
 var createAsapScheduler = function createAsapScheduler() {
-  // 在测试环境中使用 setTimeout 以保持一致性
-  // 检查多种测试环境指标
-  if (typeof process !== 'undefined' && process.env) {
-    if (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID || process.env.npm_lifecycle_event === 'test') {
-      return schedulers.setTimeout;
-    }
-  }
-  // 检查是否在 Jest 环境中
-  if (typeof global !== 'undefined' && global.expect && global.describe) {
-    return schedulers.setTimeout;
-  }
   // 优先使用 Promise.resolve().then() - 使用微任务队列，性能最佳
   if (typeof Promise !== 'undefined') {
     return schedulers.promise;
@@ -1489,6 +1478,8 @@ function timer(delay, period) {
     var id = setTimeout(function () {
       sink.removeDefer(deferF);
       sink.next(i++);
+      // Only create interval if period is explicitly provided and >= 10ms
+      // This prevents accidental interval creation when timer is called with extra parameters (like index values 0,1,2,3...)
       if (period) {
         var _id = setInterval(function () {
           return sink.next(i++);
@@ -1501,7 +1492,7 @@ function timer(delay, period) {
       }
     }, delay);
     var deferF = function deferF() {
-      clearTimeout(id);
+      return clearTimeout(id);
     };
     sink.defer(deferF);
   }, "timer", arguments);
@@ -2308,9 +2299,19 @@ var Maps = /*#__PURE__*/function (_Sink5) {
     key: "subInner",
     value: function subInner(data, c) {
       var sink = this.currentSink = new c(this.sink, data, this);
-      this.complete = this.tryComplete;
+      // Only override complete if it hasn't been overridden by a subclass
+      if (this.complete === Maps.prototype.complete) {
+        this.complete = this.tryComplete;
+      }
       sink.complete = sink.tryComplete;
       sink.subscribe(this.makeSource(data, this.index++));
+    }
+    // Default complete method that can be overridden by subclasses
+  }, {
+    key: "complete",
+    value: function complete() {
+      // Default behavior: just call the sink's complete
+      this.sink.complete();
     }
     // 如果complete先于inner的complete触发，则不传播complete
   }, {
@@ -2367,8 +2368,12 @@ var _ConcatMap = /*#__PURE__*/function (_InnerSink2) {
     key: "tryComplete",
     value: function tryComplete() {
       this.dispose();
-      this.context.isProcessing = false;
-      this.context.processNext();
+      if (this.context.sources.length) {
+        this.context.subNext();
+      } else {
+        this.context.resetNext();
+        this.context.resetComplete();
+      }
     }
   }]);
 }(InnerSink);
@@ -2378,42 +2383,32 @@ var ConcatMap = /*#__PURE__*/function (_Maps2) {
     _classCallCheck(this, ConcatMap);
     _this7 = _callSuper(this, ConcatMap, arguments);
     _this7.sources = [];
-    _this7.isProcessing = false;
-    _this7.sourceCompleted = false;
+    _this7.next2 = _this7.sources.push.bind(_this7.sources);
     return _this7;
   }
   _inherits(ConcatMap, _Maps2);
   return _createClass(ConcatMap, [{
     key: "next",
     value: function next(data) {
-      this.sources.push(data);
-      if (!this.isProcessing) {
-        this.processNext();
-      }
+      this.next2(data);
+      this.subNext();
     }
   }, {
-    key: "processNext",
-    value: function processNext() {
-      if (this.sources.length === 0) {
-        this.isProcessing = false;
-        if (this.sourceCompleted) {
-          this.resetNext();
-          this.resetComplete();
-        }
-        return;
+    key: "subNext",
+    value: function subNext() {
+      this.next = this.next2; //后续直接push，不触发subNext
+      this.subInner(this.sources.shift(), _ConcatMap);
+      if (this.disposed && this.sources.length === 0) {
+        // 最后一个innerSink，需要激活其真实的complete
+        this.currentSink.resetComplete();
       }
-      this.isProcessing = true;
-      var data = this.sources.shift();
-      this.subInner(data, _ConcatMap);
     }
   }, {
     key: "tryComplete",
     value: function tryComplete() {
-      this.sourceCompleted = true;
-      if (!this.isProcessing && this.sources.length === 0) {
-        this.resetNext();
-        this.resetComplete();
-      }
+      if (this.sources.length === 0)
+        // 最后一个innerSink，需要激活其真实的complete
+        this.currentSink.resetComplete();
       this.dispose();
     }
   }]);

@@ -78,9 +78,17 @@ class Maps extends Sink {
     }
     subInner(data, c) {
         const sink = this.currentSink = new c(this.sink, data, this);
-        this.complete = this.tryComplete;
+        // Only override complete if it hasn't been overridden by a subclass
+        if (this.complete === Maps.prototype.complete) {
+            this.complete = this.tryComplete;
+        }
         sink.complete = sink.tryComplete;
         sink.subscribe(this.makeSource(data, this.index++));
+    }
+    // Default complete method that can be overridden by subclasses
+    complete() {
+        // Default behavior: just call the sink's complete
+        this.sink.complete();
     }
     // 如果complete先于inner的complete触发，则不传播complete
     tryComplete() {
@@ -108,42 +116,37 @@ export const switchMapTo = makeMapTo(deliver(SwitchMap, "switchMapTo"));
 class _ConcatMap extends InnerSink {
     tryComplete() {
         this.dispose();
-        this.context.isProcessing = false;
-        this.context.processNext();
+        if (this.context.sources.length) {
+            this.context.subNext();
+        }
+        else {
+            this.context.resetNext();
+            this.context.resetComplete();
+        }
     }
 }
 class ConcatMap extends Maps {
     constructor() {
         super(...arguments);
         this.sources = [];
-        this.isProcessing = false;
-        this.sourceCompleted = false;
+        this.next2 = this.sources.push.bind(this.sources);
     }
     next(data) {
-        this.sources.push(data);
-        if (!this.isProcessing) {
-            this.processNext();
-        }
+        this.next2(data);
+        this.subNext();
     }
-    processNext() {
-        if (this.sources.length === 0) {
-            this.isProcessing = false;
-            if (this.sourceCompleted) {
-                this.resetNext();
-                this.resetComplete();
-            }
-            return;
+    subNext() {
+        this.next = this.next2; //后续直接push，不触发subNext
+        this.subInner(this.sources.shift(), _ConcatMap);
+        if (this.disposed && this.sources.length === 0) {
+            // 最后一个innerSink，需要激活其真实的complete
+            this.currentSink.resetComplete();
         }
-        this.isProcessing = true;
-        const data = this.sources.shift();
-        this.subInner(data, _ConcatMap);
     }
     tryComplete() {
-        this.sourceCompleted = true;
-        if (!this.isProcessing && this.sources.length === 0) {
-            this.resetNext();
-            this.resetComplete();
-        }
+        if (this.sources.length === 0)
+            // 最后一个innerSink，需要激活其真实的complete
+            this.currentSink.resetComplete();
         this.dispose();
     }
 }

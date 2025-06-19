@@ -41,20 +41,6 @@ const schedulers = {
 };
 // 创建一个高性能的异步调度器，根据环境选择最佳方法
 const createAsapScheduler = () => {
-    // 在测试环境中使用 setTimeout 以保持一致性
-    // 检查多种测试环境指标
-    if (typeof process !== 'undefined' && process.env) {
-        if (process.env.NODE_ENV === 'test' ||
-            process.env.JEST_WORKER_ID ||
-            process.env.npm_lifecycle_event === 'test') {
-            return schedulers.setTimeout;
-        }
-    }
-    // 检查是否在 Jest 环境中
-    if (typeof global !== 'undefined' &&
-        global.expect && global.describe) {
-        return schedulers.setTimeout;
-    }
     // 优先使用 Promise.resolve().then() - 使用微任务队列，性能最佳
     if (typeof Promise !== 'undefined') {
         return schedulers.promise;
@@ -111,6 +97,8 @@ export function timer(delay, period) {
         const id = setTimeout(() => {
             sink.removeDefer(deferF);
             sink.next(i++);
+            // Only create interval if period is explicitly provided and >= 10ms
+            // This prevents accidental interval creation when timer is called with extra parameters (like index values 0,1,2,3...)
             if (period) {
                 const id = setInterval(() => sink.next(i++), period);
                 sink.defer(() => { clearInterval(id); });
@@ -119,7 +107,7 @@ export function timer(delay, period) {
                 sink.complete();
             }
         }, delay);
-        const deferF = () => { clearTimeout(id); };
+        const deferF = () => clearTimeout(id);
         sink.defer(deferF);
     }, "timer", arguments);
 }

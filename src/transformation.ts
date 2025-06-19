@@ -78,10 +78,19 @@ class Maps<T, U, R, CS extends InnerSink<T, U, R, MapContext<T, U, R>>> extends 
   }
   subInner<THIS extends Maps<T, U, R, CS>, C extends { new(sink: ISink<R>, data: T, _this: THIS): CS; }>(this: THIS, data: T, c: C) {
     const sink = this.currentSink = new c(this.sink, data, this);
-    this.complete = this.tryComplete;
+    // Only override complete if it hasn't been overridden by a subclass
+    if (this.complete === Maps.prototype.complete) {
+      this.complete = this.tryComplete;
+    }
     sink.complete = sink.tryComplete;
     sink.subscribe(this.makeSource(data, this.index++));
   }
+  // Default complete method that can be overridden by subclasses
+  complete() {
+    // Default behavior: just call the sink's complete
+    this.sink.complete();
+  }
+
   // 如果complete先于inner的complete触发，则不传播complete
   tryComplete() {
     // 如果tryComplete被调用，说明currentSink已经存在
@@ -112,44 +121,34 @@ export const switchMapTo = makeMapTo(deliver(SwitchMap, "switchMapTo"));
 class _ConcatMap<T, U, R> extends InnerSink<T, U, R, ConcatMap<T, U, R>> {
   tryComplete() {
     this.dispose();
-    this.context.isProcessing = false;
-    this.context.processNext();
+    if (this.context.sources.length) {
+      this.context.subNext();
+    } else {
+      this.context.resetNext();
+      this.context.resetComplete();
+    }
   }
 }
 
-class ConcatMap<T, U, R = U> extends Maps<T, U, R, _ConcatMap<T, U, R>> {
+class ConcatMap<T, U, R = U> extends Maps<T, U, R, _ConcatMap<T, U, R>>{
   sources: T[] = [];
-  isProcessing = false;
-  sourceCompleted = false;
-
+  next2 = this.sources.push.bind(this.sources);
   next(data: T) {
-    this.sources.push(data);
-    if (!this.isProcessing) {
-      this.processNext();
+    this.next2(data);
+    this.subNext();
+  }
+  subNext() {
+    this.next = this.next2; //后续直接push，不触发subNext
+    this.subInner(this.sources.shift() as T, _ConcatMap);
+    if (this.disposed && this.sources.length === 0) {
+      // 最后一个innerSink，需要激活其真实的complete
+      this.currentSink.resetComplete();
     }
   }
-
-  processNext() {
-    if (this.sources.length === 0) {
-      this.isProcessing = false;
-      if (this.sourceCompleted) {
-        this.resetNext();
-        this.resetComplete();
-      }
-      return;
-    }
-
-    this.isProcessing = true;
-    const data = this.sources.shift() as T;
-    this.subInner(data, _ConcatMap);
-  }
-
   tryComplete() {
-    this.sourceCompleted = true;
-    if (!this.isProcessing && this.sources.length === 0) {
-      this.resetNext();
-      this.resetComplete();
-    }
+    if (this.sources.length === 0)
+      // 最后一个innerSink，需要激活其真实的complete
+      this.currentSink.resetComplete();
     this.dispose();
   }
 }
