@@ -154,7 +154,7 @@ export class Subscribe extends LastSink {
                 this.error = err => {
                     this.dispose();
                     Events.complete(node, 0, err);
-                    _error();
+                    _error(err);
                 };
             }
         }

@@ -180,7 +180,7 @@ export class Subscribe<T> extends LastSink<T> {
         this.error = err => {
           this.dispose();
           Events.complete(node, 0, err);
-          _error();
+          _error(err);
         };
       }
     } else {

@@ -757,7 +757,7 @@ var Subscribe = /*#__PURE__*/function (_LastSink2) {
         _this4.error = function (err) {
           _this4.dispose();
           Events.complete(node, 0, err);
-          _error();
+          _error(err);
         };
       }
     } else {
