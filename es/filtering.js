@@ -26,6 +26,7 @@ class Take extends Sink {
     next(data) {
         this.sink.next(data);
         if (--this.count === 0) {
+            this.doDefer();
             this.complete();
         }
     }
@@ -35,7 +36,10 @@ class TakeUntil extends Sink {
     constructor(sink, control) {
         super(sink);
         const _takeUntil = new Sink(sink);
-        _takeUntil.next = () => sink.complete();
+        _takeUntil.next = () => {
+            _takeUntil.doDefer();
+            sink.complete();
+        };
         _takeUntil.complete = dispose;
         _takeUntil.subscribe(control);
     }
@@ -51,6 +55,7 @@ class TakeWhile extends Sink {
             this.sink.next(data);
         }
         else {
+            this.doDefer();
             this.complete();
         }
     }
@@ -80,7 +85,7 @@ class SkipUntil extends Sink {
         sink.next = nothing;
         const _skipUntil = new Sink(sink);
         _skipUntil.next = () => {
-            _skipUntil.dispose();
+            _skipUntil.doDefer();
             sink.resetNext();
         };
         _skipUntil.complete = dispose;
@@ -200,6 +205,7 @@ class ElementAt extends Sink {
     next(data) {
         if (this.count-- === 0) {
             this.defaultValue = data;
+            this.doDefer();
             this.complete();
         }
     }
@@ -224,6 +230,7 @@ class FindIndex extends Sink {
     next(data) {
         if (this.f(data)) {
             this.sink.next(this.i++);
+            this.doDefer();
             this.complete();
         }
         else {
@@ -242,6 +249,7 @@ class First extends Sink {
     next(data) {
         if (!this.f || this.f(data, this.index++)) {
             this.defaultValue = data;
+            this.doDefer();
             this.complete();
         }
     }
@@ -288,6 +296,7 @@ class Every extends Sink {
     next(data) {
         if (!this.predicate(data, this.index++)) {
             this.result = false;
+            this.doDefer();
             this.complete();
         }
         else {

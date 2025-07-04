@@ -1783,6 +1783,7 @@ var Take = /*#__PURE__*/function (_Sink3) {
     value: function next(data) {
       this.sink.next(data);
       if (--this.count === 0) {
+        this.doDefer();
         this.complete();
       }
     }
@@ -1796,7 +1797,8 @@ var TakeUntil = /*#__PURE__*/function (_Sink4) {
     _this3 = _callSuper(this, TakeUntil, [sink]);
     var _takeUntil = new Sink(sink);
     _takeUntil.next = function () {
-      return sink.complete();
+      _takeUntil.doDefer();
+      sink.complete();
     };
     _takeUntil.complete = dispose;
     _takeUntil.subscribe(control);
@@ -1821,6 +1823,7 @@ var TakeWhile = /*#__PURE__*/function (_Sink5) {
       if (this.f(data)) {
         this.sink.next(data);
       } else {
+        this.doDefer();
         this.complete();
       }
     }
@@ -1861,7 +1864,7 @@ var SkipUntil = /*#__PURE__*/function (_Sink7) {
     sink.next = nothing;
     var _skipUntil = new Sink(sink);
     _skipUntil.next = function () {
-      _skipUntil.dispose();
+      _skipUntil.doDefer();
       sink.resetNext();
     };
     _skipUntil.complete = dispose;
@@ -2045,6 +2048,7 @@ var ElementAt = /*#__PURE__*/function (_Sink13) {
     value: function next(data) {
       if (this.count-- === 0) {
         this.defaultValue = data;
+        this.doDefer();
         this.complete();
       }
     }
@@ -2082,6 +2086,7 @@ var FindIndex = /*#__PURE__*/function (_Sink14) {
     value: function next(data) {
       if (this.f(data)) {
         this.sink.next(this.i++);
+        this.doDefer();
         this.complete();
       } else {
         ++this.i;
@@ -2106,6 +2111,7 @@ var First = /*#__PURE__*/function (_Sink15) {
     value: function next(data) {
       if (!this.f || this.f(data, this.index++)) {
         this.defaultValue = data;
+        this.doDefer();
         this.complete();
       }
     }
@@ -2166,6 +2172,7 @@ var Every = /*#__PURE__*/function (_Sink17) {
     value: function next(data) {
       if (!this.predicate(data, this.index++)) {
         this.result = false;
+        this.doDefer();
         this.complete();
       } else {
         this.result = true;

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FastRx DevTools 测试页面</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-success {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #1e7e34;
+    }
+
+    .btn-warning {
+      background-color: #ffc107;
+      color: #212529;
+    }
+
+    .btn-warning:hover {
+      background-color: #e0a800;
+    }
+
+    .btn-danger {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #c82333;
+    }
+
+    .log-section {
+      margin: 20px 0;
+    }
+
+    .log-section h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    #eventLog,
+    #debugInfo {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    .info-box {
+      background-color: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+
+    .info-box h4 {
+      margin-top: 0;
+      color: #0056b3;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🚀 FastRx DevTools 测试页面</h1>
+    <p>这个页面用于测试 FastRx Chrome 扩展的功能。</p>
+
+    <div class="info-box">
+      <h4>📋 使用说明</h4>
+      <ol>
+        <li>确保已安装并启用 FastRx 扩展</li>
+        <li>打开 Chrome DevTools (F12)</li>
+        <li>在 DevTools 中找到 "FastRx" 标签页</li>
+        <li>点击下面的按钮测试各种功能</li>
+      </ol>
+    </div>
+
+    <div id="status" class="status">
+      <p>正在检查扩展连接状态...</p>
+    </div>
+
+    <div class="controls">
+      <button class="btn-primary" onclick="testConnection()">🔍 测试连接</button>
+      <button class="btn-success" onclick="testMessage()">📤 发送测试消息</button>
+      <button class="btn-warning" onclick="simulateEvents()">🎬 模拟事件流</button>
+      <button class="btn-danger" onclick="clearEvents()">🗑️ 清除日志</button>
+    </div>
+
+    <div class="log-section">
+      <h3>📊 事件日志</h3>
+      <div id="eventLog"></div>
+    </div>
+
+    <div class="log-section">
+      <h3>🐛 调试信息</h3>
+      <div id="debugInfo"></div>
+    </div>
+  </div>
+
+  <!-- 引用外部 JavaScript 文件 -->
+  <script src="test.js"></script>
+</body>
+
+</html>

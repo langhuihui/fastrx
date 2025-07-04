@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FastRx 扩展简单测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .info {
+      background-color: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🚀 FastRx 扩展测试</h1>
+
+    <div class="info">
+      <h3>测试步骤：</h3>
+      <ol>
+        <li>确保已加载 FastRx 扩展</li>
+        <li>点击"检查连接"按钮</li>
+        <li>如果连接成功，打开 DevTools (F12)</li>
+        <li>在 DevTools 中找到 "FastRx" 标签页</li>
+        <li>点击"发送测试消息"按钮</li>
+        <li>在 DevTools 面板中查看是否收到消息</li>
+      </ol>
+    </div>
+
+    <div id="status" class="status">
+      等待检查连接状态...
+    </div>
+
+    <div>
+      <button onclick="checkConnection()">检查连接</button>
+      <button onclick="sendTestMessage()">发送测试消息</button>
+      <button onclick="simulateRxEvent()">模拟 Rx 事件</button>
+    </div>
+
+    <div id="log"
+      style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-family: monospace; font-size: 12px;">
+      日志将在这里显示...
+    </div>
+  </div>
+
+  <script>
+    function log(message) {
+      const logDiv = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logDiv.innerHTML += `[${time}] ${message}<br>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function checkConnection() {
+      const status = document.getElementById('status');
+      if (window.__FASTRX_DEVTOOLS__) {
+        status.className = 'status success';
+        status.textContent = '✅ 扩展连接正常！';
+        log('✅ 扩展连接检查成功');
+      } else {
+        status.className = 'status error';
+        status.textContent = '❌ 扩展未连接';
+        log('❌ 扩展连接检查失败');
+      }
+    }
+
+    function sendTestMessage() {
+      const message = {
+        source: 'fastrx-devtools-backend',
+        payload: {
+          event: 'test',
+          data: 'Hello from test page!',
+          timestamp: Date.now()
+        }
+      };
+
+      window.postMessage(message, '*');
+      log('📤 发送测试消息: ' + JSON.stringify(message.payload));
+    }
+
+    function simulateRxEvent() {
+      const events = [
+        { type: 'subscribe', data: '订阅数据流', nodeId: 'test-stream' },
+        { type: 'next', data: '数据: 42', nodeId: 'test-stream' },
+        { type: 'next', data: '数据: Hello World', nodeId: 'test-stream' },
+        { type: 'complete', data: '流完成', nodeId: 'test-stream' }
+      ];
+
+      events.forEach((event, index) => {
+        setTimeout(() => {
+          const message = {
+            source: 'fastrx-devtools-backend',
+            payload: {
+              event: event.type,
+              data: event.data,
+              nodeId: event.nodeId,
+              timestamp: Date.now()
+            }
+          };
+
+          window.postMessage(message, '*');
+          log(`📤 发送 ${event.type} 事件: ${event.data}`);
+        }, index * 1000);
+      });
+    }
+
+    // 监听来自扩展的消息
+    window.addEventListener('message', function (event) {
+      if (event.data && event.data.source === 'fastrx-devtools-proxy') {
+        log('📥 收到代理消息: ' + JSON.stringify(event.data.payload));
+      }
+    });
+
+    // 页面加载时自动检查连接
+    window.addEventListener('load', () => {
+      setTimeout(checkConnection, 1000);
+      log('页面加载完成，开始检查扩展连接...');
+    });
+  </script>
+</body>
+
+</html>

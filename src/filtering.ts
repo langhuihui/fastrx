@@ -24,6 +24,7 @@ class Take<T> extends Sink<T> {
   next(data: T) {
     this.sink.next(data);
     if (--this.count === 0) {
+      this.doDefer();
       this.complete();
     }
   }
@@ -33,7 +34,10 @@ class TakeUntil<T> extends Sink<T> {
   constructor(sink: ISink<T>, control: Observable<unknown>) {
     super(sink);
     const _takeUntil = new Sink<unknown>(sink);
-    _takeUntil.next = () => sink.complete();
+    _takeUntil.next = () => {
+      _takeUntil.doDefer();
+      sink.complete();
+    };
     _takeUntil.complete = dispose;
     _takeUntil.subscribe(control);
   }
@@ -48,6 +52,7 @@ class TakeWhile<T> extends Sink<T> {
     if (this.f(data)) {
       this.sink.next(data);
     } else {
+      this.doDefer();
       this.complete();
     }
   }
@@ -78,7 +83,7 @@ class SkipUntil<T> extends Sink<T> {
     sink.next = nothing;
     const _skipUntil = new Sink<unknown>(sink);
     _skipUntil.next = () => {
-      _skipUntil.dispose();
+      _skipUntil.doDefer();
       sink.resetNext();
     };
     _skipUntil.complete = dispose;
@@ -193,6 +198,7 @@ class ElementAt<T> extends Sink<T> {
   next(data: T) {
     if (this.count-- === 0) {
       this.defaultValue = data;
+      this.doDefer();
       this.complete();
     }
   }
@@ -215,6 +221,7 @@ class FindIndex<T> extends Sink<T, number> {
   next(data: T) {
     if (this.f(data)) {
       this.sink.next(this.i++);
+      this.doDefer();
       this.complete();
     } else {
       ++this.i;
@@ -230,6 +237,7 @@ class First<T> extends Sink<T> {
   next(data: T) {
     if (!this.f || this.f(data, this.index++)) {
       this.defaultValue = data;
+      this.doDefer();
       this.complete();
     }
   }
@@ -273,6 +281,7 @@ class Every<T> extends Sink<T, boolean> {
   next(data: T) {
     if (!this.predicate(data, this.index++)) {
       this.result = false;
+      this.doDefer();
       this.complete();
     } else {
       this.result = true;
