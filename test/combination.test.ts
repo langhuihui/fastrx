@@ -24,8 +24,8 @@ test('concat', async () => {
 
 test('combineLatest', async () => {
     return new Promise((resolve, reject) => {
-        pipe(combineLatest(interval(100), of(4)), take(3), last(), subscribe(d => {
-            expect(d.join(',')).toBe('2,4');
+        pipe(combineLatest(interval(100), of(4, 5)), take(3), last(), subscribe(d => {
+            expect(d.join(',')).toBe('2,5');
         }, reject, resolve));
     });
 });

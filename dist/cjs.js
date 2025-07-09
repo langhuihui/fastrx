@@ -1157,15 +1157,12 @@ function combineLatest() {
     var s = function s(source, i) {
       var ss = new Sink(sink);
       ss.next = function (data) {
-        if (--nRun === 0) {
-          ss.next = function (data) {
-            array[i] = data;
-            sink.next(array);
-          };
-          ss.next(data);
-        } else {
+        nRun--;
+        ss.next = function (data) {
           array[i] = data;
-        }
+          if (nRun === 0) sink.next(array);
+        };
+        ss.next(data);
       };
       ss.complete = onComplete;
       ss.subscribe(source);

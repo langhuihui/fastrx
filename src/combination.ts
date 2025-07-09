@@ -37,7 +37,7 @@ export function share<T>(): Operator<T> {
       const ob = create((observer) => {
         share.add(observer);
       }, "share", arguments) as InspectObservable<T>;
-      share.sourceId = ob.id
+      share.sourceId = ob.id;
       ob.source = source;
       Events.pipe(ob);
       return ob;
@@ -139,15 +139,12 @@ export function combineLatest
     const s = (source: Observable<A[number]>, i: number) => {
       const ss = new Sink<A[number], A>(sink);
       ss.next = data => {
-        if (--nRun === 0) {
-          ss.next = data => {
-            array[i] = data;
-            sink.next(array);
-          };
-          ss.next(data);
-        } else {
+        nRun--;
+        ss.next = data => {
           array[i] = data;
-        }
+          if (nRun === 0) sink.next(array);
+        };
+        ss.next(data);
       };
       ss.complete = onComplete;
       ss.subscribe(source);

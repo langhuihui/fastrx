@@ -134,16 +134,13 @@ export function combineLatest(...sources) {
         const s = (source, i) => {
             const ss = new Sink(sink);
             ss.next = data => {
-                if (--nRun === 0) {
-                    ss.next = data => {
-                        array[i] = data;
-                        sink.next(array);
-                    };
-                    ss.next(data);
-                }
-                else {
+                nRun--;
+                ss.next = data => {
                     array[i] = data;
-                }
+                    if (nRun === 0)
+                        sink.next(array);
+                };
+                ss.next(data);
             };
             ss.complete = onComplete;
             ss.subscribe(source);

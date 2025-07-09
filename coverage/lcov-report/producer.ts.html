@@ -30,23 +30,23 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">8.82% </span>
+                <span class="strong">11.76% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/34</span>
+                <span class='fraction'>4/34</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">11.68% </span>
+                <span class="strong">15.58% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>9/77</span>
+                <span class='fraction'>12/77</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">31.69% </span>
+                <span class="strong">29.57% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>45/142</span>
+                <span class='fraction'>42/142</span>
             </div>
         
             
@@ -348,7 +348,7 @@
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -381,7 +381,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -399,14 +399,14 @@
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
@@ -416,29 +416,29 @@
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -601,8 +601,8 @@ type AsyncScheduler = (callback: () =&gt; void) =&gt; void;
 // 不同的调度器实现
 const schedulers = {
   // 使用 Promise.resolve().then() - 微任务队列，性能最佳
-  promise: <span class="fstat-no" title="function not covered" >(c</span>allback: () =&gt; void) =&gt; {
-<span class="cstat-no" title="statement not covered" >    Promise.resolve().then(callback);</span>
+  promise: (callback: () =&gt; void) =&gt; {
+    Promise.resolve().then(callback);
   },
 &nbsp;
   // 使用 setImmediate - Node.js 环境
@@ -634,8 +634,8 @@ const createAsapScheduler = (): AsyncScheduler =&gt; {
 let scheduler = createAsapScheduler();
 &nbsp;
 // 导出可配置的 asap 函数
-const asap = <span class="fstat-no" title="function not covered" >&lt;T&gt;(f</span>: (sink: ISink&lt;T&gt;) =&gt; void) =&gt; <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(s</span>ink: ISink&lt;T&gt;) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  scheduler(<span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >f(sink))</span>;</span>
+const asap = &lt;T&gt;(f: (sink: ISink&lt;T&gt;) =&gt; void) =&gt; (sink: ISink&lt;T&gt;) =&gt; {
+  scheduler(() =&gt; f(sink));
 };
 &nbsp;
 // 调度器配置函数，允许用户自定义调度方法
@@ -652,15 +652,15 @@ const setAsapScheduler = <span class="fstat-no" title="function not covered" >(s
 // 单独导出调度器配置函数，避免与 Observable 创建函数混淆
 export { setAsapScheduler };
 &nbsp;
-const _fromArray = <span class="fstat-no" title="function not covered" >&lt;T&gt;(d</span>ata: ArrayLike&lt;T&gt;) =&gt; <span class="cstat-no" title="statement not covered" >asap(<span class="fstat-no" title="function not covered" >(s</span>ink: ISink&lt;T&gt;) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  for (let i = <span class="cstat-no" title="statement not covered" >0;</span> !sink.disposed &amp;&amp; i &lt; data.length; i++) {</span>
-<span class="cstat-no" title="statement not covered" >    sink.next(data[i]);</span>
+const _fromArray = &lt;T&gt;(data: ArrayLike&lt;T&gt;) =&gt; asap((sink: ISink&lt;T&gt;) =&gt; {
+  for (let i = 0; !sink.disposed &amp;&amp; i &lt; data.length; i++) {
+    sink.next(data[i]);
   }
-<span class="cstat-no" title="statement not covered" >  sink.complete();</span>
+  sink.complete();
 });
 &nbsp;
-export function <span class="fstat-no" title="function not covered" >of&lt;</span>T&gt;(...data: T[]) {
-<span class="cstat-no" title="statement not covered" >  return create(_fromArray(data), "of", arguments);</span>
+export function of&lt;T&gt;(...data: T[]) {
+  return create(_fromArray(data), "of", arguments);
 }
 &nbsp;
 export function <span class="fstat-no" title="function not covered" >fromArray&lt;</span>T&gt;(data: ArrayLike&lt;T&gt;): Observable&lt;T&gt; {
@@ -676,23 +676,23 @@ export function interval(period: number): Observable&lt;number&gt; {
   }, "interval", arguments);
 }
 &nbsp;
-export function timer(delay: number, period?: number): Observable&lt;number&gt; {
-  return create((sink: ISink&lt;number&gt;) =&gt; {
-    let i = 0;
-    const id = setTimeout(() =&gt; {
-      sink.removeDefer(deferF);
-      sink.next(i++);
+export function <span class="fstat-no" title="function not covered" >timer(</span>delay: number, period?: number): Observable&lt;number&gt; {
+<span class="cstat-no" title="statement not covered" >  return create(<span class="fstat-no" title="function not covered" >(s</span>ink: ISink&lt;number&gt;) =&gt; {</span>
+    let i = <span class="cstat-no" title="statement not covered" >0;</span>
+    const id = <span class="cstat-no" title="statement not covered" >setTimeout(<span class="fstat-no" title="function not covered" >() =</span>&gt; {</span>
+<span class="cstat-no" title="statement not covered" >      sink.removeDefer(deferF);</span>
+<span class="cstat-no" title="statement not covered" >      sink.next(i++);</span>
       // Only create interval if period is explicitly provided and &gt;= 10ms
       // This prevents accidental interval creation when timer is called with extra parameters (like index values 0,1,2,3...)
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (period) {
+<span class="cstat-no" title="statement not covered" >      if (period) {</span>
         const id = <span class="cstat-no" title="statement not covered" >setInterval(<span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >sink.next(i++),</span> period);</span>
 <span class="cstat-no" title="statement not covered" >        sink.defer(<span class="fstat-no" title="function not covered" >() =</span>&gt; { <span class="cstat-no" title="statement not covered" >clearInterval(id); </span>});</span>
       } else {
-        sink.complete();
+<span class="cstat-no" title="statement not covered" >        sink.complete();</span>
       }
     }, delay);
-    const deferF = () =&gt; clearTimeout(id);
-    sink.defer(deferF);
+    const deferF = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >clearTimeout(id);</span></span>
+<span class="cstat-no" title="statement not covered" >    sink.defer(deferF);</span>
   }, "timer", arguments);
 };
 function <span class="fstat-no" title="function not covered" >_fromEventPattern&lt;</span>T&gt;(add: (n: EventHandler&lt;T&gt;) =&gt; void, remove: (n: EventHandler&lt;T&gt;) =&gt; void): Observable&lt;T&gt; {
@@ -832,7 +832,7 @@ export function <span class="fstat-no" title="function not covered" >empty(</spa
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-04T03:39:26.460Z
+                at 2025-07-09T08:07:09.192Z
             </div>
         <script src="prettify.js"></script>
         <script>
