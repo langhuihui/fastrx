@@ -139,7 +139,10 @@ export function fromEvent(target, name) {
 ;
 export function fromPromise(promise) {
     return create((sink) => {
-        promise.then(sink.next.bind(sink), sink.error.bind(sink));
+        promise.then((data) => {
+            sink.next(data);
+            sink.complete();
+        }, sink.error.bind(sink));
     }, "fromPromise", arguments);
 }
 export function fromFetch(input, init) {
@@ -162,16 +165,21 @@ export function fromIterable(source) {
 }
 export function fromReader(source) {
     const read = (sink) => __awaiter(this, void 0, void 0, function* () {
-        if (sink.disposed)
-            return;
-        const { done, value } = yield source.read();
-        if (done) {
-            sink.complete();
-            return;
+        try {
+            if (sink.disposed)
+                return;
+            const { done, value } = yield source.read();
+            if (done) {
+                sink.complete();
+                return;
+            }
+            else {
+                sink.next(value);
+                read(sink);
+            }
         }
-        else {
-            sink.next(value);
-            read(sink);
+        catch (err) {
+            sink.error(err);
         }
     });
     return create((sink) => {

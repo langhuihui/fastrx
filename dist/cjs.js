@@ -1531,7 +1531,10 @@ function fromEvent(target, name) {
 }
 function fromPromise(promise) {
   return create(function (sink) {
-    promise.then(sink.next.bind(sink), sink.error.bind(sink));
+    promise.then(function (data) {
+      sink.next(data);
+      sink.complete();
+    }, sink.error.bind(sink));
   }, "fromPromise", arguments);
 }
 function fromFetch(input, init) {
@@ -1569,32 +1572,40 @@ function fromReader(source) {
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
+            _context.prev = 0;
             if (!sink.disposed) {
-              _context.next = 2;
+              _context.next = 3;
               break;
             }
             return _context.abrupt("return");
-          case 2:
-            _context.next = 4;
+          case 3:
+            _context.next = 5;
             return source.read();
-          case 4:
+          case 5:
             _yield$source$read = _context.sent;
             done = _yield$source$read.done;
             value = _yield$source$read.value;
             if (!done) {
-              _context.next = 12;
+              _context.next = 13;
               break;
             }
             sink.complete();
             return _context.abrupt("return");
-          case 12:
+          case 13:
             sink.next(value);
             _read(sink);
-          case 14:
+          case 15:
+            _context.next = 20;
+            break;
+          case 17:
+            _context.prev = 17;
+            _context.t0 = _context["catch"](0);
+            sink.error(_context.t0);
+          case 20:
           case "end":
             return _context.stop();
         }
-      }, _callee);
+      }, _callee, null, [[0, 17]]);
     }));
   };
   return create(function (sink) {

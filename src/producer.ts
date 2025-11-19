@@ -152,7 +152,13 @@ export function fromEvent<T, N>(target: EventDispachter<N, T>, name: N) {
 
 export function fromPromise<T>(promise: Promise<T>): Observable<T> {
   return create((sink: ISink<T>) => {
-    promise.then(sink.next.bind(sink), sink.error.bind(sink));
+    promise.then(
+      (data) => {
+        sink.next(data);
+        sink.complete();
+      },
+      sink.error.bind(sink)
+    );
   }, "fromPromise", arguments);
 }
 export function fromFetch(input: RequestInfo, init?: RequestInit) {
@@ -173,14 +179,18 @@ export function fromIterable<T>(source: Iterable<T>): Observable<T> {
 }
 export function fromReader<T>(source: ReadableStreamDefaultReader<T>): Observable<T> {
   const read = async (sink: ISink<T>) => {
-    if (sink.disposed) return;
-    const { done, value } = await source.read();
-    if (done) {
-      sink.complete();
-      return;
-    } else {
-      sink.next(value!);
-      read(sink);
+    try {
+      if (sink.disposed) return;
+      const { done, value } = await source.read();
+      if (done) {
+        sink.complete();
+        return;
+      } else {
+        sink.next(value!);
+        read(sink);
+      }
+    } catch (err) {
+      sink.error(err);
     }
   };
   return create((sink: ISink<T>) => {
