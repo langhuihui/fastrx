@@ -2,6 +2,8 @@ import { Sink, deliver, nothing, dispose } from "./common";
 import { reduce } from "./mathematical";
 import { timer } from "./producer";
 class Filter extends Sink {
+    filter;
+    thisArg;
     constructor(sink, filter, thisArg) {
         super(sink);
         this.filter = filter;
@@ -14,11 +16,38 @@ class Filter extends Sink {
     }
 }
 export const filter = deliver(Filter, "filter");
+class Distinct extends Sink {
+    keySelector;
+    hasPrevious = false;
+    previous;
+    constructor(sink, keySelector) {
+        super(sink);
+        this.keySelector = keySelector;
+    }
+    next(data) {
+        const key = this.keySelector(data);
+        if (!this.hasPrevious || key !== this.previous) {
+            this.hasPrevious = true;
+            this.previous = key;
+            this.sink.next(data);
+        }
+    }
+}
+/**
+ * Suppresses consecutive values with the same key.
+ *
+ * This matches Rill's `distinct` operator semantics. A new comparison state is
+ * created for every subscription.
+ */
+export function distinct(keySelector = (data => data)) {
+    return deliver(Distinct, "distinct")(keySelector);
+}
 class Ignore extends Sink {
     next(_data) { }
 }
 export const ignoreElements = deliver(Ignore, "ignoreElements");
 class Take extends Sink {
+    count;
     constructor(sink, count) {
         super(sink);
         this.count = count;
@@ -46,6 +75,7 @@ class TakeUntil extends Sink {
 }
 export const takeUntil = deliver(TakeUntil, "takeUntil");
 class TakeWhile extends Sink {
+    f;
     constructor(sink, f) {
         super(sink);
         this.f = f;
@@ -68,6 +98,7 @@ export const takeLast = (count) => reduce((buffer, d) => {
     return buffer;
 }, []);
 class Skip extends Sink {
+    count;
     constructor(sink, count) {
         super(sink);
         this.count = count;
@@ -94,6 +125,7 @@ class SkipUntil extends Sink {
 }
 export const skipUntil = deliver(SkipUntil, "skipUntil");
 class SkipWhile extends Sink {
+    f;
     constructor(sink, f) {
         super(sink);
         this.f = f;
@@ -111,6 +143,9 @@ const defaultThrottleConfig = {
     trailing: false,
 };
 class _Throttle extends Sink {
+    durationSelector;
+    trailing;
+    last;
     constructor(sink, durationSelector, trailing) {
         super(sink);
         this.durationSelector = durationSelector;
@@ -140,6 +175,9 @@ class _Throttle extends Sink {
     }
 }
 class Throttle extends Sink {
+    durationSelector;
+    config;
+    _throttle;
     constructor(sink, durationSelector, config = defaultThrottleConfig) {
         super(sink);
         this.durationSelector = durationSelector;
@@ -168,6 +206,7 @@ const defaultAuditConfig = {
 };
 export const audit = (durationSelector) => deliver(Throttle, "audit")(durationSelector, defaultAuditConfig);
 class _Debounce extends Sink {
+    last;
     next() {
         this.complete();
     }
@@ -177,10 +216,11 @@ class _Debounce extends Sink {
     }
 }
 class Debounce extends Sink {
+    durationSelector;
+    _debounce = new _Debounce(this.sink);
     constructor(sink, durationSelector) {
         super(sink);
         this.durationSelector = durationSelector;
-        this._debounce = new _Debounce(this.sink);
         this._debounce.dispose();
     }
     next(data) {
@@ -197,6 +237,8 @@ class Debounce extends Sink {
 export const debounce = deliver(Debounce, "debounce");
 export const debounceTime = (period) => deliver(Debounce, "debounceTime")((_d) => timer(period));
 class ElementAt extends Sink {
+    count;
+    defaultValue;
     constructor(sink, count, defaultValue) {
         super(sink);
         this.count = count;
@@ -222,10 +264,11 @@ class ElementAt extends Sink {
 export const elementAt = deliver(ElementAt, "elementAt");
 export const find = (f) => (source) => take(1)(skipWhile((d) => !f(d))(source));
 class FindIndex extends Sink {
+    f;
+    i = 0;
     constructor(sink, f) {
         super(sink);
         this.f = f;
-        this.i = 0;
     }
     next(data) {
         if (this.f(data)) {
@@ -240,11 +283,13 @@ class FindIndex extends Sink {
 }
 export const findIndex = deliver(FindIndex, "findIndex");
 class First extends Sink {
+    f;
+    defaultValue;
+    index = 0;
     constructor(sink, f, defaultValue) {
         super(sink);
         this.f = f;
         this.defaultValue = defaultValue;
-        this.index = 0;
     }
     next(data) {
         if (!this.f || this.f(data, this.index++)) {
@@ -265,11 +310,13 @@ class First extends Sink {
 }
 export const first = deliver(First, "first");
 class Last extends Sink {
+    f;
+    defaultValue;
+    index = 0;
     constructor(sink, f, defaultValue) {
         super(sink);
         this.f = f;
         this.defaultValue = defaultValue;
-        this.index = 0;
     }
     next(data) {
         if (!this.f || this.f(data, this.index++)) {
@@ -288,10 +335,12 @@ class Last extends Sink {
 }
 export const last = deliver(Last, 'last');
 class Every extends Sink {
+    predicate;
+    result;
+    index = 0;
     constructor(sink, predicate) {
         super(sink);
         this.predicate = predicate;
-        this.index = 0;
     }
     next(data) {
         if (!this.predicate(data, this.index++)) {
@@ -314,3 +363,4 @@ class Every extends Sink {
     }
 }
 export const every = deliver(Every, "every");
+//# sourceMappingURL=filtering.js.map

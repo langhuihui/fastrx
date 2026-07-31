@@ -236,12 +236,13 @@ export const timeInterval = deliver(TimeInterval, "timeInterval");
 
 class BufferTime<T> extends Sink<T, T[]> {
   buffer: T[] = [];
-  id = setInterval(() => {
-    this.sink.next(this.buffer.concat());
-    this.buffer.length = 0;
-  }, this.miniseconds);
+  id: ReturnType<typeof setInterval>;
   constructor(sink: ISink<T[]>, private readonly miniseconds: number) {
     super(sink);
+    this.id = setInterval(() => {
+      this.sink.next(this.buffer.concat());
+      this.buffer.length = 0;
+    }, this.miniseconds);
   }
   next(data: T) {
     this.buffer.push(data);

@@ -11,23 +11,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 12
+          node-version: 22
+          cache: npm
       - run: npm ci
-      - run: npm build
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
 
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 12
+          node-version: 22
+          cache: npm
           registry-url: https://registry.npmjs.org/
       - run: npm ci
+      - run: npm run build
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
@@ -36,12 +41,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 12
+          node-version: 22
+          cache: npm
           registry-url: https://npm.pkg.github.com/
       - run: npm ci
+      - run: npm run build
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

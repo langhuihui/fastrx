@@ -35,6 +35,8 @@ class Tap extends Sink {
 }
 export const tap = deliver(Tap, "tap");
 class Timeout extends Sink {
+    timeout;
+    id;
     constructor(sink, timeout) {
         super(sink);
         this.timeout = timeout;
@@ -87,3 +89,4 @@ export const retry = (count = Infinity) => (source) => {
         };
     }
 };
+//# sourceMappingURL=utils.js.map

@@ -1,9 +1,10 @@
 import { Sink, LastSink, deliver, nothing, create, Inspect, Events } from "./common";
 class Share extends LastSink {
+    source;
+    sinks = new Set();
     constructor(source) {
         super();
         this.source = source;
-        this.sinks = new Set();
     }
     add(sink) {
         sink.defer(() => this.remove(sink));
@@ -182,6 +183,7 @@ export function startWith(...xs) {
     }, "startWith", arguments);
 }
 class WithLatestFrom extends Sink {
+    buffer;
     constructor(sink, ...sources) {
         super(sink);
         const s = new Sink(this.sink);
@@ -197,12 +199,15 @@ class WithLatestFrom extends Sink {
 }
 export const withLatestFrom = deliver(WithLatestFrom, "withLatestFrom");
 class BufferCount extends Sink {
+    bufferSize;
+    startBufferEvery;
+    buffer = [];
+    buffers;
+    count = 0;
     constructor(sink, bufferSize, startBufferEvery) {
         super(sink);
         this.bufferSize = bufferSize;
         this.startBufferEvery = startBufferEvery;
-        this.buffer = [];
-        this.count = 0;
         if (this.startBufferEvery) {
             this.buffers = [[]];
         }
@@ -243,9 +248,9 @@ export const bufferCount = deliver(BufferCount, "bufferCount");
 //   return (...args: ARG): (Operator<T, R>) => source => sink => f(sink, ...args).subscribe(source);
 // }
 class Buffer extends Sink {
+    buffer = [];
     constructor(sink, closingNotifier) {
         super(sink);
-        this.buffer = [];
         const s = new Sink(sink);
         s.next = (_data) => {
             sink.next(this.buffer);
@@ -265,3 +270,4 @@ class Buffer extends Sink {
     }
 }
 export const buffer = deliver(Buffer, "buffer");
+//# sourceMappingURL=combination.js.map
