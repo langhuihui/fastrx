@@ -11,6 +11,10 @@ let obids = 1;
 //   return pipe(this, ...args);
 // }
 export class Inspect extends Function {
+    id;
+    args;
+    streamId;
+    source;
     toString() {
         return `${this.name}(${this.args.length ? [...this.args].join(', ') : ""})`;
     }
@@ -25,10 +29,9 @@ export class Inspect extends Function {
     }
 }
 export class LastSink {
-    constructor() {
-        this.defers = new Set();
-        this.disposed = false;
-    }
+    sourceId;
+    defers = new Set();
+    disposed = false;
     next(data) {
     }
     complete() {
@@ -96,6 +99,7 @@ export class LastSink {
     }
 }
 export class Sink extends LastSink {
+    sink;
     constructor(sink) {
         super();
         this.sink = sink;
@@ -112,12 +116,15 @@ export class Sink extends LastSink {
     }
 }
 export class Subscribe extends LastSink {
+    _next;
+    _error;
+    _complete;
+    then = nothing;
     constructor(source, _next = nothing, _error = nothing, _complete = nothing) {
         super();
         this._next = _next;
         this._error = _error;
         this._complete = _complete;
-        this.then = nothing;
         if (source instanceof Inspect) {
             const node = { toString: () => 'subscribe', id: 0, source };
             this.defer(() => {
@@ -223,6 +230,8 @@ function send(event, payload) {
     window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
 }
 class NodeSink extends Sink {
+    source;
+    id;
     constructor(sink, source, id) {
         super(sink);
         this.source = source;
@@ -286,8 +295,10 @@ export const Events = {
     },
 };
 export class TimeoutError extends Error {
+    timeout;
     constructor(timeout) {
         super(`timeout after ${timeout}ms`);
         this.timeout = timeout;
     }
 }
+//# sourceMappingURL=common.js.map

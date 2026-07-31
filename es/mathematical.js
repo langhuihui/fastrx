@@ -1,5 +1,7 @@
 import { Sink, deliver } from "./common";
 class Reduce extends Sink {
+    f;
+    acc;
     constructor(sink, f, seed) {
         super(sink);
         this.f = f;
@@ -28,3 +30,4 @@ export const count = (f) => deliver(Reduce, "count")((aac, c) => (f(c) ? aac + 1
 export const max = () => deliver(Reduce, "max")(Math.max);
 export const min = () => deliver(Reduce, "min")(Math.min);
 export const sum = () => deliver(Reduce, "sum")((aac, c) => aac + c, 0);
+//# sourceMappingURL=mathematical.js.map

@@ -6,3 +6,4 @@ export * from './mathematical';
 export * from './transformation';
 export * from './utils';
 //export * from './chain';
+//# sourceMappingURL=index.js.map

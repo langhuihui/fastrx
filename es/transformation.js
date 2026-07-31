@@ -1,6 +1,8 @@
 import { Sink, deliver, nothing } from "./common";
 import { subject } from "./producer";
 class Scan extends Sink {
+    f;
+    acc;
     constructor(sink, f, seed) {
         super(sink);
         this.f = f;
@@ -21,10 +23,8 @@ class Scan extends Sink {
 }
 export const scan = deliver(Scan, "scan");
 class Pairwise extends Sink {
-    constructor() {
-        super(...arguments);
-        this.hasLast = false;
-    }
+    hasLast = false;
+    last;
     next(data) {
         if (this.hasLast) {
             this.sink.next([this.last, data]);
@@ -37,6 +37,8 @@ class Pairwise extends Sink {
 }
 export const pairwise = deliver(Pairwise, "pairwise");
 class MapObserver extends Sink {
+    mapper;
+    thisArg;
     constructor(sink, mapper, thisArg) {
         super(sink);
         this.mapper = mapper;
@@ -49,6 +51,8 @@ class MapObserver extends Sink {
 export const map = deliver(MapObserver, "map");
 export const mapTo = (target) => deliver(MapObserver, "mapTo")((_x) => target);
 class InnerSink extends Sink {
+    data;
+    context;
     constructor(sink, data, context) {
         super(sink);
         this.data = data;
@@ -70,11 +74,14 @@ class InnerSink extends Sink {
     }
 }
 class Maps extends Sink {
+    makeSource;
+    combineResults;
+    currentSink;
+    index = 0;
     constructor(sink, makeSource, combineResults) {
         super(sink);
         this.makeSource = makeSource;
         this.combineResults = combineResults;
-        this.index = 0;
     }
     subInner(data, c) {
         const sink = this.currentSink = new c(this.sink, data, this);
@@ -126,11 +133,8 @@ class _ConcatMap extends InnerSink {
     }
 }
 class ConcatMap extends Maps {
-    constructor() {
-        super(...arguments);
-        this.sources = [];
-        this.next2 = this.sources.push.bind(this.sources);
-    }
+    sources = [];
+    next2 = this.sources.push.bind(this.sources);
     next(data) {
         this.next2(data);
         this.subNext();
@@ -163,10 +167,7 @@ class _MergeMap extends InnerSink {
 // type __Maps<C> = C extends MapContext<infer T, infer U, infer R> ? C : never;
 // type _Maps<C> = C extends InnerSink<infer T, infer U, infer R, infer> ? Maps<T, U, R, C> : never;
 class MergeMap extends Maps {
-    constructor() {
-        super(...arguments);
-        this.inners = new Set();
-    }
+    inners = new Set();
     next(data) {
         this.subInner(data, _MergeMap);
         this.inners.add(this.currentSink);
@@ -196,10 +197,11 @@ class ExhaustMap extends Maps {
 export const exhaustMap = deliver(ExhaustMap, "exhaustMap");
 export const exhaustMapTo = makeMapTo(deliver(ExhaustMap, "exhaustMapTo"));
 class GroupBy extends Sink {
+    f;
+    groups = new Map();
     constructor(sink, f) {
         super(sink);
         this.f = f;
-        this.groups = new Map();
     }
     next(data) {
         const key = this.f(data);
@@ -223,10 +225,7 @@ class GroupBy extends Sink {
 }
 export const groupBy = deliver(GroupBy, "groupBy");
 class TimeInterval extends Sink {
-    constructor() {
-        super(...arguments);
-        this.start = new Date();
-    }
+    start = new Date();
     next(value) {
         this.sink.next({ value, interval: Number(new Date()) - Number(this.start) });
         this.start = new Date();
@@ -234,10 +233,12 @@ class TimeInterval extends Sink {
 }
 export const timeInterval = deliver(TimeInterval, "timeInterval");
 class BufferTime extends Sink {
+    miniseconds;
+    buffer = [];
+    id;
     constructor(sink, miniseconds) {
         super(sink);
         this.miniseconds = miniseconds;
-        this.buffer = [];
         this.id = setInterval(() => {
             this.sink.next(this.buffer.concat());
             this.buffer.length = 0;
@@ -257,9 +258,11 @@ class BufferTime extends Sink {
 }
 export const bufferTime = deliver(BufferTime, "bufferTime");
 class Delay extends Sink {
+    delayTime;
+    buffer = [];
+    timeoutId;
     constructor(sink, delay) {
         super(sink);
-        this.buffer = [];
         this.delayTime = delay;
     }
     dispose() {
@@ -290,6 +293,7 @@ class Delay extends Sink {
 }
 export const delay = deliver(Delay, "delay");
 class CatchError extends Sink {
+    selector;
     constructor(sink, selector) {
         super(sink);
         this.selector = selector;
@@ -317,11 +321,12 @@ class _Expand extends InnerSink {
     }
 }
 class Expand extends Maps {
+    project;
+    inners = new Set();
+    sourceCompleted = false;
     constructor(sink, project) {
         super(sink, project);
         this.project = project;
-        this.inners = new Set();
-        this.sourceCompleted = false;
     }
     next(data) {
         // 发送原始数据到输出流
@@ -358,3 +363,4 @@ class Expand extends Maps {
     }
 }
 export const expand = deliver(Expand, "expand");
+//# sourceMappingURL=transformation.js.map

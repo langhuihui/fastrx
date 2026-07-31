@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { share } from "./combination";
 import { nothing, create } from "./common";
 export function subject(source) {
@@ -164,11 +155,11 @@ export function fromIterable(source) {
     }), "fromIterable", arguments);
 }
 export function fromReader(source) {
-    const read = (sink) => __awaiter(this, void 0, void 0, function* () {
+    const read = async (sink) => {
         try {
             if (sink.disposed)
                 return;
-            const { done, value } = yield source.read();
+            const { done, value } = await source.read();
             if (done) {
                 sink.complete();
                 return;
@@ -181,7 +172,7 @@ export function fromReader(source) {
         catch (err) {
             sink.error(err);
         }
-    });
+    };
     return create((sink) => {
         read(sink);
     }, "fromReader", arguments);
@@ -247,3 +238,4 @@ export function empty() {
     return create(sink => sink.complete(), "empty", arguments);
 }
 ;
+//# sourceMappingURL=producer.js.map

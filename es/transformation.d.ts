@@ -1,6 +1,6 @@
 import { Observable } from "./common";
 import { Subject } from "./producer";
-export declare const scan: <T, R, ACC extends T | R>(f: (acc: ACC, c: T) => ACC, seed?: ACC | undefined) => import("./common").Operator<T, ACC>;
+export declare const scan: <T, R, ACC extends R | T>(f: (acc: ACC, c: T) => ACC, seed?: ACC | undefined) => import("./common").Operator<T, ACC>;
 export declare const pairwise: <T>() => import("./common").Operator<T, [T, T]>;
 export declare const map: <T, R>(mapper: (data: T) => R, thisArg?: any) => import("./common").Operator<T, R>;
 export declare const mapTo: <R>(target: R) => import("./common").Operator<unknown, R>;
