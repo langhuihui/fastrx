@@ -1,4 +1,31 @@
-import { pipe, interval, takeLast, skipUntil, subscribe, take, skip, skipWhile, takeWhile, timer, takeUntil, every, debounceTime, tap, switchMapTo } from '../src/index';
+import { pipe, interval, takeLast, skipUntil, subscribe, take, skip, skipWhile, takeWhile, timer, takeUntil, every, debounceTime, tap, switchMapTo, distinct, subject } from '../src/index';
+
+test('distinct suppresses consecutive values', () => {
+  const source = subject<number>();
+  const values: number[] = [];
+
+  pipe(source, distinct(), subscribe(value => values.push(value)));
+  [1, 1, 2, 2, 1].forEach(value => source.next(value));
+
+  expect(values).toEqual([1, 2, 1]);
+});
+
+test('distinct supports key selectors', () => {
+  const source = subject<{ id: number; value: string }>();
+  const values: string[] = [];
+
+  pipe(
+    source,
+    distinct(value => value.id),
+    subscribe(value => values.push(value.value))
+  );
+  source.next({ id: 1, value: 'first' });
+  source.next({ id: 1, value: 'duplicate' });
+  source.next({ id: 2, value: 'second' });
+
+  expect(values).toEqual(['first', 'second']);
+});
+
 test('take', () => {
   return new Promise((resolve, reject) => {
     pipe(interval(100), tap((e) => {

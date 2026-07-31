@@ -1,4 +1,4 @@
-import { Sink, deliver, ISink, Observable, nothing, dispose } from "./common";
+import { Sink, deliver, ISink, Observable, Operator, nothing, dispose } from "./common";
 import { reduce } from "./mathematical";
 import { timer } from "./producer";
 class Filter<T> extends Sink<T> {
@@ -12,6 +12,36 @@ class Filter<T> extends Sink<T> {
   }
 }
 export const filter = deliver(Filter, "filter");
+
+class Distinct<T, K> extends Sink<T> {
+  private hasPrevious = false;
+  private previous!: K;
+
+  constructor(sink: ISink<T>, private readonly keySelector: (data: T) => K) {
+    super(sink);
+  }
+
+  next(data: T) {
+    const key = this.keySelector(data);
+    if (!this.hasPrevious || key !== this.previous) {
+      this.hasPrevious = true;
+      this.previous = key;
+      this.sink.next(data);
+    }
+  }
+}
+
+/**
+ * Suppresses consecutive values with the same key.
+ *
+ * This matches Rill's `distinct` operator semantics. A new comparison state is
+ * created for every subscription.
+ */
+export function distinct<T, K = T>(
+  keySelector: (data: T) => K = (data => data as unknown as K)
+): Operator<T, T> {
+  return deliver(Distinct, "distinct")(keySelector) as Operator<T, T>;
+}
 
 class Ignore<T> extends Sink<T, never> {
   next(_data: T) { }

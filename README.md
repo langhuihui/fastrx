@@ -1,30 +1,35 @@
-#rx4rx-fast
-the fast rxjs implemention
+# fastrx
 
-#install
+A lightweight, high-performance reactive stream library and the runtime
+backend for [Rill](https://github.com/langhuihui/rill).
+
+## Install
 
 ```bash
 npm i fastrx
 ```
 
-#usage
+## Usage
 
 ```js
-import rx from 'fastrx';
+import { filter, of, pipe, subscribe } from 'fastrx';
 
-rx.of(1,2,3).filter(x=>x<2).subscribe(console.log)
+pipe(of(1, 2, 3), filter(x => x < 2), subscribe(console.log));
 ```
 
-or
-> with tree-shaking
+### Rill-compatible distinct
+
+Rill's `distinct` operator suppresses consecutive values whose selected keys
+are strictly equal. The same operator is available directly from fastrx:
+
 ```js
-import {pipe,fromArray,filter,subscribe} from 'fastrx/pipe';
-pipe(fromArray([1,2,3]), filter(x=>x<2), subscribe(console.log))
-```
-> with "@babel/plugin-proposal-pipeline-operator"
-```js
-import {fromArray,filter,subscribe} from 'fastrx/pipe';
-fromArray([1,2,3]) |> filter(x=>x<2) |> subscribe(console.log)
+import { distinct, pipe, subscribe } from 'fastrx';
+
+pipe(
+  users,
+  distinct(user => user.id),
+  subscribe(console.log),
+);
 ```
 
 dataflow for 1000000 source events

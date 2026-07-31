@@ -1,12 +1,29 @@
 {
   "name": "fastrx",
-  "version": "3.3.6",
-  "description": "fast rxjs implemention",
-  "main": "dist/index.js",
-  "module": "es/index.js",
+  "version": "3.4.0",
+  "description": "A lightweight, high-performance reactive stream library",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./es/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./es/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "es",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
   "scripts": {
-    "test": "jest --coverage",
-    "build": "tsc && rollup -c",
+    "clean": "node -e \"for (const path of ['es', 'dist']) require('node:fs').rmSync(path, { recursive: true, force: true })\"",
+    "test": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
     "build:devtools": "cd devtools/devtools/panel && npm run build"
   },
   "repository": {
@@ -17,7 +34,6 @@
     "rxjs",
     "fast"
   ],
-  "typings": "./es/index.d.ts",
   "author": "langhuihui",
   "license": "MIT",
   "bugs": {
@@ -25,28 +41,9 @@
   },
   "homepage": "https://github.com/langhuihui/fastrx#readme",
   "devDependencies": {
-    "@babel/core": "^7.15.0",
-    "@babel/eslint-parser": "^7.15.0",
-    "@babel/preset-env": "^7.12.1",
-    "@babel/preset-typescript": "^7.15.0",
-    "@types/jest": "^27.0.1",
-    "@typescript-eslint/eslint-plugin": "^4.30.0",
-    "@typescript-eslint/parser": "^4.30.0",
-    "eslint": "^5.16.0",
-    "eslint-plugin-classes": "^0.1.1",
-    "eslint-plugin-prettier": "^3.1.0",
-    "jest": "^27.1.0",
-    "prettier": "^2.3.2",
-    "rollup": "^2.32.1",
-    "rollup-plugin-babel": "^4.4.0",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-uglify": "^6.0.4",
-    "ts-jest": "^27.0.5",
-    "ts-node": "^10.2.1",
-    "typescript": "^4.4.2"
-  },
-  "dependencies": {
-    "core-js": "^3.7.0"
+    "@vitest/coverage-v8": "^4.1.10",
+    "rollup": "^4.62.3",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }
