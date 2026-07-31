@@ -41,9 +41,10 @@ class Tap<T> extends Sink<T> {
 export const tap = deliver(Tap, "tap");
 
 class Timeout<T> extends Sink<T> {
-  id = setTimeout(() => this.error(new TimeoutError(this.timeout)), this.timeout);
+  id: ReturnType<typeof setTimeout>;
   constructor(sink: ISink<T>, private readonly timeout: number) {
     super(sink);
+    this.id = setTimeout(() => this.error(new TimeoutError(this.timeout)), this.timeout);
   }
   next(data: T) {
     super.next(data);

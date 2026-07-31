@@ -15,7 +15,7 @@ type Operators<T> = {
   [Key in keyof typeof operators]: (typeof operators)[Key] extends (...arg: any[]) => Operator<T, any> ? (typeof operators)[Key] : never
 };
 const rxProxy = {
-  get: <T, PROP extends keyof typeof operators>(target: Observable<T>, prop: PROP | "subscribe" | "toPromise"): (Subscribe<T> | Promise<T> | InstanceType<ProxyConstructor>) => {
+  get: <T, PROP extends keyof typeof operators>(target: Observable<T>, prop: PROP | "subscribe" | "toPromise" | "toReadableStream"): (Subscribe<T> | Promise<T> | ReadableStream<T> | InstanceType<ProxyConstructor>) => {
     switch (prop) {
       case "subscribe":
         return (...args: Parameters<typeof subscribe>) => subscribe<T>(...args)(target);
@@ -32,6 +32,7 @@ const rxProxy = {
 type Obs = {
   subscribe: typeof subscribe;
   toPromise: typeof toPromise;
+  toReadableStream: typeof toReadableStream;
 };
 type Op = {
   [key in keyof (typeof operators)]: (...args: Parameters<((typeof operators))[key]>) => Op;

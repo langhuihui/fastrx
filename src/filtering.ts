@@ -166,9 +166,10 @@ class _Throttle<T> extends Sink<T> {
   }
 }
 class Throttle<T> extends Sink<T> {
-  _throttle: _Throttle<T> = new _Throttle(this.sink, this.durationSelector, this.config.trailing);
+  _throttle: _Throttle<T>;
   constructor(sink: ISink<T>, private readonly durationSelector: (data: T) => Observable<unknown>, private readonly config = defaultThrottleConfig) {
     super(sink);
+    this._throttle = new _Throttle(this.sink, this.durationSelector, this.config.trailing);
     this._throttle.dispose();
   }
   next(data: T) {
