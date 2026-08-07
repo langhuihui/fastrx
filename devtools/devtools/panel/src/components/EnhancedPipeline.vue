@@ -5,7 +5,10 @@
       <enhanced-pipeline
         :source="source.source"
         :timeline-events="timelineEvents"
+        :selected-node-id="selectedNodeId"
+        :snapshot-map="snapshotMap"
         @add-timeline-event="$emit('add-timeline-event', $event)"
+        @select-node="$emit('select-node', $event)"
       />
 
       <!-- Data Flow Animation -->
@@ -29,7 +32,11 @@
     </div>
 
     <!-- Main Observable Node -->
-    <div class="observable-node">
+    <div
+      class="observable-node"
+      :class="{ 'node-selected': source.nodeId === selectedNodeId }"
+      @click="emit('select-node', source.nodeId)"
+    >
       <!-- Sub-pipelines -->
       <div v-if="source.sources.length > 0" class="sub-pipelines">
         <div
@@ -40,7 +47,10 @@
           <enhanced-pipeline
             :source="subSource"
             :timeline-events="timelineEvents"
+            :selected-node-id="selectedNodeId"
+            :snapshot-map="snapshotMap"
             @add-timeline-event="$emit('add-timeline-event', $event)"
+            @select-node="$emit('select-node', $event)"
           />
 
           <!-- Sub-pipeline flow indicators -->
@@ -109,7 +119,7 @@
                     <component :is="getStreamStatusIcon(stream.status)" />
                   </n-icon>
                 </template>
-                {{ stream.label || "等待数据..." }}
+                {{ streamLabel(stream, index) }}
               </n-tag>
             </div>
 
@@ -148,10 +158,18 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  selectedNodeId: {
+    type: String,
+    default: null,
+  },
+  snapshotMap: {
+    type: Map,
+    default: null,
+  },
 });
 
 // Emits
-const emit = defineEmits(["add-timeline-event"]);
+const emit = defineEmits(["add-timeline-event", "select-node"]);
 
 // Reactive data
 const dataParticles = ref([]);
@@ -224,6 +242,17 @@ const handleStreamClick = (stream) => {
     message: `点击流: ${stream.label || "未命名流"}`,
     nodeId: props.source.name,
   });
+};
+
+// In replay mode (snapshotMap present), show the node's value at the scrub
+// position instead of the live stream.label.
+const streamLabel = (stream, index) => {
+  if (props.snapshotMap) {
+    const snap = props.snapshotMap.get(props.source.nodeId);
+    if (snap !== undefined) return snap;
+    return "—";
+  }
+  return stream.label || "等待数据...";
 };
 
 // Data flow animation
@@ -398,6 +427,11 @@ watch(
 .observable-node:hover {
   border-color: rgba(138, 43, 226, 0.5);
   box-shadow: 0 0 20px rgba(138, 43, 226, 0.2);
+}
+
+.observable-node.node-selected {
+  border-color: #00bfff;
+  box-shadow: 0 0 20px rgba(0, 191, 255, 0.4);
 }
 
 .node-content {

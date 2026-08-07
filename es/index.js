@@ -1,4 +1,5 @@
 export * from './common';
+export * from './protocol';
 export * from './producer';
 export * from './combination';
 export * from './filtering';

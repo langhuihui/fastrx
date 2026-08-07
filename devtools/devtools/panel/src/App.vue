@@ -31,6 +31,46 @@
         </div>
       </div>
 
+      <n-tabs v-model:value="activeTab" type="line" size="small" class="main-tabs">
+        <n-tab-pane name="marbles" tab="弹珠图">
+          <div class="replay-toolbar">
+            <n-button
+              size="tiny"
+              :type="paused ? 'warning' : 'default'"
+              @click="paused = !paused"
+            >{{ paused ? "继续采集" : "暂停采集" }}</n-button>
+            <n-button
+              v-if="!replayMode"
+              size="tiny"
+              @click="enterReplay"
+              :disabled="maxSeq === 0"
+            >回放</n-button>
+            <template v-else>
+              <n-button size="tiny" @click="stepBack" :disabled="!selectedSeq || selectedSeq <= 1">⏮</n-button>
+              <n-button size="tiny" @click="togglePlay">{{ replayPlaying ? "⏸" : "⏯" }}</n-button>
+              <n-button size="tiny" @click="stepForward" :disabled="!selectedSeq || selectedSeq >= maxSeq">⏭</n-button>
+              <n-slider
+                style="flex: 1; min-width: 120px"
+                :min="1"
+                :max="Math.max(maxSeq, 1)"
+                :step="1"
+                :value="selectedSeq || 1"
+                @update:value="(v) => (selectedSeq = v)"
+              />
+              <span class="replay-pos">{{ selectedSeq || 0 }} / {{ maxSeq }}</span>
+              <n-button size="tiny" @click="exitReplay">退出</n-button>
+            </template>
+          </div>
+          <marble-view
+            :events="rawEvents"
+            :node-order="nodeOrder"
+            :selected-seq="selectedSeq"
+            :cause-chain-set="causeChainSet"
+            :max-visible-seq="maxVisibleSeq"
+            @select="selectedSeq = $event"
+          />
+        </n-tab-pane>
+        <n-tab-pane name="timeline" tab="时间轴">
       <!-- Timeline -->
       <div class="timeline-container" v-if="timelineEvents.length > 0">
         <div class="timeline-header">
@@ -170,7 +210,14 @@
             v-for="(event, index) in filteredEvents"
             :key="index"
             class="event-item"
-            :class="event.type"
+            :class="[
+              event.type,
+              {
+                'causal-highlight': causeChainSet.has(event.sequence),
+                selected: selectedSeq === event.sequence,
+              },
+            ]"
+            @click="selectedSeq = event.sequence"
           >
             <div class="event-time">{{ formatTime(event.timestamp) }}</div>
             <div class="event-stream" v-if="isMultiAxis">
@@ -186,7 +233,8 @@
           </div>
         </div>
       </div>
-
+        </n-tab-pane>
+        <n-tab-pane name="pipeline" tab="管道">
       <!-- Pipeline Visualization -->
       <div class="pipelines-container">
         <div
@@ -197,7 +245,10 @@
           <enhanced-pipeline
             :source="pipeline"
             :timeline-events="timelineEvents"
+            :selected-node-id="selectedNodeId"
+            :snapshot-map="nodeSnapshotMap"
             @add-timeline-event="addTimelineEvent"
+            @select-node="selectNode"
           />
         </div>
       </div>
@@ -212,6 +263,8 @@
           </template>
         </n-empty>
       </div>
+        </n-tab-pane>
+      </n-tabs>
     </div>
   </n-config-provider>
 </template>
@@ -227,15 +280,145 @@ import {
   TimeOutline,
 } from "@vicons/ionicons5";
 import EnhancedPipeline from "./components/EnhancedPipeline.vue";
+import MarbleView from "./components/MarbleView.vue";
 
 // Reactive data
 const pipelines = ref([]);
 const timelineEvents = ref([]);
+const rawEvents = ref([]); // canonical Envelopes from the library (kind/data/err/cause)
 const nodes = reactive({});
 const currentTime = ref(Date.now());
 const isMultiAxis = ref(false);
 const streamTimelines = reactive({});
 const selectedStreamFilter = ref(null);
+const selectedSeq = ref(null);
+const activeTab = ref("marbles");
+const causeChainSet = computed(() => {
+  const s = selectedSeq.value;
+  if (s == null) return new Set();
+  const set = new Set([s]);
+  let cur = rawEvents.value.find((e) => e.sequence === s);
+  while (cur && cur.cause && !set.has(cur.cause.sequence)) {
+    set.add(cur.cause.sequence);
+    cur = rawEvents.value.find((e) => e.sequence === cur.cause.sequence);
+  }
+  return set;
+});
+
+// Node lane order: nodeIds by first appearance in rawEvents, then any nodes
+// registered structurally but without events yet.
+const nodeOrder = computed(() => {
+  const seen = new Set();
+  const order = [];
+  for (const e of rawEvents.value) {
+    if (!seen.has(e.nodeId)) {
+      seen.add(e.nodeId);
+      order.push(e.nodeId);
+    }
+  }
+  for (const id of Object.keys(nodes)) {
+    if (!seen.has(id)) {
+      seen.add(id);
+      order.push(id);
+    }
+  }
+  return order;
+});
+
+// Time-travel replay state.
+const maxSeq = computed(() =>
+  rawEvents.value.reduce((m, e) => Math.max(m, e.sequence || 0), 0)
+);
+const replayMode = ref(false);
+const replayPlaying = ref(false);
+const paused = ref(false); // pause live recording (block onMessage push)
+const maxVisibleSeq = computed(() =>
+  replayMode.value ? selectedSeq.value : null
+);
+
+// Per-node snapshot at the scrub position: in replay mode, map nodeId → latest
+// `next` event data with sequence ≤ maxVisibleSeq. Outside replay, empty map
+// (EnhancedPipeline falls back to its live stream.label).
+const nodeSnapshotMap = computed(() => {
+  const limit = maxVisibleSeq.value;
+  if (limit == null) return new Map();
+  const map = new Map();
+  for (const e of rawEvents.value) {
+    if (e.kind !== 'next') continue;
+    if (e.sequence > limit) continue;
+    const cur = map.get(e.nodeId);
+    if (!cur || e.sequence > cur.sequence) {
+      map.set(e.nodeId, e);
+    }
+  }
+  // Return nodeId → data string.
+  const out = new Map();
+  for (const [id, e] of map) out.set(id, e.data ?? '—');
+  return out;
+});
+
+let playTimer = null;
+const stopPlay = () => {
+  replayPlaying.value = false;
+  if (playTimer) {
+    clearInterval(playTimer);
+    playTimer = null;
+  }
+};
+const startPlay = () => {
+  if (playTimer) return;
+  replayPlaying.value = true;
+  playTimer = setInterval(() => {
+    if (selectedSeq.value == null) {
+      selectedSeq.value = 1;
+      return;
+    }
+    if (selectedSeq.value >= maxSeq.value) {
+      stopPlay();
+      return;
+    }
+    selectedSeq.value++;
+  }, 300);
+};
+const togglePlay = () => (replayPlaying.value ? stopPlay() : startPlay());
+const enterReplay = () => {
+  replayMode.value = true;
+  selectedSeq.value = maxSeq.value || null;
+};
+const exitReplay = () => {
+  stopPlay();
+  replayMode.value = false;
+  selectedSeq.value = null;
+};
+const stepBack = () => {
+  if (selectedSeq.value == null) selectedSeq.value = maxSeq.value;
+  if (selectedSeq.value > 1) selectedSeq.value--;
+};
+const stepForward = () => {
+  if (selectedSeq.value == null) return;
+  if (selectedSeq.value < maxSeq.value) selectedSeq.value++;
+};
+
+// Node currently selected (derived from selectedSeq → its event's nodeId).
+const selectedNodeId = computed(() => {
+  const s = selectedSeq.value;
+  if (s == null) return null;
+  const e = rawEvents.value.find((ev) => ev.sequence === s);
+  return e ? e.nodeId : null;
+});
+
+// Reverse sync: clicking a pipeline node jumps to that node's latest event
+// (≤ maxVisibleSeq in replay mode).
+const selectNode = (nodeId) => {
+  const limit = maxVisibleSeq.value;
+  let found = null;
+  for (const e of rawEvents.value) {
+    if (e.nodeId !== nodeId) continue;
+    if (limit != null && e.sequence > limit) continue;
+    if (!found || e.sequence > found.sequence) found = e;
+  }
+  if (found) selectedSeq.value = found.sequence;
+};
 
 // Legend items
 const legendItems = [
@@ -255,9 +438,9 @@ const addTimelineEvent = (event) => {
 
   timelineEvents.value.unshift(eventWithStream);
 
-  // Keep only last 50 events
-  if (timelineEvents.value.length > 50) {
-    timelineEvents.value = timelineEvents.value.slice(0, 50);
+  // Keep last 1000 events (was 50; raised for real debugging).
+  if (timelineEvents.value.length > 1000) {
+    timelineEvents.value = timelineEvents.value.slice(0, 1000);
   }
 
   // Update stream timelines
@@ -268,6 +451,8 @@ const addTimelineEvent = (event) => {
 
 const clearTimeline = () => {
   timelineEvents.value = [];
+  rawEvents.value = [];
+  selectedSeq.value = null;
   Object.keys(streamTimelines).forEach((key) => delete streamTimelines[key]);
 };
 
@@ -404,116 +589,115 @@ onMounted(() => {
   if (chrome.runtime) {
     const connect = () => {
       const port = chrome.runtime.connect({
-        name: "" + chrome.devtools.inspectedWindow.tabId,
+        name: "fastrx-panel:" + chrome.devtools.inspectedWindow.tabId,
       });
 
       port.onDisconnect.addListener(() => {
         pipelines.value = [];
+        rawEvents.value = [];
         Object.keys(nodes).forEach((key) => delete nodes[key]);
         setTimeout(connect, 1000);
       });
 
-      port.onMessage.addListener(({ event, payload }) => {
-        console.log("DevTools received message:", { event, payload });
-
-        // 处理测试消息格式
-        if (payload && payload.event && !event) {
-          event = payload.event;
-          payload = payload;
+      port.onMessage.addListener((env) => {
+        // env is an Envelope: { version, sequence, nodeId, nodeLabel?, kind,
+        //   streamId, cause?:{nodeId,sequence}, data?, err?, ts }
+        // Structural events (pipe/addSource/subscribe) carry a parent/source
+        // nodeId in `data`; data events (next/complete/error) carry the
+        // stringified value/err.
+        if (!env || typeof env.kind !== "string") return;
+        if (paused.value) return; // recording paused — drop live event
+        // Record the canonical envelope for the marble view / causal walk.
+        rawEvents.value.push(env);
+        if (rawEvents.value.length > 1000) {
+          rawEvents.value = rawEvents.value.slice(-1000);
         }
 
-        switch (event) {
+        switch (env.kind) {
           case "create":
-            if (!nodes[payload.id]) {
-              const ob = new Node(payload.name);
-              nodes[payload.id] = ob;
+            if (!nodes[env.nodeId]) {
+              nodes[env.nodeId] = new Node(env.nodeId, env.nodeLabel || env.nodeId);
             }
             break;
           case "next":
-            if (nodes[payload.id]) {
-              nodes[payload.id].next(payload.streamId, payload.data);
+            if (!nodes[env.nodeId]) nodes[env.nodeId] = new Node(env.nodeId, env.nodeLabel || env.nodeId);
+            nodes[env.nodeId].next(env.streamId, env.data);
+            addTimelineEvent({
+              type: "next",
+              message: `数据流: ${env.data ?? ""}`,
+              nodeId: env.nodeId,
+              sequence: env.sequence,
+              cause: env.cause,
+            });
+            break;
+          case "complete":
+            if (nodes[env.nodeId]) {
+              nodes[env.nodeId].complete(env.streamId);
               addTimelineEvent({
-                type: "next",
-                message: `数据流: ${payload.data}`,
-                nodeId: payload.id,
-              });
-            } else {
-              // 如果没有找到节点，创建一个默认节点
-              const ob = new Node(payload.nodeId || "unknown");
-              nodes[payload.nodeId || "unknown"] = ob;
-              ob.next(0, payload.data);
-              addTimelineEvent({
-                type: "next",
-                message: `数据流: ${payload.data}`,
-                nodeId: payload.nodeId || "unknown",
+                type: "complete",
+                message: "流完成",
+                nodeId: env.nodeId,
+                sequence: env.sequence,
+                cause: env.cause,
               });
             }
             break;
-          case "complete":
-            if (nodes[payload.id]) {
-              nodes[payload.id].complete(payload.streamId, payload.err);
+          case "error":
+            if (nodes[env.nodeId]) {
+              nodes[env.nodeId].complete(env.streamId, env.err);
               addTimelineEvent({
-                type: payload.err ? "error" : "complete",
-                message: payload.err ? `错误: ${payload.err}` : "流完成",
-                nodeId: payload.id,
+                type: "error",
+                message: `错误: ${env.err ?? ""}`,
+                nodeId: env.nodeId,
+                sequence: env.sequence,
+                cause: env.cause,
               });
             }
             break;
           case "defer":
-            if (nodes[payload.id]) {
-              nodes[payload.id].defer(payload.streamId);
+            if (nodes[env.nodeId]) {
+              nodes[env.nodeId].defer(env.streamId);
               addTimelineEvent({
                 type: "warning",
                 message: "流延迟",
-                nodeId: payload.id,
+                nodeId: env.nodeId,
+                sequence: env.sequence,
               });
             }
             break;
           case "addSource":
-            if (nodes[payload.id]) {
-              nodes[payload.source.id].sinkNode = nodes[payload.id];
-              nodes[payload.id].sources.push(nodes[payload.source.id]);
+            // env.data is the source nodeId
+            if (nodes[env.nodeId] && nodes[env.data]) {
+              nodes[env.data].sinkNode = nodes[env.nodeId];
+              nodes[env.nodeId].sources.push(nodes[env.data]);
             }
             break;
           case "pipe":
-            if (!nodes[payload.source.id]) {
-              const ob = new Node(payload.source.name);
-              nodes[payload.source.id] = ob;
-            }
-            const sink = new Node(payload.name);
-            nodes[payload.id] = sink;
-            sink.source = nodes[payload.source.id];
-            nodes[payload.source.id].sinkNode = sink;
-            break;
-          case "update":
-            if (nodes[payload.id]) {
-              nodes[payload.id].name = payload.name;
-            }
+            // env.data is the source nodeId
+            if (env.data && !nodes[env.data]) nodes[env.data] = new Node(env.data, env.data);
+            if (!nodes[env.nodeId]) nodes[env.nodeId] = new Node(env.nodeId, env.nodeLabel || env.nodeId);
+            nodes[env.nodeId].source = nodes[env.data] || null;
+            if (nodes[env.data]) nodes[env.data].sinkNode = nodes[env.nodeId];
             break;
           case "subscribe":
-            let node = nodes[payload.id];
-            if (!node) break;
-            if (!pipelines.value.includes(node)) {
-              pipelines.value.unshift(node);
+            if (!nodes[env.nodeId]) break;
+            if (!pipelines.value.includes(nodes[env.nodeId])) {
+              pipelines.value.unshift(nodes[env.nodeId]);
               addTimelineEvent({
                 type: "subscribe",
-                message: `订阅: ${node.name}`,
-                nodeId: payload.id,
+                message: `订阅: ${nodes[env.nodeId].name}`,
+                nodeId: env.nodeId,
+                sequence: env.sequence,
               });
             }
-            const s = nodes[payload.sink?.nodeId] || node.sinkNode;
-            node.subscribe(s && s.streams[payload.sink?.streamId]);
-            break;
-          case "test":
-            // 处理测试消息
-            addTimelineEvent({
-              type: "info",
-              message: `测试: ${payload.data}`,
-              nodeId: "test",
-            });
+            // env.data = downstream nodeId (intermediate) or undefined (terminal)
+            {
+              const sinkNode = env.data ? nodes[env.data] : nodes[env.nodeId].sinkNode;
+              nodes[env.nodeId].subscribe(sinkNode && sinkNode.streams[env.streamId]);
+            }
             break;
           default:
-            console.log("Unknown event type:", event);
+            console.log("Unknown envelope kind:", env.kind);
         }
       });
     };
@@ -526,11 +710,13 @@ onUnmounted(() => {
   if (timeInterval) {
     clearInterval(timeInterval);
   }
+  stopPlay();
 });
 
 // Node class (simplified version)
 class Node {
-  constructor(name = "") {
+  constructor(nodeId = "", name = nodeId) {
+    this.nodeId = nodeId;
     this.name = name;
     this.streams = reactive([]);
     this.sources = reactive([]);
@@ -989,6 +1175,16 @@ class Node {
   border-left: 3px solid #f0a020;
 }
 
+.event-item.causal-highlight {
+  background: rgba(138, 43, 226, 0.18);
+  box-shadow: inset 2px 0 0 #8a2be2;
+}
+
+.event-item.selected {
+  outline: 1px solid #00bfff;
+  outline-offset: -1px;
+}
+
 .pipelines-container {
   max-width: 1200px;
   margin: 2rem auto;
@@ -1019,6 +1215,25 @@ class Node {
   border-radius: 50%;
   background: linear-gradient(45deg, #8a2be2, #00bfff);
   animation: pulse 2s infinite;
+}
+
+.replay-toolbar {
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: 0.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  border: 1px solid rgba(138, 43, 226, 0.3);
+}
+
+.replay-pos {
+  font-size: 0.75rem;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
 }
 
 @keyframes slideIn {

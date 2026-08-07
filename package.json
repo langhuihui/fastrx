@@ -24,7 +24,10 @@
     "test": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
-    "build:devtools": "cd devtools/devtools/panel && npm run build"
+    "build:devtools": "cd devtools/devtools/panel && npm run build",
+    "site:dev": "vite --config site/vite.config.ts",
+    "site:build": "vite build --config site/vite.config.ts",
+    "site:typecheck": "tsc -p site/tsconfig.json --noEmit"
   },
   "repository": {
     "type": "git",

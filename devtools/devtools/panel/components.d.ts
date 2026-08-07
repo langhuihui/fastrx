@@ -8,12 +8,16 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     EnhancedPipeline: typeof import('./src/components/EnhancedPipeline.vue')['default']
+    MarbleView: typeof import('./src/components/MarbleView.vue')['default']
     NButton: typeof import('naive-ui')['NButton']
     NConfigProvider: typeof import('naive-ui')['NConfigProvider']
     NEmpty: typeof import('naive-ui')['NEmpty']
     NIcon: typeof import('naive-ui')['NIcon']
     NSelect: typeof import('naive-ui')['NSelect']
+    NSlider: typeof import('naive-ui')['NSlider']
     NSpace: typeof import('naive-ui')['NSpace']
+    NTabPane: typeof import('naive-ui')['NTabPane']
+    NTabs: typeof import('naive-ui')['NTabs']
     NTag: typeof import('naive-ui')['NTag']
   }
 }

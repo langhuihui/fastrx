@@ -1,11 +1,14 @@
+import { Envelope, summarize } from './protocol';
 export function nothing(...args: any[]): any { }
 export const call = (f: Function) => f();
 export const identity = <T>(x: T): T => x;
 export function dispose<T>(this: ISink<T>) {
   this.dispose();
 }
+// Compile-time opt-out: defining `__FASTRX_NO_DEVTOOLS__` (e.g. via a bundler
+// define) removes all devtools instrumentation via dead-code elimination.
 // @ts-ignore
-export const inspect = () => typeof __FASTRX_DEVTOOLS__ !== 'undefined';
+const DEVTOOLS_ENABLED: boolean = typeof __FASTRX_NO_DEVTOOLS__ === 'undefined';
 export type ObservableInputTuple<T> = {
   [K in keyof T]: Observable<T[K]>;
 };
@@ -34,19 +37,26 @@ let obids = 1;
 //   return pipe(this, ...args);
 // }
 export class Inspect<T> extends Function {
-  id!: number;
+  id!: string;
+  name!: string;
   args!: IArguments;
   streamId!: number;
   source?: InspectObservable<unknown>;
+  _label?: string;
   toString() {
     return `${this.name}(${this.args.length ? [...this.args].join(', ') : ""})`;
+  }
+  /** Attach a stable display label for the devtools panel. Does not change the node id. */
+  label(name: string): this {
+    this._label = name;
+    return this;
   }
   // pipe(...args: [...Operator<unknown>[], Operator<unknown>]): Observable<unknown> {
   //   return pipe(this as unknown as Observable<T>, ...args);
   // }
   subscribe(sink: ISink<T>): ISink<T> {
     const ns = new NodeSink<T>(sink, this, this.streamId++);
-    Events.subscribe({ id: this.id, end: false }, { nodeId: ns.sourceId, streamId: ns.id });
+    Events.subscribe({ id: this.id }, { nodeId: ns.sourceId, streamId: ns.id });
     this(ns);
     return ns;
   }
@@ -58,7 +68,7 @@ export type InspectObservable<T> = Observable<T> & Inspect<T>;
 export type Operator<T, R = T> = (source: Observable<T>) => Observable<R>;
 
 export class LastSink<T> implements Observer<T> {
-  sourceId!: number;
+  sourceId!: string;
   defers = new Set<Dispose>();
   disposed = false;
   next(data: T) {
@@ -148,7 +158,7 @@ export class Subscribe<T> extends LastSink<T> {
   constructor(source: Observable<T> | InspectObservable<T>, public _next = nothing, public _error = nothing, public _complete = nothing) {
     super();
     if (source instanceof Inspect) {
-      const node = { toString: () => 'subscribe', id: 0, source };
+      const node: Node = { toString: () => 'subscribe', name: 'subscribe', id: '', source: source as unknown as Node };
       this.defer(() => {
         Events.defer(node, 0);
       });
@@ -156,7 +166,7 @@ export class Subscribe<T> extends LastSink<T> {
       Events.pipe(node);
       this.sourceId = node.id;
       this.subscribe(source);
-      Events.subscribe({ id: node.id, end: true });
+      Events.subscribe({ id: node.id });
       if (_next == nothing) {
         this._next = data => Events.next(node, 0, data);
       } else {
@@ -175,11 +185,11 @@ export class Subscribe<T> extends LastSink<T> {
         };
       }
       if (_error == nothing) {
-        this._error = err => Events.complete(node, 0, err);
+        this._error = err => Events.error(node, 0, err);
       } else {
         this.error = err => {
           this.dispose();
-          Events.complete(node, 0, err);
+          Events.error(node, 0, err);
           _error(err);
         };
       }
@@ -205,18 +215,18 @@ type Subscription<T, R = T> = Subscribe<T> | Promise<T> | Observable<R>;
 
 /**
  * Why use function overloads instead of a generic recursive type?
- * 
+ *
  * 1. Inference vs Validation: TypeScript infers argument types independently before validating them against the function signature.
  *    A recursive type (like PipeArgs) requires the type of the Nth argument to depend on the (N-1)th argument's return type.
  *    However, TS often infers 'unknown' or 'any' for intermediate operators during the initial pass, causing the recursive match to fail
  *    with confusing errors (e.g., "Type ... is not assignable to type 'never'").
- * 
+ *
  * 2. Developer Experience: Overloads provide precise type inference for each step in the pipeline.
  *    If a type mismatch occurs (e.g., op2 expects string but op1 returns number), the error points exactly to the failing argument,
  *    rather than a generic error on the entire function call.
- * 
+ *
  * 3. Performance: Deeply recursive types can be computationally expensive for the compiler. Overloads are straightforward and fast.
- * 
+ *
  * This is the standard approach used by libraries like RxJS.
  */
 export function pipe<T, L extends Subscription<T>>(first: Observable<T>, sub: (source: Observable<T>) => L): L;
@@ -235,13 +245,13 @@ export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: {
   [index: number]: any;
   length: number;
 }): Observable<T> {
-  if (inspect()) {
+  if (DEVTOOLS_ENABLED) {
     const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
       streamId: { value: 0, writable: true, configurable: true },
       name: { value: name, writable: true, configurable: true },
       args: { value: args, writable: true, configurable: true },
-      id: { value: 0, writable: true, configurable: true },
-    });
+      id: { value: '', writable: true, configurable: true },
+    }) as InspectObservable<T>;
     Events.create(result);
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
@@ -249,11 +259,10 @@ export function create<T>(ob: (sink: ISink<T>) => void, name: string, args: {
         if (arg instanceof Inspect) {
           Events.addSource(result, arg);
         } else {
-
         }
       }
     }
-    return result as InspectObservable<T>;
+    return result;
   }
   return ob;
 }
@@ -276,9 +285,85 @@ export function deliver<T, R, ARG extends any[]>(c: { new(sink: ISink<R>, ...arg
   };
 }
 
-function send(event: string, payload: any) {
-  window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
+// ── Devtools transport ─────────────────────────────────────────────────────
+// The library connects to the devtools extension via externally_connectable.
+// When the devtools panel opens, devtools.js sets window.__fastrxExtId to the
+// extension id (via inspectedWindow.eval). The library detects this (immediately
+// or via the property setter) and opens a long-lived port with
+// chrome.runtime.connect(extId, {name:'fastrx-backend'}). Envelopes are posted
+// on the port. When the panel closes, devtools.js clears the id and the library
+// disconnects, resuming ring-buffer accumulation.
+let sequence = 0;
+let currentCause: { nodeId: string; sequence: number } | undefined;
+let port: any;
+const ring: Envelope[] = [];
+const RING_MAX = 500;
+
+function dispatch(env: Envelope) {
+  if (port) {
+    try { port.postMessage(env); }
+    catch { port = undefined; ring.push(env); if (ring.length > RING_MAX) ring.shift(); }
+  } else {
+    ring.push(env);
+    if (ring.length > RING_MAX) ring.shift();
+  }
 }
+
+function openPort(extId: string) {
+  if (port) return;
+  const rt = (globalThis as any).chrome?.runtime;
+  if (!rt?.connect) return;
+  try {
+    const p = rt.connect(extId, { name: 'fastrx-backend' });
+    p.onDisconnect.addListener(() => { port = undefined; });
+    port = p;
+    while (ring.length) p.postMessage(ring.shift()!);
+  } catch {
+    port = undefined;
+  }
+}
+
+function closePort() {
+  if (port) { try { port.disconnect(); } catch {} port = undefined; }
+}
+
+function tryOpen() {
+  if (port) return;
+  const extId = (globalThis as any).__fastrxExtId;
+  if (extId) openPort(extId);
+}
+
+if (typeof window !== 'undefined') {
+  const w = window as any;
+  const currentId = w.__fastrxExtId;
+  let storedId: any = currentId;
+  try {
+    Object.defineProperty(w, '__fastrxExtId', {
+      configurable: true,
+      get() { return storedId; },
+      set(id: any) {
+        storedId = id;
+        if (id) tryOpen();
+        else closePort();
+      },
+    });
+  } catch { /* property non-configurable; fall back to direct check in tryOpen */ }
+  if (storedId) tryOpen();
+}
+
+/** @internal Test seam: install a mock backend that receives all emitted
+ *  envelopes (drains the ring first). Returns a disconnect function. */
+export function __testInstallBackend(emit: (e: Envelope) => void): () => void {
+  port = {
+    postMessage: emit,
+    onDisconnect: { addListener: () => {} } as any,
+    disconnect: () => {},
+  };
+  while (ring.length) emit(ring.shift()!);
+  return () => { port = undefined; };
+}
+// ────────────────────────────────────────────────────────────────────────────
+
 class NodeSink<T> extends Sink<T> {
   constructor(sink: ISink<T>, public readonly source: Inspect<T>, public readonly id: number) {
     super(sink);
@@ -288,60 +373,91 @@ class NodeSink<T> extends Sink<T> {
     });
   }
   next(data: T) {
-    Events.next(this.source, this.id, data);
-    this.sink.next(data);
+    const seq = Events.next(this.source, this.id, data);
+    const prev = currentCause;
+    currentCause = { nodeId: this.source.id, sequence: seq };
+    try { this.sink.next(data); }
+    finally { currentCause = prev; }
   }
   complete() {
-    Events.complete(this.source, this.id);
-    this.sink.complete();
+    const seq = Events.complete(this.source, this.id);
+    const prev = currentCause;
+    currentCause = { nodeId: this.source.id, sequence: seq };
+    try { this.sink.complete(); }
+    finally { currentCause = prev; }
   }
   error(err: any) {
-    Events.complete(this.source, this.id, err);
-    this.sink.error(err);
+    const seq = Events.error(this.source, this.id, err);
+    const prev = currentCause;
+    currentCause = { nodeId: this.source.id, sequence: seq };
+    try { this.sink.error(err); }
+    finally { currentCause = prev; }
   }
 }
 interface Node {
-  id: number;
+  id: string;
+  name: string;
+  _label?: string;
   toString(): string;
   source?: Node;
 }
 export const Events = {
   addSource(who: Node, source: Node) {
-    send('addSource', {
-      id: who.id,
-      name: who.toString(),
-      source: { id: source.id, name: source.toString() },
+    dispatch({
+      version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+      kind: 'addSource', streamId: 0, ts: Date.now(), data: source.id,
     });
   },
-  next(who: Node, streamId: number, data?: any) {
-    send('next', { id: who.id, streamId, data: data && data.toString() });
+  next(who: Node, streamId: number, data?: unknown, cause: { nodeId: string; sequence: number } | undefined = currentCause): number {
+    const seq = ++sequence;
+    dispatch({
+      version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
+      kind: 'next', streamId, ts: Date.now(), cause, data: summarize(data),
+    });
+    return seq;
   },
-  subscribe({ id, end }: { id: number, end: boolean; }, sink?: { nodeId: number; streamId: number; }) {
-    send('subscribe', {
-      id,
-      end,
-      sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId },
+  subscribe(id: { id: string }, sink?: { nodeId: string; streamId: number }) {
+    dispatch({
+      version: 1, sequence: ++sequence, nodeId: id.id, kind: 'subscribe',
+      streamId: sink ? sink.streamId : 0, ts: Date.now(),
+      data: sink ? sink.nodeId : undefined,
     });
   },
-  complete(who: Node, streamId: number, err?: any) {
-    send('complete', { id: who.id, streamId, err: err ? err.toString() : null });
+  complete(who: Node, streamId: number, cause: { nodeId: string; sequence: number } | undefined = currentCause): number {
+    const seq = ++sequence;
+    dispatch({
+      version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
+      kind: 'complete', streamId, ts: Date.now(), cause,
+    });
+    return seq;
+  },
+  error(who: Node, streamId: number, err: unknown, cause: { nodeId: string; sequence: number } | undefined = currentCause): number {
+    const seq = ++sequence;
+    dispatch({
+      version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
+      kind: 'error', streamId, ts: Date.now(), cause, err: summarize(err),
+    });
+    return seq;
   },
   defer(who: Node, streamId: number) {
-    send('defer', { id: who.id, streamId });
-  },
-  pipe(who: Node) {
-    send('pipe', {
-      name: who.toString(),
-      id: who.id,
-      source: { id: who.source!.id, name: who.source!.toString() },
+    dispatch({
+      version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+      kind: 'defer', streamId, ts: Date.now(),
     });
   },
-  update(who: Node) {
-    send('update', { id: who.id, name: who.toString() });
+  pipe(who: Node) {
+    dispatch({
+      version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+      kind: 'pipe', streamId: 0, ts: Date.now(),
+      data: who.source ? who.source.id : undefined,
+    });
   },
   create(who: Node) {
-    if (!who.id) who.id = obids++;
-    send('create', { name: who.toString(), id: who.id });
+    if (!who.id) who.id = `${who.name}#${obids++}`;
+    dispatch({
+      version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+      kind: 'create', streamId: 0, ts: Date.now(),
+    });
   },
 };
 export class TimeoutError extends Error {

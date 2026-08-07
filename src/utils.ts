@@ -1,4 +1,4 @@
-import { Observable, nothing, Sink, ISink, Observer, deliver, TimeoutError, Subscribe, Events, inspect, InspectObservable, Inspect, create } from "./common";
+import { Observable, nothing, Sink, ISink, Observer, deliver, TimeoutError, Subscribe, Events, InspectObservable, Inspect, create } from "./common";
 
 export const toPromise = <T>() => (source: Observable<T>) =>
   new Promise<T>((resolve, reject) => {

@@ -1,8 +1,8 @@
+import { Envelope } from './protocol';
 export declare function nothing(...args: any[]): any;
 export declare const call: (f: Function) => any;
 export declare const identity: <T>(x: T) => T;
 export declare function dispose<T>(this: ISink<T>): void;
-export declare const inspect: () => boolean;
 export type ObservableInputTuple<T> = {
     [K in keyof T]: Observable<T[K]>;
 };
@@ -26,11 +26,15 @@ export interface Observer<T> {
     dispose(): void;
 }
 export declare class Inspect<T> extends Function {
-    id: number;
+    id: string;
+    name: string;
     args: IArguments;
     streamId: number;
     source?: InspectObservable<unknown>;
+    _label?: string;
     toString(): string;
+    /** Attach a stable display label for the devtools panel. Does not change the node id. */
+    label(name: string): this;
     subscribe(sink: ISink<T>): ISink<T>;
 }
 declare type Dispose = () => any;
@@ -38,7 +42,7 @@ export type Observable<T> = (sink: ISink<T>) => void;
 export type InspectObservable<T> = Observable<T> & Inspect<T>;
 export type Operator<T, R = T> = (source: Observable<T>) => Observable<R>;
 export declare class LastSink<T> implements Observer<T> {
-    sourceId: number;
+    sourceId: string;
     defers: Set<Dispose>;
     disposed: boolean;
     next(data: T): void;
@@ -107,25 +111,38 @@ export declare function create<T>(ob: (sink: ISink<T>) => void, name: string, ar
 export declare function deliver<T, R, ARG extends any[]>(c: {
     new (sink: ISink<R>, ...args: ARG): ISink<T>;
 }, name: string): (...args: ARG) => (Operator<T, R>);
+/** @internal Test seam: install a mock backend that receives all emitted
+ *  envelopes (drains the ring first). Returns a disconnect function. */
+export declare function __testInstallBackend(emit: (e: Envelope) => void): () => void;
 interface Node {
-    id: number;
+    id: string;
+    name: string;
+    _label?: string;
     toString(): string;
     source?: Node;
 }
 export declare const Events: {
     addSource(who: Node, source: Node): void;
-    next(who: Node, streamId: number, data?: any): void;
-    subscribe({ id, end }: {
-        id: number;
-        end: boolean;
+    next(who: Node, streamId: number, data?: unknown, cause?: {
+        nodeId: string;
+        sequence: number;
+    } | undefined): number;
+    subscribe(id: {
+        id: string;
     }, sink?: {
-        nodeId: number;
+        nodeId: string;
         streamId: number;
     }): void;
-    complete(who: Node, streamId: number, err?: any): void;
+    complete(who: Node, streamId: number, cause?: {
+        nodeId: string;
+        sequence: number;
+    } | undefined): number;
+    error(who: Node, streamId: number, err: unknown, cause?: {
+        nodeId: string;
+        sequence: number;
+    } | undefined): number;
     defer(who: Node, streamId: number): void;
     pipe(who: Node): void;
-    update(who: Node): void;
     create(who: Node): void;
 };
 export declare class TimeoutError extends Error {

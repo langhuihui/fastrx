@@ -12,34 +12,17 @@
     "type": "module"
   },
   "permissions": [
-    "tabs",
-    "scripting"
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "devtools_page": "devtools/devtools-page.html",
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "content-script.js"
-      ],
-      "run_at": "document_start"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "proxy.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ],
+  "externally_connectable": {
+    "matches": [
+      "<all_urls>"
+    ]
+  },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }

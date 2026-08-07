@@ -1,29 +1,68 @@
+// Shared devtools protocol types for fastrx.
+// Consumed by the library (emit side) and the devtools panel (decode side).
+/**
+ * Bounded serialization of a runtime value for the devtools panel.
+ * Returns undefined for null/undefined so the Envelope field can be omitted.
+ * Objects attempted via JSON.stringify, fallback to String(); truncated to `max`.
+ */
+function summarize(v, max = 256) {
+    if (v === undefined || v === null)
+        return undefined;
+    let s;
+    try {
+        if (typeof v === 'object')
+            s = JSON.stringify(v);
+        else
+            s = String(v);
+    }
+    catch {
+        try {
+            s = String(v);
+        }
+        catch {
+            return 'unserializable';
+        }
+    }
+    if (s.length > max)
+        return s.slice(0, Math.max(0, max - 3)) + '...';
+    return s;
+}
+
 function nothing(...args) { }
 const call = (f) => f();
 const identity = (x) => x;
 function dispose() {
     this.dispose();
 }
+// Compile-time opt-out: defining `__FASTRX_NO_DEVTOOLS__` (e.g. via a bundler
+// define) removes all devtools instrumentation via dead-code elimination.
 // @ts-ignore
-const inspect = () => typeof __FASTRX_DEVTOOLS__ !== 'undefined';
+const DEVTOOLS_ENABLED = typeof __FASTRX_NO_DEVTOOLS__ === 'undefined';
 let obids = 1;
 // function pp(this: Observable<unknown>, ...args: [...Operator<unknown>[], Operator<unknown>]) {
 //   return pipe(this, ...args);
 // }
 class Inspect extends Function {
     id;
+    name;
     args;
     streamId;
     source;
+    _label;
     toString() {
         return `${this.name}(${this.args.length ? [...this.args].join(', ') : ""})`;
+    }
+    /** Attach a stable display label for the devtools panel. Does not change the node id. */
+    label(name) {
+        this._label = name;
+        return this;
     }
     // pipe(...args: [...Operator<unknown>[], Operator<unknown>]): Observable<unknown> {
     //   return pipe(this as unknown as Observable<T>, ...args);
     // }
     subscribe(sink) {
         const ns = new NodeSink(sink, this, this.streamId++);
-        Events.subscribe({ id: this.id, end: false }, { nodeId: ns.sourceId, streamId: ns.id });
+        Events.subscribe({ id: this.id }, { nodeId: ns.sourceId, streamId: ns.id });
         this(ns);
         return ns;
     }
@@ -126,7 +165,7 @@ class Subscribe extends LastSink {
         this._error = _error;
         this._complete = _complete;
         if (source instanceof Inspect) {
-            const node = { toString: () => 'subscribe', id: 0, source };
+            const node = { toString: () => 'subscribe', name: 'subscribe', id: '', source: source };
             this.defer(() => {
                 Events.defer(node, 0);
             });
@@ -134,7 +173,7 @@ class Subscribe extends LastSink {
             Events.pipe(node);
             this.sourceId = node.id;
             this.subscribe(source);
-            Events.subscribe({ id: node.id, end: true });
+            Events.subscribe({ id: node.id });
             if (_next == nothing) {
                 this._next = data => Events.next(node, 0, data);
             }
@@ -155,12 +194,12 @@ class Subscribe extends LastSink {
                 };
             }
             if (_error == nothing) {
-                this._error = err => Events.complete(node, 0, err);
+                this._error = err => Events.error(node, 0, err);
             }
             else {
                 this.error = err => {
                     this.dispose();
-                    Events.complete(node, 0, err);
+                    Events.error(node, 0, err);
                     _error(err);
                 };
             }
@@ -185,12 +224,12 @@ function pipe(first, ...cbs) {
     return cbs.reduce((aac, c) => c(aac), first);
 }
 function create(ob, name, args) {
-    if (inspect()) {
+    if (DEVTOOLS_ENABLED) {
         const result = Object.defineProperties(Object.setPrototypeOf(ob, Inspect.prototype), {
             streamId: { value: 0, writable: true, configurable: true },
             name: { value: name, writable: true, configurable: true },
             args: { value: args, writable: true, configurable: true },
-            id: { value: 0, writable: true, configurable: true },
+            id: { value: '', writable: true, configurable: true },
         });
         Events.create(result);
         for (let i = 0; i < args.length; i++) {
@@ -224,9 +263,104 @@ function deliver(c, name) {
         };
     };
 }
-function send(event, payload) {
-    window.postMessage({ source: 'fastrx-devtools-backend', payload: { event, payload } });
+// ── Devtools transport ─────────────────────────────────────────────────────
+// The library connects to the devtools extension via externally_connectable.
+// When the devtools panel opens, devtools.js sets window.__fastrxExtId to the
+// extension id (via inspectedWindow.eval). The library detects this (immediately
+// or via the property setter) and opens a long-lived port with
+// chrome.runtime.connect(extId, {name:'fastrx-backend'}). Envelopes are posted
+// on the port. When the panel closes, devtools.js clears the id and the library
+// disconnects, resuming ring-buffer accumulation.
+let sequence = 0;
+let currentCause;
+let port;
+const ring = [];
+const RING_MAX = 500;
+function dispatch(env) {
+    if (port) {
+        try {
+            port.postMessage(env);
+        }
+        catch {
+            port = undefined;
+            ring.push(env);
+            if (ring.length > RING_MAX)
+                ring.shift();
+        }
+    }
+    else {
+        ring.push(env);
+        if (ring.length > RING_MAX)
+            ring.shift();
+    }
 }
+function openPort(extId) {
+    if (port)
+        return;
+    const rt = globalThis.chrome?.runtime;
+    if (!rt?.connect)
+        return;
+    try {
+        const p = rt.connect(extId, { name: 'fastrx-backend' });
+        p.onDisconnect.addListener(() => { port = undefined; });
+        port = p;
+        while (ring.length)
+            p.postMessage(ring.shift());
+    }
+    catch {
+        port = undefined;
+    }
+}
+function closePort() {
+    if (port) {
+        try {
+            port.disconnect();
+        }
+        catch { }
+        port = undefined;
+    }
+}
+function tryOpen() {
+    if (port)
+        return;
+    const extId = globalThis.__fastrxExtId;
+    if (extId)
+        openPort(extId);
+}
+if (typeof window !== 'undefined') {
+    const w = window;
+    const currentId = w.__fastrxExtId;
+    let storedId = currentId;
+    try {
+        Object.defineProperty(w, '__fastrxExtId', {
+            configurable: true,
+            get() { return storedId; },
+            set(id) {
+                storedId = id;
+                if (id)
+                    tryOpen();
+                else
+                    closePort();
+            },
+        });
+    }
+    catch { /* property non-configurable; fall back to direct check in tryOpen */ }
+    if (storedId)
+        tryOpen();
+}
+/** @internal Test seam: install a mock backend that receives all emitted
+ *  envelopes (drains the ring first). Returns a disconnect function. */
+function __testInstallBackend(emit) {
+    port = {
+        postMessage: emit,
+        onDisconnect: { addListener: () => { } },
+        disconnect: () => { },
+    };
+    while (ring.length)
+        emit(ring.shift());
+    return () => { port = undefined; };
+}
+// ────────────────────────────────────────────────────────────────────────────
 class NodeSink extends Sink {
     source;
     id;
@@ -240,56 +374,97 @@ class NodeSink extends Sink {
         });
     }
     next(data) {
-        Events.next(this.source, this.id, data);
-        this.sink.next(data);
+        const seq = Events.next(this.source, this.id, data);
+        const prev = currentCause;
+        currentCause = { nodeId: this.source.id, sequence: seq };
+        try {
+            this.sink.next(data);
+        }
+        finally {
+            currentCause = prev;
+        }
     }
     complete() {
-        Events.complete(this.source, this.id);
-        this.sink.complete();
+        const seq = Events.complete(this.source, this.id);
+        const prev = currentCause;
+        currentCause = { nodeId: this.source.id, sequence: seq };
+        try {
+            this.sink.complete();
+        }
+        finally {
+            currentCause = prev;
+        }
     }
     error(err) {
-        Events.complete(this.source, this.id, err);
-        this.sink.error(err);
+        const seq = Events.error(this.source, this.id, err);
+        const prev = currentCause;
+        currentCause = { nodeId: this.source.id, sequence: seq };
+        try {
+            this.sink.error(err);
+        }
+        finally {
+            currentCause = prev;
+        }
     }
 }
 const Events = {
     addSource(who, source) {
-        send('addSource', {
-            id: who.id,
-            name: who.toString(),
-            source: { id: source.id, name: source.toString() },
+        dispatch({
+            version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+            kind: 'addSource', streamId: 0, ts: Date.now(), data: source.id,
         });
     },
-    next(who, streamId, data) {
-        send('next', { id: who.id, streamId, data: data && data.toString() });
+    next(who, streamId, data, cause = currentCause) {
+        const seq = ++sequence;
+        dispatch({
+            version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
+            kind: 'next', streamId, ts: Date.now(), cause, data: summarize(data),
+        });
+        return seq;
     },
-    subscribe({ id, end }, sink) {
-        send('subscribe', {
-            id,
-            end,
-            sink: { nodeId: sink && sink.nodeId, streamId: sink && sink.streamId },
+    subscribe(id, sink) {
+        dispatch({
+            version: 1, sequence: ++sequence, nodeId: id.id, kind: 'subscribe',
+            streamId: sink ? sink.streamId : 0, ts: Date.now(),
+            data: sink ? sink.nodeId : undefined,
         });
     },
-    complete(who, streamId, err) {
-        send('complete', { id: who.id, streamId, err: err ? err.toString() : null });
+    complete(who, streamId, cause = currentCause) {
+        const seq = ++sequence;
+        dispatch({
+            version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
+            kind: 'complete', streamId, ts: Date.now(), cause,
+        });
+        return seq;
+    },
+    error(who, streamId, err, cause = currentCause) {
+        const seq = ++sequence;
+        dispatch({
+            version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
+            kind: 'error', streamId, ts: Date.now(), cause, err: summarize(err),
+        });
+        return seq;
     },
     defer(who, streamId) {
-        send('defer', { id: who.id, streamId });
-    },
-    pipe(who) {
-        send('pipe', {
-            name: who.toString(),
-            id: who.id,
-            source: { id: who.source.id, name: who.source.toString() },
+        dispatch({
+            version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+            kind: 'defer', streamId, ts: Date.now(),
         });
     },
-    update(who) {
-        send('update', { id: who.id, name: who.toString() });
+    pipe(who) {
+        dispatch({
+            version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+            kind: 'pipe', streamId: 0, ts: Date.now(),
+            data: who.source ? who.source.id : undefined,
+        });
     },
     create(who) {
         if (!who.id)
-            who.id = obids++;
-        send('create', { name: who.toString(), id: who.id });
+            who.id = `${who.name}#${obids++}`;
+        dispatch({
+            version: 1, sequence: ++sequence, nodeId: who.id, nodeLabel: who._label,
+            kind: 'create', streamId: 0, ts: Date.now(),
+        });
     },
 };
 class TimeoutError extends Error {
@@ -1652,5 +1827,5 @@ const retry = (count = Infinity) => (source) => {
     }
 };
 
-export { Events, Inspect, LastSink, Sink, Subscribe, TimeoutError, audit, bindCallback, bindNodeCallback, buffer, bufferCount, bufferTime, call, catchError, combineLatest, concat, concatMap, concatMapTo, count, create, debounce, debounceTime, defer, delay, deliver, dispose, distinct, elementAt, empty, every, exhaustMap, exhaustMapTo, expand, filter, find, findIndex, first, fromAnimationFrame, fromArray, fromEvent, fromEventPattern, fromFetch, fromIterable, fromPromise, fromReadableStream, fromReader, groupBy, identity, ignoreElements, iif, inspect, interval, last, map, mapTo, max, merge, mergeMap, mergeMapTo, min, never, nothing, of, pairwise, pipe, race, range, reduce, retry, scan, setAsapScheduler, share, shareReplay, skip, skipUntil, skipWhile, startWith, subject, subscribe, sum, switchMap, switchMapTo, take, takeLast, takeUntil, takeWhile, tap, throttle, throwError, timeInterval, timeout, timer, toPromise, toReadableStream, withLatestFrom, zip };
+export { Events, Inspect, LastSink, Sink, Subscribe, TimeoutError, __testInstallBackend, audit, bindCallback, bindNodeCallback, buffer, bufferCount, bufferTime, call, catchError, combineLatest, concat, concatMap, concatMapTo, count, create, debounce, debounceTime, defer, delay, deliver, dispose, distinct, elementAt, empty, every, exhaustMap, exhaustMapTo, expand, filter, find, findIndex, first, fromAnimationFrame, fromArray, fromEvent, fromEventPattern, fromFetch, fromIterable, fromPromise, fromReadableStream, fromReader, groupBy, identity, ignoreElements, iif, interval, last, map, mapTo, max, merge, mergeMap, mergeMapTo, min, never, nothing, of, pairwise, pipe, race, range, reduce, retry, scan, setAsapScheduler, share, shareReplay, skip, skipUntil, skipWhile, startWith, subject, subscribe, sum, summarize, switchMap, switchMapTo, take, takeLast, takeUntil, takeWhile, tap, throttle, throwError, timeInterval, timeout, timer, toPromise, toReadableStream, withLatestFrom, zip };
 //# sourceMappingURL=index.mjs.map

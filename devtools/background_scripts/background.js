@@ -1,108 +1,51 @@
 /**
-When we receive the message, execute the given script in the given
-tab.
-*/
-// function handleMessage(request, sender, sendResponse) {
+ * Background service worker. Pairs each devtools panel port with the matching
+ * library port (from the inspected page via externally_connectable) and pipes
+ * them bidirectionally.
+ *
+ * - Panel connects via chrome.runtime.connect({name:'fastrx-panel:<tabId>'})
+ *   (own extension; received via onConnect).
+ * - Library connects via chrome.runtime.connect(extId, {name:'fastrx-backend'})
+ *   from the inspected page (external; received via onConnectExternal). The
+ *   tabId is read from port.sender.tab.id.
+ */
 
-//   if (sender.url != chrome.runtime.getURL("/devtools/panel/panel.html")) {
-//     return;
-//   }
+const ports = {}; // tabId -> { panel, backend }
 
-//   chrome.tabs.executeScript(
-//     request.tabId, 
-//     {
-//       code: request.script
-//     });
-
-// }
-
-// /**
-// Listen for messages from our devtools panel.
-// */
-// chrome.runtime.onMessage.addListener(handleMessage); 
-const ports = {};
-
-// 监听来自 content script 的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'fastrx-event') {
-    // 转发消息到 devtools
-    const tabId = sender.tab.id;
-    if (ports[tabId] && ports[tabId].devtools) {
-      ports[tabId].devtools.postMessage(message.payload);
-    }
+chrome.runtime.onConnect.addListener((port) => {
+  const m = /^fastrx-panel:(\d+)$/.exec(port.name);
+  if (m) {
+    pair(m[1], 'panel', port);
   }
 });
 
-chrome.runtime.onConnect.addListener(port => {
-  let tab;
-  let name;
-  if (isNumeric(port.name)) {
-    tab = port.name;
-    name = 'devtools';
-    installProxy(+port.name);
-  } else {
-    tab = port.sender.tab.id;
-    name = 'backend';
-  }
-
-  if (!ports[tab]) {
-    ports[tab] = {
-      devtools: null,
-      backend: null
-    };
-  }
-  ports[tab][name] = port;
-
-  if (ports[tab].devtools && ports[tab].backend) {
-    doublePipe(tab, ports[tab].devtools, ports[tab].backend);
+chrome.runtime.onConnectExternal.addListener((port) => {
+  if (port.name === 'fastrx-backend' && port.sender && port.sender.tab != null) {
+    pair(String(port.sender.tab.id), 'backend', port);
   }
 });
 
-function isNumeric(str) {
-  return +str + '' === str;
-}
-
-async function installProxy(tabId) {
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId: tabId },
-      files: ['/proxy.js']
-    });
-    console.log('injected proxy to tab ' + tabId);
-  } catch (error) {
-    console.error('Failed to inject proxy to tab ' + tabId, error);
-    if (ports[tabId] && ports[tabId].devtools) {
-      ports[tabId].devtools.postMessage('proxy-fail');
-    }
+function pair(tabId, side, port) {
+  if (!ports[tabId]) ports[tabId] = { panel: null, backend: null };
+  ports[tabId][side] = port;
+  if (ports[tabId].panel && ports[tabId].backend) {
+    doublePipe(tabId, ports[tabId].panel, ports[tabId].backend);
   }
 }
 
 function doublePipe(id, one, two) {
+  function lOne(message) { two.postMessage(message); }
+  function lTwo(message) { one.postMessage(message); }
   one.onMessage.addListener(lOne);
-  function lOne(message) {
-    if (message.event === 'log') {
-      return console.log('tab ' + id, message.payload);
-    }
-    console.log('devtools -> backend', message);
-    two.postMessage(message);
-  }
   two.onMessage.addListener(lTwo);
-  function lTwo(message) {
-    if (message.event === 'log') {
-      return console.log('tab ' + id, message.payload);
-    }
-    console.log('backend -> devtools', message);
-    one.postMessage(message);
-  }
+
   function shutdown() {
-    console.log('tab ' + id + ' disconnected.');
     one.onMessage.removeListener(lOne);
     two.onMessage.removeListener(lTwo);
-    one.disconnect();
-    two.disconnect();
-    ports[id] = null;
+    try { one.disconnect(); } catch (_) {}
+    try { two.disconnect(); } catch (_) {}
+    if (ports[id]) ports[id] = { panel: null, backend: null };
   }
   one.onDisconnect.addListener(shutdown);
   two.onDisconnect.addListener(shutdown);
-  console.log('tab ' + id + ' connected.');
 }

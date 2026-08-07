@@ -1,126 +1,89 @@
-# FastRx Chrome 扩展
+# fastrx DevTools 扩展
 
-这是一个用于调试和可视化 FastRx 数据流的 Chrome DevTools 扩展。
+调试和可视化 fastrx 数据流的 Chrome DevTools 扩展。
 
-## 🚀 新特性
+## 架构
 
-- **Manifest V3 支持** - 已升级到最新的 Chrome 扩展标准
-- **多轴时间轴** - 不同数据流在独立的时间轴上显示
-- **动态动画** - 实时数据流动画和时间轴滚动
-- **现代化 UI** - 使用 Naive UI 组件库
-- **响应式设计** - 适配不同屏幕尺寸
+扩展通过 `externally_connectable` 与页面内的 fastrx 库直接通信，无需 content script 或注入脚本：
 
-## 📦 安装步骤
-
-### 1. 构建面板
-
-```bash
-cd devtools/panel
-npm install
-npm run build
+```
+fastrx 库 (页面 main world)
+  │ chrome.runtime.connect(extId, {name:'fastrx-backend'})
+  ▼
+background service worker
+  │ onConnectExternal → 按 tabId 配对
+  │ onConnect         → 面板端口 (name='fastrx-panel:<tabId>')
+  ▼
+devtools 面板 (Vue 3 + Naive UI)
 ```
 
-### 2. 加载扩展
+- 面板打开时，`devtools.js` 通过 `inspectedWindow.eval` 把扩展 ID 写入 `window.__fastrxExtId`。
+- fastrx 库检测到 `__fastrxExtId` 后，用 `chrome.runtime.connect` 打开长连接端口，按 `Envelope` 协议发送调试事件。
+- 库未连接时（devtools 关闭 / Node 环境），事件入 500 条 ring buffer，连接建立时排空。
+- 协议带 `version`、稳定 `nodeId`（`opName#N` + 可选 `.label()`）、`sequence`、`cause`（因果链）。
 
-1. 打开 Chrome 浏览器
-2. 访问 `chrome://extensions/`
-3. 开启"开发者模式"
-4. 点击"加载已解压的扩展程序"
-5. 选择 `devtools` 文件夹
+## 安装
 
-### 3. 测试扩展
+```bash
+# 1. 构建面板
+cd devtools/devtools/panel
+npm install
+npm run build
 
-1. 打开 `devtools/test.html` 文件
-2. 按 F12 打开 DevTools
-3. 查看 "FastRx" 面板
-4. 点击"模拟事件"按钮测试功能
+# 2. 加载扩展
+# chrome://extensions → 开发者模式 → 加载已解压的扩展程序 → 选择 devtools/ 文件夹
 
-## 🔧 主要文件结构
+# 3. 使用
+# 在使用 fastrx 的页面上打开 DevTools → 切到 "FastRx" 面板
+```
+
+## 文件结构
 
 ```
 devtools/
-├── manifest.json              # 扩展清单文件 (Manifest V3)
+├── manifest.json              # MV3 清单（externally_connectable）
 ├── background_scripts/
-│   └── background.js          # Service Worker
-├── content-script.js          # 内容脚本
-├── proxy.js                   # 代理脚本
+│   └── background.js          # service worker，端口配对 + doublePipe
 ├── devtools/
-│   ├── devtools-page.html     # DevTools 页面
-│   ├── devtools.js            # DevTools 脚本
-│   └── panel/                 # 面板应用
-│       ├── src/
+│   ├── devtools-page.html
+│   ├── devtools.js            # 面板注册 + 设置 __fastrxExtId
+│   └── panel/                 # Vue 3 面板
+│       ├── src/App.vue
 │       ├── dist/              # 构建输出
 │       └── package.json
-├── icons/
-│   └── Rx_Logo_S.png          # 扩展图标
-└── test.html                  # 测试页面
+└── icons/
 ```
 
-## 🎯 功能特性
+## 协议（Envelope）
 
-### 时间轴功能
-- **单轴视图** - 所有事件在同一个时间轴上显示
-- **多轴视图** - 每个数据流有独立的时间轴
-- **实时滚动** - 时间轴持续滚动显示当前时间
-- **事件标记** - 不同类型事件用不同颜色和动画显示
+```ts
+interface Envelope {
+  version: 1;
+  sequence: number;            // 全局单调递增
+  nodeId: string;              // `${opName}#${counter}`
+  nodeLabel?: string;          // .label() 覆盖的显示名
+  kind: 'create'|'next'|'complete'|'error'|'defer'|'subscribe'|'pipe'|'addSource';
+  streamId: number;
+  cause?: { nodeId: string; sequence: number };  // 因果前驱
+  data?: string;               // 有界序列化值 / 结构事件的源 nodeId
+  err?: string;
+  ts: number;
+}
+```
 
-### 数据流可视化
-- **流状态** - 显示每个流的活跃状态
-- **事件筛选** - 按事件类型筛选显示
-- **流分组** - 自动按数据流ID分组
-- **颜色编码** - 每个流有独特的颜色标识
+点击事件流中的某条事件，面板会沿 `cause` 向上高亮整条因果链。
 
-### 动画效果
-- **数据流动画** - 数据在节点间流动的粒子动画
-- **状态动画** - 活跃、完成、错误等状态的动画
-- **悬停效果** - 鼠标悬停时的交互反馈
-- **平滑过渡** - 视图切换的平滑动画
+## 开发
 
-## 🔄 Manifest V3 升级说明
-
-### 主要变更
-1. **manifest_version**: 2 → 3
-2. **background.scripts** → **background.service_worker**
-3. **permissions** 分离为 **permissions** 和 **host_permissions**
-4. **chrome.tabs.executeScript** → **chrome.scripting.executeScript**
-5. 添加 **web_accessible_resources** 配置
-
-### 兼容性
-- ✅ Chrome 88+
-- ✅ Edge 88+
-- ❌ Firefox (需要额外适配)
-
-## 🐛 故障排除
-
-### 扩展无法加载
-1. 确保已开启开发者模式
-2. 检查 manifest.json 语法是否正确
-3. 查看 Chrome 扩展页面的错误信息
-
-### 面板无法显示
-1. 确保已运行 `npm run build`
-2. 检查 dist 文件夹是否存在
-3. 重新加载扩展
-
-### 连接问题
-1. 确保在测试页面打开 DevTools
-2. 检查控制台是否有错误信息
-3. 尝试刷新页面
-
-## 📝 开发说明
-
-### 修改面板
 ```bash
-cd devtools/panel
-npm run dev    # 开发模式
-npm run build  # 构建生产版本
+cd devtools/devtools/panel
+npm run dev    # Vite HMR
+npm run build  # 生产构建
 ```
 
-### 修改扩展
-- 修改 `manifest.json` 后需要重新加载扩展
-- 修改 background script 后需要重新加载扩展
-- 修改 content script 后需要刷新页面
+修改 `manifest.json` 或 `background.js` 后需在 `chrome://extensions` 重新加载扩展。
 
-## �� 许可证
+## 兼容性
 
-MIT License 
+- ✅ Chrome（`externally_connectable` 需 Chrome 76+）
+- ❌ Firefox（`externally_connectable` 在 Firefox 128+ 支持，但未测试）
