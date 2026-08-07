@@ -1,4 +1,4 @@
-import { lookupSpec, type ParamSpec } from "./node-catalogue.js";
+import { isSubgraphable, lookupSpec, type ParamSpec } from "./node-catalogue.js";
 
 interface NodeInspectorProps {
   readonly nodeId: string | null;
@@ -8,6 +8,8 @@ interface NodeInspectorProps {
   readonly onDelete: () => void;
   /** Historical output values for this node (cleared on every run). */
   readonly history?: readonly string[];
+  /** Open the nested subgraph editor (only shown for *Map operators). */
+  readonly onEditSubgraph?: () => void;
 }
 
 function ParamInput({
@@ -51,6 +53,7 @@ export default function NodeInspector({
   onParamChange,
   onDelete,
   history,
+  onEditSubgraph,
 }: NodeInspectorProps) {
   if (!nodeId || !op) {
     return (
@@ -78,6 +81,15 @@ export default function NodeInspector({
         </button>
       </header>
       <p className="pg-inspector-desc">{spec.description}</p>
+      {isSubgraphable(spec.op) && onEditSubgraph && (
+        <button
+          type="button"
+          className="pg-inspector-subgraph-btn"
+          onClick={onEditSubgraph}
+        >
+          Edit inner stream (subgraph)
+        </button>
+      )}
       {spec.params.length > 0 ? (
         <dl className="pg-param-list">
           {spec.params.map((p) => (

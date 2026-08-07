@@ -21,6 +21,7 @@ import "@xyflow/react/dist/style.css";
 import {
   CATALOGUE,
   CATEGORY_COLORS,
+  SUBGRAPH_INPUT_ID,
   defaultParams,
   lookupSpec,
   type CanvasNodeData,
@@ -63,6 +64,26 @@ export function createNode(
 }
 
 function OpNode({ id, data, selected }: NodeProps<Node<CanvasNodeData>>) {
+  // Reserved subgraph input source ("x" from the outer stream).
+  if (data.op === SUBGRAPH_INPUT_ID) {
+    return (
+      <div
+        className="pg-node pg-node-input"
+        data-selected={selected ? "" : undefined}
+      >
+        <Handle
+          type="source"
+          position={Position.Right}
+          style={{ background: "#72f5bd", width: "10px", height: "10px" }}
+          isConnectable
+        />
+        <div className="pg-node-header" style={{ background: "#72f5bd" }}>
+          <code>input x</code>
+        </div>
+        <div className="pg-node-params">outer value</div>
+      </div>
+    );
+  }
   const spec = lookupSpec(data.op);
   if (!spec) return null;
   const color = CATEGORY_COLORS[spec.category as NodeCategory];

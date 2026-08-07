@@ -4,6 +4,7 @@ import type { Node, Edge } from "@xyflow/react";
 import NodeCanvas, { createNode } from "./NodeCanvas.js";
 import NodePalette from "./NodePalette.js";
 import NodeInspector from "./NodeInspector.js";
+import SubgraphEditor from "./SubgraphEditor.js";
 import EventFlowPanel from "./EventFlowPanel.js";
 import RuntimeToolbar from "./RuntimeToolbar.js";
 import { useEnvelopeMonitor } from "./envelope-monitor.js";
@@ -17,7 +18,11 @@ import {
   shareUrl,
 } from "./graph-serialization.js";
 import { PRESETS } from "./examples.js";
-import type { CanvasNodeData, CanvasGraph } from "./node-catalogue.js";
+import {
+  isSubgraphable,
+  type CanvasNodeData,
+  type CanvasGraph,
+} from "./node-catalogue.js";
 
 export default function PlaygroundPage() {
   const [nodes, setNodes] = useState<Node<CanvasNodeData>[]>([]);
@@ -25,12 +30,29 @@ export default function PlaygroundPage() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [speedMs, setSpeedMs] = useState(0); // 0 = realtime
   const [shareCopied, setShareCopied] = useState(false);
+  const [subgraphNodeId, setSubgraphNodeId] = useState<string | null>(null);
 
   const monitor = useEnvelopeMonitor();
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
   const selectedOp = selectedNode?.data.op ?? null;
   const selectedParams = selectedNode?.data.params ?? {};
+  const subgraphNode = nodes.find((n) => n.id === subgraphNodeId) ?? null;
+
+  const onSaveSubgraph = useCallback(
+    (g: CanvasGraph) => {
+      if (!subgraphNodeId) return;
+      setNodes((cur) =>
+        cur.map((n) =>
+          n.id === subgraphNodeId
+            ? { ...n, data: { ...n.data, subgraph: g } }
+            : n,
+        ),
+      );
+      setSubgraphNodeId(null);
+    },
+    [subgraphNodeId],
+  );
 
   const onAddNode = useCallback(
     (op: string) => {
@@ -255,12 +277,24 @@ export default function PlaygroundPage() {
           onParamChange={onParamChange}
           onDelete={onDelete}
           history={selectedNodeId ? nodeHistory[selectedNodeId] : undefined}
+          onEditSubgraph={
+            selectedNodeId && selectedOp && isSubgraphable(selectedOp)
+              ? () => setSubgraphNodeId(selectedNodeId)
+              : undefined
+          }
         />
       </div>
       <EventFlowPanel
         events={monitor.events}
         lifecycle={monitor.lifecycle}
       />
+      {subgraphNode && (
+        <SubgraphEditor
+          initialGraph={subgraphNode.data.subgraph}
+          onSave={onSaveSubgraph}
+          onClose={() => setSubgraphNodeId(null)}
+        />
+      )}
     </section>
   );
 }

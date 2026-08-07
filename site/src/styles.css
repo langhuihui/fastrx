@@ -4988,3 +4988,90 @@ progress.mock-stream-progress::-moz-progress-bar {
   color: var(--mint);
   font-family: var(--font-mono);
 }
+
+/* ── Subgraph editor modal ──────────────────────────────────────────────── */
+.pg-subgraph-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.pg-subgraph {
+  background: var(--ink);
+  border: 1px solid var(--dark-line);
+  border-radius: var(--radius-lg);
+  width: min(900px, 92vw);
+  height: min(600px, 86vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+.pg-subgraph-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--dark-line);
+  background: var(--ink-2);
+}
+
+.pg-subgraph-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--mint);
+}
+
+.pg-subgraph-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--dark-muted);
+}
+
+.pg-subgraph-hint code {
+  font-family: var(--font-mono);
+  color: var(--mint);
+}
+
+.pg-subgraph-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  min-height: 0;
+}
+
+.pg-subgraph-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--dark-line);
+  background: var(--ink-2);
+}
+
+.pg-node-input .pg-node-params {
+  color: var(--mint);
+}
+
+.pg-inspector-subgraph-btn {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(114, 245, 189, 0.08);
+  border: 1px solid var(--mint-strong);
+  border-radius: var(--radius-sm);
+  color: var(--mint);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pg-inspector-subgraph-btn:hover {
+  background: rgba(114, 245, 189, 0.18);
+}
+
+.pg-subgraph-body {
+  grid-template-columns: 180px 1fr 260px;
+}

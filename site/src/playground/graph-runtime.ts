@@ -26,7 +26,12 @@ import {
   type Envelope,
 } from "fastrx";
 
-import { lookupSpec, type CanvasGraph, type CanvasNodeData } from "./node-catalogue.js";
+import {
+  lookupSpec,
+  SUBGRAPH_INPUT_ID,
+  type CanvasGraph,
+  type CanvasNodeData,
+} from "./node-catalogue.js";
 import { safeFn, parseValues, parseValue } from "./param-eval.js";
 
 type AnyObs = Observable<unknown>;
@@ -125,6 +130,37 @@ function buildObservable(graph: CanvasGraph, speedMs: number): AnyObs {
   return source;
 }
 
+/**
+ * Compile a *Map subgraph into an inner Observable given the outer value `x`.
+ * The subgraph starts at the reserved `__input` node (fed `of(x)`), threads
+ * operators in topological order, and returns the last operator's output.
+ */
+function buildSubgraph(sub: CanvasGraph, x: unknown): AnyObs {
+  const memo = new Map<string, AnyObs>();
+  memo.set(SUBGRAPH_INPUT_ID, of(x));
+
+  const sorted = topoSort(sub);
+  for (const node of sorted) {
+    if (node.id === SUBGRAPH_INPUT_ID) continue;
+    const spec = lookupSpec(node.data.op);
+    if (!spec) throw new Error(`Unknown operator in subgraph: ${node.data.op}`);
+    const inEdges = sub.edges.filter((e) => e.target === node.id);
+    const inputs = inEdges.map((e) => {
+      const ob = memo.get(e.source);
+      if (!ob) throw new Error(`Subgraph input not built for ${e.source}`);
+      return ob;
+    });
+    if (spec.inputs > 0 && inputs.length < spec.inputs) {
+      throw new Error(`Subgraph "${node.data.op}" needs ${spec.inputs} input(s), got ${inputs.length}`);
+    }
+    // Subgraphs never re-apply slow-motion; the outer pipe's speedMs handles it.
+    memo.set(node.id, applySpeed(construct(node.data, inputs), 0));
+  }
+
+  const output = [...sorted].reverse().find((n) => n.id !== SUBGRAPH_INPUT_ID);
+  return output ? memo.get(output.id) ?? of(x) : of(x);
+}
+
 function construct(data: CanvasNodeData, inputs: AnyObs[]): AnyObs {
   const p = data.params;
   switch (data.op) {
@@ -184,6 +220,13 @@ function construct(data: CanvasNodeData, inputs: AnyObs[]): AnyObs {
     case "bufferCount":
       return pipe(inputs[0], bufferCount(Number(p.size ?? 2)));
     case "switchMap":
+      if (data.subgraph) {
+        const sub = data.subgraph;
+        return pipe(
+          inputs[0],
+          switchMap((x) => buildSubgraph(sub, x) as AnyObs),
+        );
+      }
       return pipe(
         inputs[0],
         switchMap(safeFn(["x"], p.fn ?? "x => of(x)") as (x: unknown) => AnyObs),

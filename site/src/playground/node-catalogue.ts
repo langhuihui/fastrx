@@ -27,6 +27,15 @@ export interface CanvasNodeData extends Record<string, unknown> {
   readonly category: NodeCategory;
   readonly params: Record<string, string>;
   readonly label?: string;
+  /** Nested inner-stream graph for *Map operators (single-level). */
+  readonly subgraph?: CanvasGraph;
+}
+
+/** The reserved source node id inside a *Map subgraph, fed the outer value. */
+export const SUBGRAPH_INPUT_ID = "__input";
+
+export function isSubgraphable(op: string): boolean {
+  return op === "switchMap";
 }
 
 export interface CanvasEdge {
