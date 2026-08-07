@@ -273,11 +273,18 @@ function deliver(c, name) {
 // chrome.runtime.connect(extId, {name:'fastrx-backend'}). Envelopes are posted
 // on the port. When the panel closes, devtools.js clears the id and the library
 // disconnects, resuming ring-buffer accumulation.
+//
+// The port is bidirectional: the panel can send PanelCommands (inspect /
+// breakpoint) and the library replies over the same port.
 let sequence = 0;
 let currentCause;
 let port;
 const ring = [];
 const RING_MAX = 500;
+// Reverse-channel state.
+const breakpoints = new Set();
+const latestByNode = new Map();
+const streamCountByNode = new Map();
 function dispatch(env) {
     if (port) {
         try {
@@ -296,6 +303,29 @@ function dispatch(env) {
             ring.shift();
     }
 }
+/** Handle a panel command; returns a reply to post back (or undefined). */
+function handlePanelCommand(msg) {
+    if (!msg || typeof msg.type !== 'string')
+        return undefined;
+    if (msg.type === 'breakpoint') {
+        if (msg.on)
+            breakpoints.add(String(msg.nodeId));
+        else
+            breakpoints.delete(String(msg.nodeId));
+        return { type: 'breakpoint-ack', nodeId: String(msg.nodeId), on: !!msg.on, ts: Date.now() };
+    }
+    if (msg.type === 'inspect') {
+        const nodeId = String(msg.nodeId);
+        return {
+            type: 'inspect-result',
+            nodeId,
+            latest: latestByNode.get(nodeId),
+            subscriptionCount: streamCountByNode.get(nodeId) ?? 0,
+            ts: Date.now(),
+        };
+    }
+    return undefined;
+}
 function openPort(extId) {
     if (port)
         return;
@@ -305,6 +335,15 @@ function openPort(extId) {
     try {
         const p = rt.connect(extId, { name: 'fastrx-backend' });
         p.onDisconnect.addListener(() => { port = undefined; });
+        p.onMessage.addListener((msg) => {
+            const reply = handlePanelCommand(msg);
+            if (reply && port) {
+                try {
+                    port.postMessage(reply);
+                }
+                catch { /* noop */ }
+            }
+        });
         port = p;
         while (ring.length)
             p.postMessage(ring.shift());
@@ -350,17 +389,24 @@ if (typeof window !== 'undefined') {
     if (storedId)
         tryOpen();
 }
-/** @internal Test seam: install a mock backend that receives all emitted
- *  envelopes (drains the ring first). Returns a disconnect function. */
-function __testInstallBackend(emit) {
+function __testInstallBackend(emit, onReply) {
+    const sendCommand = (msg) => {
+        const reply = handlePanelCommand(msg);
+        if (reply && onReply)
+            onReply(reply);
+    };
     port = {
         postMessage: emit,
         onDisconnect: { addListener: () => { } },
+        onMessage: { addListener: (cb) => { port._onMessage = cb; } },
         disconnect: () => { },
     };
     while (ring.length)
         emit(ring.shift());
-    return () => { port = undefined; };
+    const disconnect = () => { port = undefined; };
+    return onReply
+        ? { disconnect, sendCommand }
+        : disconnect;
 }
 // ────────────────────────────────────────────────────────────────────────────
 class NodeSink extends Sink {
@@ -418,13 +464,17 @@ const Events = {
     },
     next(who, streamId, data, cause = currentCause) {
         const seq = ++sequence;
+        latestByNode.set(who.id, summarize(data) ?? '');
         dispatch({
             version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
             kind: 'next', streamId, ts: Date.now(), cause, data: summarize(data),
+            breakpoint: breakpoints.has(who.id) || undefined,
         });
         return seq;
     },
     subscribe(id, sink) {
+        const active = sink !== undefined;
+        streamCountByNode.set(id.id, (streamCountByNode.get(id.id) ?? 0) + (active ? 1 : 0));
         dispatch({
             version: 1, sequence: ++sequence, nodeId: id.id, kind: 'subscribe',
             streamId: sink ? sink.streamId : 0, ts: Date.now(),
@@ -436,6 +486,7 @@ const Events = {
         dispatch({
             version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
             kind: 'complete', streamId, ts: Date.now(), cause,
+            breakpoint: breakpoints.has(who.id) || undefined,
         });
         return seq;
     },
@@ -444,6 +495,7 @@ const Events = {
         dispatch({
             version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
             kind: 'error', streamId, ts: Date.now(), cause, err: summarize(err),
+            breakpoint: breakpoints.has(who.id) || undefined,
         });
         return seq;
     },
@@ -1877,6 +1929,7 @@ exports.fromPromise = fromPromise;
 exports.fromReadableStream = fromReadableStream;
 exports.fromReader = fromReader;
 exports.groupBy = groupBy;
+exports.handlePanelCommand = handlePanelCommand;
 exports.identity = identity;
 exports.ignoreElements = ignoreElements;
 exports.iif = iif;

@@ -18,8 +18,34 @@ export interface Envelope {
     data?: string;
     /** Bounded stringified error (see summarize). */
     err?: string;
+    /** Set when the node had a devtools breakpoint armed at emit time. */
+    breakpoint?: boolean;
     ts: number;
 }
+/** Panel → library commands (reverse channel over the same port). */
+export type PanelCommand = {
+    type: 'inspect';
+    nodeId: string;
+} | {
+    type: 'breakpoint';
+    nodeId: string;
+    on: boolean;
+};
+/** Library → panel replies to PanelCommands. */
+export type BackendReply = {
+    type: 'inspect-result';
+    nodeId: string;
+    /** Most recent value stringified, if the node has emitted one. */
+    latest?: string;
+    /** Number of active subscriptions on this node. */
+    subscriptionCount: number;
+    ts: number;
+} | {
+    type: 'breakpoint-ack';
+    nodeId: string;
+    on: boolean;
+    ts: number;
+};
 /**
  * Bounded serialization of a runtime value for the devtools panel.
  * Returns undefined for null/undefined so the Envelope field can be omitted.

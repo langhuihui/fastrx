@@ -3,6 +3,7 @@ import {
   ReactFlow,
   Background,
   Controls,
+  MiniMap,
   addEdge,
   applyNodeChanges,
   applyEdgeChanges,
@@ -216,6 +217,11 @@ export default function NodeCanvas({
       >
         <Background color="#aaa" gap={20} size={1} />
         <Controls showInteractive={false} />
+        <MiniMap
+          nodeColor={(n) => (n.data as { category?: string }).category === "source" ? "#3dd68c" : "#5e9cff"}
+          nodeStrokeWidth={2}
+          maskColor="rgba(0, 0, 0, 0.6)"
+        />
       </ReactFlow>
     </div>
   );

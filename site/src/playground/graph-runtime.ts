@@ -58,8 +58,12 @@ function applySpeed(ob: AnyObs, speedMs: number): AnyObs {
 }
 
 /**
- * Run a canvas graph as a fastrx pipe chain. Captures all emitted Envelopes
- * via the library's `__testInstallBackend` test seam (drains ring first).
+ * Run a canvas graph as one or more fastrx pipe chains (one per terminal
+ * node). Captures all emitted Envelopes via the library's `__testInstallBackend`
+ * test seam (drains ring first).
+ *
+ * `onOut` receives each terminal's value together with the terminal's node id,
+ * so multi-stream graphs (several `subscribe` nodes) stay distinguishable.
  *
  * Returns a dispose function. Throws if the graph is invalid (cycle, missing
  * source, bad params).
@@ -67,22 +71,20 @@ function applySpeed(ob: AnyObs, speedMs: number): AnyObs {
 export function runGraph(
   graph: CanvasGraph,
   onEnv: (e: Envelope) => void,
-  onOut: (v: unknown) => void,
+  onOut: (v: unknown, terminalId: string) => void,
   options: RunOptions = {},
 ): () => void {
   const speedMs = options.speedMs ?? 0;
   const disconnect = __testInstallBackend(onEnv);
   try {
-    const source = buildObservable(graph, speedMs);
-    const sub = pipe(
-      source,
-      subscribe(onOut, () => {}, () => {}),
-    );
+    const subs = buildPipelines(graph, speedMs, onOut);
     return () => {
-      try {
-        (sub as { dispose?: () => void }).dispose?.();
-      } catch {
-        /* noop */
+      for (const sub of subs) {
+        try {
+          (sub as { dispose?: () => void }).dispose?.();
+        } catch {
+          /* noop */
+        }
       }
       disconnect();
     };
@@ -93,16 +95,22 @@ export function runGraph(
 }
 
 /**
- * Topologically sort the graph from sources to terminals, memoize each node's
- * Observable, and return the terminal's source Observable.
+ * Topologically sort the graph, memoize every node's Observable, and subscribe
+ * each terminal (subscribe) node to its own chain. Returns the subscriptions.
  */
-function buildObservable(graph: CanvasGraph, speedMs: number): AnyObs {
+function buildPipelines(
+  graph: CanvasGraph,
+  speedMs: number,
+  onOut: (v: unknown, terminalId: string) => void,
+): Array<{ dispose?: () => void }> {
   const sorted = topoSort(graph);
   const memo = new Map<string, AnyObs>();
 
   for (const node of sorted) {
     const spec = lookupSpec(node.data.op);
     if (!spec) throw new Error(`Unknown operator: ${node.data.op}`);
+    // Terminal nodes are consumed by runGraph itself; skip constructing them.
+    if (spec.category === "terminal") continue;
 
     const inEdges = graph.edges.filter((e) => e.target === node.id);
     const inputs = inEdges.map((e) => {
@@ -120,14 +128,27 @@ function buildObservable(graph: CanvasGraph, speedMs: number): AnyObs {
     memo.set(node.id, ob);
   }
 
-  // The terminal's input is the chain's source Observable.
-  const terminal = sorted.find((n) => lookupSpec(n.data.op)?.category === "terminal");
-  if (!terminal) throw new Error("No terminal (subscribe) node in graph");
-  const terminalInEdge = graph.edges.find((e) => e.target === terminal.id);
-  if (!terminalInEdge) throw new Error("Terminal has no input");
-  const source = memo.get(terminalInEdge.source);
-  if (!source) throw new Error("Terminal input not built");
-  return source;
+  const terminals = sorted.filter(
+    (n) => lookupSpec(n.data.op)?.category === "terminal",
+  );
+  if (terminals.length === 0) {
+    throw new Error("No terminal (subscribe) node in graph");
+  }
+
+  return terminals.map((t) => {
+    const inEdge = graph.edges.find((e) => e.target === t.id);
+    if (!inEdge) throw new Error(`Terminal "${t.data.op}" has no input`);
+    const source = memo.get(inEdge.source);
+    if (!source) throw new Error("Terminal input not built");
+    return pipe(
+      source,
+      subscribe(
+        (v) => onOut(v, t.id),
+        () => {},
+        () => {},
+      ),
+    );
+  });
 }
 
 /**

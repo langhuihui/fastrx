@@ -11,7 +11,11 @@
     "noEmit": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "baseUrl": ".",
+    "paths": {
+      "fastrx": ["../../src/index.ts"]
+    }
   },
   "include": ["src", "../../src"]
 }

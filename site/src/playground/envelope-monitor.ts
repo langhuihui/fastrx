@@ -27,6 +27,7 @@ export function useEnvelopeMonitor(): EnvelopeMonitorApi {
   const [lifecycle, setLifecycle] = useState<Lifecycle>("idle");
   const [error, setError] = useState<string | null>(null);
   const disposeRef = useRef<(() => void) | null>(null);
+  const terminalCountRef = useRef(0);
 
   const stop = useCallback(() => {
     disposeRef.current?.();
@@ -40,6 +41,7 @@ export function useEnvelopeMonitor(): EnvelopeMonitorApi {
     setOutputs([]);
     setLifecycle("idle");
     setError(null);
+    terminalCountRef.current = 0;
   }, [stop]);
 
   const run = useCallback(
@@ -51,6 +53,7 @@ export function useEnvelopeMonitor(): EnvelopeMonitorApi {
       setOutputs([]);
       setError(null);
       setLifecycle("running");
+      terminalCountRef.current = 0;
 
       try {
         const dispose = runGraph(
@@ -60,14 +63,24 @@ export function useEnvelopeMonitor(): EnvelopeMonitorApi {
               const next = cur.length >= MAX_EVENTS ? cur.slice(cur.length - MAX_EVENTS + 1) : cur;
               return [...next, env];
             });
+            // Terminal subscribe events carry no sink (data is undefined).
+            if (env.kind === "subscribe" && !env.data) {
+              terminalCountRef.current += 1;
+            }
             if (env.kind === "complete" || env.kind === "error") {
-              setLifecycle(env.kind === "error" ? "error" : "completed");
+              if (env.kind === "error") {
+                setLifecycle("error");
+              } else if (terminalCountRef.current <= 1) {
+                // Single-stream: completion ends the run. Multi-stream stays
+                // "running" until the user stops it (e.g. an interval source).
+                setLifecycle("completed");
+              }
             }
           },
-          (value) => {
+          (value, terminalId) => {
             setOutputs((cur) => {
               const next = cur.length >= MAX_EVENTS ? cur.slice(cur.length - MAX_EVENTS + 1) : cur;
-              return [...next, value];
+              return [...next, { value, terminalId }];
             });
           },
           options,

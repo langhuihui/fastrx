@@ -1,4 +1,4 @@
-import { Envelope } from './protocol';
+import { Envelope, type BackendReply } from './protocol';
 export declare function nothing(...args: any[]): any;
 export declare const call: (f: Function) => any;
 export declare const identity: <T>(x: T) => T;
@@ -111,9 +111,16 @@ export declare function create<T>(ob: (sink: ISink<T>) => void, name: string, ar
 export declare function deliver<T, R, ARG extends any[]>(c: {
     new (sink: ISink<R>, ...args: ARG): ISink<T>;
 }, name: string): (...args: ARG) => (Operator<T, R>);
+/** Handle a panel command; returns a reply to post back (or undefined). */
+export declare function handlePanelCommand(msg: any): BackendReply | undefined;
 /** @internal Test seam: install a mock backend that receives all emitted
- *  envelopes (drains the ring first). Returns a disconnect function. */
+ *  envelopes (drains the ring first) and can accept panel commands.
+ *  Returns a disconnect function and a `sendCommand` helper for tests. */
 export declare function __testInstallBackend(emit: (e: Envelope) => void): () => void;
+export declare function __testInstallBackend(emit: (e: Envelope) => void, onReply: (reply: BackendReply) => void): {
+    disconnect: () => void;
+    sendCommand: (msg: any) => void;
+};
 interface Node {
     id: string;
     name: string;

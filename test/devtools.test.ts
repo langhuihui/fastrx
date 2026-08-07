@@ -1,6 +1,6 @@
-import { pipe, of, map, filter, subscribe } from '../src/index';
+import { pipe, of, map, filter, subscribe, subject } from '../src/index';
 import { __testInstallBackend } from '../src/common';
-import type { Envelope } from '../src/protocol';
+import type { Envelope, BackendReply } from '../src/protocol';
 
 /** Flush the asap (microtask + setTimeout) scheduler. */
 const flush = () => new Promise<void>((r) => setTimeout(r, 10));
@@ -72,4 +72,50 @@ test('ring buffer drains on attach', async () => {
   const drained: Envelope[] = [];
   __testInstallBackend((e) => drained.push(e));
   expect(drained.some((e) => e.kind === 'next' && e.data === '99')).toBe(true);
+});
+
+test('reverse channel: inspect returns latest value + subscription count', async () => {
+  const events: Envelope[] = [];
+  const replies: BackendReply[] = [];
+  const backend = __testInstallBackend(
+    (e) => events.push(e),
+    (r) => replies.push(r),
+  );
+  pipe(of(42), subscribe(() => {}));
+  await flush();
+
+  const ofNode = events.find((e) => e.kind === 'next')!.nodeId;
+  backend.sendCommand({ type: 'inspect', nodeId: ofNode });
+  const result = replies.find((r) => r.type === 'inspect-result');
+  expect(result?.type).toBe('inspect-result');
+  if (result?.type === 'inspect-result') {
+    expect(result.latest).toBe('42');
+    expect(result.subscriptionCount).toBeGreaterThanOrEqual(1);
+  }
+  backend.disconnect();
+});
+
+test('reverse channel: breakpoint marks next envelopes', async () => {
+  const events: Envelope[] = [];
+  const replies: BackendReply[] = [];
+  const backend = __testInstallBackend(
+    (e) => events.push(e),
+    (r) => replies.push(r),
+  );
+  // Reuse one node (subject) so the breakpoint targets the same nodeId.
+  const s = subject<number>();
+  pipe(s, subscribe(() => {}));
+  s.next(0); // produce a next event so we can learn the subject's nodeId
+  await flush();
+
+  const nodeId = events.find((e) => e.kind === 'next')!.nodeId;
+  expect(nodeId).toBeTruthy();
+  backend.sendCommand({ type: 'breakpoint', nodeId: nodeId!, on: true });
+  expect(replies.some((r) => r.type === 'breakpoint-ack')).toBe(true);
+
+  s.next(7);
+  await flush();
+  const nexts = events.filter((e) => e.kind === 'next');
+  expect(nexts.some((e) => e.breakpoint === true)).toBe(true);
+  backend.disconnect();
 });

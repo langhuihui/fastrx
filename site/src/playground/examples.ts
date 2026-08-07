@@ -92,4 +92,19 @@ export const PRESETS: readonly PresetGraph[] = [
       edges: [edge("n1", "n2"), edge("n2", "n3")],
     },
   },
+  {
+    id: "multi-stream",
+    title: "Two streams",
+    description: "Two independent pipelines running in parallel.",
+    graph: {
+      nodes: [
+        node("n1", "interval", 0, -100, { period: "500" }),
+        node("n2", "map", 200, -100, { fn: "x => `tick ${x}`" }),
+        node("n3", "subscribe", 420, -100),
+        node("n4", "of", 0, 100, { values: "a, b, c" }),
+        node("n5", "subscribe", 420, 100),
+      ],
+      edges: [edge("n1", "n2"), edge("n2", "n3"), edge("n4", "n5")],
+    },
+  },
 ];

@@ -1,4 +1,4 @@
-import { Envelope, summarize } from './protocol';
+import { Envelope, summarize, type BackendReply } from './protocol';
 export function nothing(...args: any[]): any { }
 export const call = (f: Function) => f();
 export const identity = <T>(x: T): T => x;
@@ -293,11 +293,19 @@ export function deliver<T, R, ARG extends any[]>(c: { new(sink: ISink<R>, ...arg
 // chrome.runtime.connect(extId, {name:'fastrx-backend'}). Envelopes are posted
 // on the port. When the panel closes, devtools.js clears the id and the library
 // disconnects, resuming ring-buffer accumulation.
+//
+// The port is bidirectional: the panel can send PanelCommands (inspect /
+// breakpoint) and the library replies over the same port.
 let sequence = 0;
 let currentCause: { nodeId: string; sequence: number } | undefined;
 let port: any;
 const ring: Envelope[] = [];
 const RING_MAX = 500;
+
+// Reverse-channel state.
+const breakpoints = new Set<string>();
+const latestByNode = new Map<string, string>();
+const streamCountByNode = new Map<string, number>();
 
 function dispatch(env: Envelope) {
   if (port) {
@@ -309,6 +317,27 @@ function dispatch(env: Envelope) {
   }
 }
 
+/** Handle a panel command; returns a reply to post back (or undefined). */
+export function handlePanelCommand(msg: any): BackendReply | undefined {
+  if (!msg || typeof msg.type !== 'string') return undefined;
+  if (msg.type === 'breakpoint') {
+    if (msg.on) breakpoints.add(String(msg.nodeId));
+    else breakpoints.delete(String(msg.nodeId));
+    return { type: 'breakpoint-ack', nodeId: String(msg.nodeId), on: !!msg.on, ts: Date.now() };
+  }
+  if (msg.type === 'inspect') {
+    const nodeId = String(msg.nodeId);
+    return {
+      type: 'inspect-result',
+      nodeId,
+      latest: latestByNode.get(nodeId),
+      subscriptionCount: streamCountByNode.get(nodeId) ?? 0,
+      ts: Date.now(),
+    };
+  }
+  return undefined;
+}
+
 function openPort(extId: string) {
   if (port) return;
   const rt = (globalThis as any).chrome?.runtime;
@@ -316,6 +345,12 @@ function openPort(extId: string) {
   try {
     const p = rt.connect(extId, { name: 'fastrx-backend' });
     p.onDisconnect.addListener(() => { port = undefined; });
+    p.onMessage.addListener((msg: any) => {
+      const reply = handlePanelCommand(msg);
+      if (reply && port) {
+        try { port.postMessage(reply); } catch { /* noop */ }
+      }
+    });
     port = p;
     while (ring.length) p.postMessage(ring.shift()!);
   } catch {
@@ -352,15 +387,32 @@ if (typeof window !== 'undefined') {
 }
 
 /** @internal Test seam: install a mock backend that receives all emitted
- *  envelopes (drains the ring first). Returns a disconnect function. */
-export function __testInstallBackend(emit: (e: Envelope) => void): () => void {
+ *  envelopes (drains the ring first) and can accept panel commands.
+ *  Returns a disconnect function and a `sendCommand` helper for tests. */
+export function __testInstallBackend(emit: (e: Envelope) => void): () => void;
+export function __testInstallBackend(
+  emit: (e: Envelope) => void,
+  onReply: (reply: BackendReply) => void,
+): { disconnect: () => void; sendCommand: (msg: any) => void };
+export function __testInstallBackend(
+  emit: (e: Envelope) => void,
+  onReply?: (reply: BackendReply) => void,
+): any {
+  const sendCommand = (msg: any) => {
+    const reply = handlePanelCommand(msg);
+    if (reply && onReply) onReply(reply);
+  };
   port = {
     postMessage: emit,
     onDisconnect: { addListener: () => {} } as any,
+    onMessage: { addListener: (cb: any) => { port._onMessage = cb; } } as any,
     disconnect: () => {},
   };
   while (ring.length) emit(ring.shift()!);
-  return () => { port = undefined; };
+  const disconnect = () => { port = undefined; };
+  return onReply
+    ? { disconnect, sendCommand }
+    : disconnect;
 }
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -410,13 +462,17 @@ export const Events = {
   },
   next(who: Node, streamId: number, data?: unknown, cause: { nodeId: string; sequence: number } | undefined = currentCause): number {
     const seq = ++sequence;
+    latestByNode.set(who.id, summarize(data) ?? '');
     dispatch({
       version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
       kind: 'next', streamId, ts: Date.now(), cause, data: summarize(data),
+      breakpoint: breakpoints.has(who.id) || undefined,
     });
     return seq;
   },
   subscribe(id: { id: string }, sink?: { nodeId: string; streamId: number }) {
+    const active = sink !== undefined;
+    streamCountByNode.set(id.id, (streamCountByNode.get(id.id) ?? 0) + (active ? 1 : 0));
     dispatch({
       version: 1, sequence: ++sequence, nodeId: id.id, kind: 'subscribe',
       streamId: sink ? sink.streamId : 0, ts: Date.now(),
@@ -428,6 +484,7 @@ export const Events = {
     dispatch({
       version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
       kind: 'complete', streamId, ts: Date.now(), cause,
+      breakpoint: breakpoints.has(who.id) || undefined,
     });
     return seq;
   },
@@ -436,6 +493,7 @@ export const Events = {
     dispatch({
       version: 1, sequence: seq, nodeId: who.id, nodeLabel: who._label,
       kind: 'error', streamId, ts: Date.now(), cause, err: summarize(err),
+      breakpoint: breakpoints.has(who.id) || undefined,
     });
     return seq;
   },

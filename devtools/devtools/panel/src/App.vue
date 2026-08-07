@@ -85,6 +85,26 @@
           </div>
         </div>
 
+        <!-- Reverse-channel debug controls -->
+        <div class="debug-controls">
+          <span class="debug-node">节点: <code>{{ selectedNodeId || "—" }}</code></span>
+          <n-button
+            size="tiny"
+            :disabled="!selectedNodeId"
+            @click="sendInspect"
+          >Inspect</n-button>
+          <n-button
+            size="tiny"
+            :disabled="!selectedNodeId"
+            :type="breakpointOn ? 'warning' : 'default'"
+            @click="toggleBreakpoint"
+          >{{ breakpointOn ? "断点 ON" : "断点" }}</n-button>
+          <span v-if="inspectResult" class="debug-result">
+            最新: <code>{{ inspectResult.latest ?? "—" }}</code> ·
+            订阅: {{ inspectResult.subscriptionCount }}
+          </span>
+        </div>
+
         <!-- Multi-Axis Timeline -->
         <div v-if="isMultiAxis" class="multi-axis-timeline">
           <div
@@ -215,6 +235,7 @@
               {
                 'causal-highlight': causeChainSet.has(event.sequence),
                 selected: selectedSeq === event.sequence,
+                'event-breakpoint': event.breakpoint,
               },
             ]"
             @click="selectedSeq = event.sequence"
@@ -293,6 +314,9 @@ const streamTimelines = reactive({});
 const selectedStreamFilter = ref(null);
 const selectedSeq = ref(null);
 const activeTab = ref("marbles");
+const inspectResult = ref(null); // { latest, subscriptionCount }
+const breakpointOn = ref(false);
+let panelPort = null; // live chrome port for the reverse channel
 const causeChainSet = computed(() => {
   const s = selectedSeq.value;
   if (s == null) return new Set();
@@ -397,6 +421,21 @@ const stepBack = () => {
 const stepForward = () => {
   if (selectedSeq.value == null) return;
   if (selectedSeq.value < maxSeq.value) selectedSeq.value++;
+};
+
+// Reverse-channel controls: ask the library to inspect a node or arm a breakpoint.
+const sendInspect = () => {
+  if (!selectedNodeId.value || !panelPort) return;
+  panelPort.postMessage({ type: "inspect", nodeId: selectedNodeId.value });
+  inspectResult.value = null;
+};
+const toggleBreakpoint = () => {
+  if (!selectedNodeId.value || !panelPort) return;
+  panelPort.postMessage({
+    type: "breakpoint",
+    nodeId: selectedNodeId.value,
+    on: !breakpointOn.value,
+  });
 };
 
 // Node currently selected (derived from selectedSeq → its event's nodeId).
@@ -591,21 +630,34 @@ onMounted(() => {
       const port = chrome.runtime.connect({
         name: "fastrx-panel:" + chrome.devtools.inspectedWindow.tabId,
       });
+      panelPort = port;
 
       port.onDisconnect.addListener(() => {
+        panelPort = null;
         pipelines.value = [];
         rawEvents.value = [];
         Object.keys(nodes).forEach((key) => delete nodes[key]);
         setTimeout(connect, 1000);
       });
 
-      port.onMessage.addListener((env) => {
+      port.onMessage.addListener((msg) => {
+        if (!msg) return;
+        // BackendReply from the reverse channel (inspect / breakpoint).
+        if (typeof msg.type === "string") {
+          if (msg.type === "inspect-result") {
+            inspectResult.value = msg;
+          } else if (msg.type === "breakpoint-ack") {
+            breakpointOn.value = msg.on;
+          }
+          return;
+        }
         // env is an Envelope: { version, sequence, nodeId, nodeLabel?, kind,
         //   streamId, cause?:{nodeId,sequence}, data?, err?, ts }
         // Structural events (pipe/addSource/subscribe) carry a parent/source
         // nodeId in `data`; data events (next/complete/error) carry the
         // stringified value/err.
-        if (!env || typeof env.kind !== "string") return;
+        if (typeof msg.kind !== "string") return;
+        const env = msg;
         if (paused.value) return; // recording paused — drop live event
         // Record the canonical envelope for the marble view / causal walk.
         rawEvents.value.push(env);
@@ -628,6 +680,7 @@ onMounted(() => {
               nodeId: env.nodeId,
               sequence: env.sequence,
               cause: env.cause,
+              breakpoint: env.breakpoint,
             });
             break;
           case "complete":
@@ -639,6 +692,7 @@ onMounted(() => {
                 nodeId: env.nodeId,
                 sequence: env.sequence,
                 cause: env.cause,
+                breakpoint: env.breakpoint,
               });
             }
             break;
@@ -651,6 +705,7 @@ onMounted(() => {
                 nodeId: env.nodeId,
                 sequence: env.sequence,
                 cause: env.cause,
+                breakpoint: env.breakpoint,
               });
             }
             break;
@@ -1178,6 +1233,42 @@ class Node {
 .event-item.causal-highlight {
   background: rgba(138, 43, 226, 0.18);
   box-shadow: inset 2px 0 0 #8a2be2;
+}
+
+.event-item.event-breakpoint {
+  outline: 2px solid #f0a020;
+  outline-offset: -1px;
+  background: rgba(240, 160, 32, 0.12);
+}
+
+.debug-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.debug-node {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.debug-node code {
+  font-family: var(--font-mono, monospace);
+  color: #8a2be2;
+}
+
+.debug-result {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.debug-result code {
+  font-family: var(--font-mono, monospace);
+  color: #00bfff;
 }
 
 .event-item.selected {
