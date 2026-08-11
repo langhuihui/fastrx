@@ -17,11 +17,11 @@ interface RuntimeToolbarProps {
 }
 
 const SPEED_OPTIONS = [
-  { value: 0, label: "实时" },
-  { value: 200, label: "0.2s/值" },
-  { value: 500, label: "0.5s/值" },
-  { value: 1000, label: "1s/值" },
-  { value: 2000, label: "2s/值" },
+  { value: 0, label: "Realtime" },
+  { value: 200, label: "0.2s/value" },
+  { value: 500, label: "0.5s/value" },
+  { value: 1000, label: "1s/value" },
+  { value: 2000, label: "2s/value" },
 ] as const;
 
 export default function RuntimeToolbar({
@@ -70,20 +70,20 @@ export default function RuntimeToolbar({
           onClick={onShare}
           disabled={!canShare}
         >
-          {shareCopied ? "已复制 ✓" : "分享链接"}
+          {shareCopied ? "Copied ✓" : "Share link"}
         </button>
       </div>
 
       <div className="pg-toolbar-group pg-toolbar-speed">
         <label className="pg-toolbar-label" htmlFor="pg-speed">
-          速度
+          Speed
         </label>
         <select
           id="pg-speed"
           className="pg-toolbar-select"
           value={speedMs}
           onChange={(e) => onSpeedChange(Number(e.target.value))}
-          title="每个值之间的间隔；下次 Run 生效"
+          title="Interval between values. Takes effect on next Run."
         >
           {SPEED_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -92,7 +92,7 @@ export default function RuntimeToolbar({
           ))}
         </select>
         {speedMs > 0 && running && (
-          <span className="pg-toolbar-hint">下次 Run 生效</span>
+          <span className="pg-toolbar-hint">Takes effect on next Run</span>
         )}
       </div>
 

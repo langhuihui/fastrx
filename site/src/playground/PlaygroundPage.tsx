@@ -146,7 +146,7 @@ export default function PlaygroundPage() {
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
     } catch {
-      window.prompt("复制分享链接", url);
+      window.prompt("Copy share link", url);
     }
   }, [graph, nodes.length]);
 
