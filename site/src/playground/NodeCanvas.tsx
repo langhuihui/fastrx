@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -10,6 +10,8 @@ import {
   Handle,
   Position,
   MarkerType,
+  useNodes,
+  useStore,
   type Node,
   type Edge,
   type NodeChange,
@@ -110,7 +112,9 @@ function OpNode({ id, data, selected }: NodeProps<Node<CanvasNodeData>>) {
         />
       )}
       <div className="pg-node-header" style={{ background: color }}>
-        <code>{data.op}</code>
+        <code>
+          {data.op === "custom" && data.params.name ? data.params.name : data.op}
+        </code>
       </div>
       <div className="pg-node-params">{paramSummary}</div>
       <div className="pg-node-live" key={value ?? "none"}>
@@ -140,6 +144,62 @@ const DEFAULT_EDGE_OPTIONS = {
   markerEnd: { type: MarkerType.ArrowClosed, color: "#72f5bd" },
   style: { stroke: "#72f5bd", strokeWidth: 2 },
 };
+
+/** MiniMap that auto-hides when all nodes fit within the current viewport. */
+function AutoMiniMap() {
+  const flowNodes = useNodes();
+  const transform = useStore((s) => s.transform);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const el = document.querySelector(".pg-canvas .react-flow");
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setSize({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const show = useMemo(() => {
+    if (flowNodes.length === 0) return false;
+    if (size.width === 0) return true; // haven't measured container yet
+    const [tx, ty, zoom] = transform;
+    const vpMinX = -tx / zoom;
+    const vpMinY = -ty / zoom;
+    const vpMaxX = (-tx + size.width) / zoom;
+    const vpMaxY = (-ty + size.height) / zoom;
+    for (const node of flowNodes) {
+      const nw = node.measured?.width ?? 150;
+      const nh = node.measured?.height ?? 60;
+      if (
+        node.position.x + nw < vpMinX ||
+        node.position.x > vpMaxX ||
+        node.position.y + nh < vpMinY ||
+        node.position.y > vpMaxY
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [flowNodes, transform, size]);
+
+  if (!show) return null;
+  return (
+    <MiniMap
+      nodeColor={(n) =>
+        (n.data as { category?: string }).category === "source"
+          ? "#3dd68c"
+          : "#5e9cff"
+      }
+      nodeStrokeWidth={2}
+      maskColor="rgba(0, 0, 0, 0.6)"
+    />
+  );
+}
 
 export default function NodeCanvas({
   nodes,
@@ -217,11 +277,7 @@ export default function NodeCanvas({
       >
         <Background color="#aaa" gap={20} size={1} />
         <Controls showInteractive={false} />
-        <MiniMap
-          nodeColor={(n) => (n.data as { category?: string }).category === "source" ? "#3dd68c" : "#5e9cff"}
-          nodeStrokeWidth={2}
-          maskColor="rgba(0, 0, 0, 0.6)"
-        />
+        <AutoMiniMap />
       </ReactFlow>
     </div>
   );

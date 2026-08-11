@@ -31,6 +31,7 @@ export default function PlaygroundPage() {
   const [speedMs, setSpeedMs] = useState(0); // 0 = realtime
   const [shareCopied, setShareCopied] = useState(false);
   const [subgraphNodeId, setSubgraphNodeId] = useState<string | null>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   const monitor = useEnvelopeMonitor();
 
@@ -104,6 +105,7 @@ export default function PlaygroundPage() {
       );
       setSelectedNodeId(null);
       setShareCopied(false);
+      setSelectedPresetId(null); // not from the dropdown
     },
     [monitor],
   );
@@ -150,14 +152,15 @@ export default function PlaygroundPage() {
     }
   }, [graph, nodes.length]);
 
-  // Map each canvas node to its latest runtime value. The runtime assigns
-  // Envelope nodeIds (`opName#N`) in the order the graph is constructed, which
-  // matches the topological order — so `topo[i]` corresponds to `create[i]`.
+  // Envelope nodeIds in creation order, matching topological sort for
+  // canvas-node → runtime-node mapping. Read from the monitor's dedicated
+  // creates list (available even when display-events are throttled).
+  const creates = monitor.creates;
+
   const nodeValues = useMemo(() => {
     const map: Record<string, string> = {};
     if (!nodes.length || !monitor.events.length) return map;
     const topo = topoSortNodes(graph);
-    const creates = monitor.events.filter((e) => e.kind === "create");
     const latest: Record<string, string> = {};
     for (const e of monitor.events) {
       if (e.kind === "next") latest[e.nodeId] = e.data ?? "";
@@ -169,7 +172,7 @@ export default function PlaygroundPage() {
       }
     });
     return map;
-  }, [nodes, graph, monitor.events]);
+  }, [nodes, graph, monitor.events, creates]);
 
   // Full output history per canvas node (all `next` values in sequence order).
   // Derived from monitor.events, so it is cleared automatically on every run.
@@ -177,7 +180,6 @@ export default function PlaygroundPage() {
     const map: Record<string, string[]> = {};
     if (!nodes.length || !monitor.events.length) return map;
     const topo = topoSortNodes(graph);
-    const creates = monitor.events.filter((e) => e.kind === "create");
     topo.forEach((canvasId, i) => {
       const runtimeId = creates[i]?.nodeId;
       if (!runtimeId) return;
@@ -190,7 +192,7 @@ export default function PlaygroundPage() {
       if (values.length) map[canvasId] = values;
     });
     return map;
-  }, [nodes, graph, monitor.events]);
+  }, [nodes, graph, monitor.events, creates]);
 
   const onRun = useCallback(() => {
     monitor.run(graph, { speedMs });
@@ -211,6 +213,7 @@ export default function PlaygroundPage() {
         })) as Node<CanvasNodeData>[],
       );
       setSelectedNodeId(null);
+      setSelectedPresetId(presetId);
     },
     [monitor],
   );
@@ -232,11 +235,12 @@ export default function PlaygroundPage() {
         canRun={canRun}
         onRun={onRun}
         onStop={monitor.stop}
-        onReset={monitor.reset}
+        onReset={() => { monitor.reset(); setSelectedPresetId(null); }}
         onPreset={onPreset}
         presets={PRESETS}
         speedMs={speedMs}
         onSpeedChange={setSpeedMs}
+        selectedPresetId={selectedPresetId}
         onShare={onShare}
         shareCopied={shareCopied}
         canShare={nodes.length > 0}

@@ -99,6 +99,11 @@ export const CATALOGUE: readonly NodeSpec[] = [
     params: [{ name: "size", type: "number", default: "2", placeholder: "2" }] },
   { op: "switchMap", category: "operator", inputs: 1, outputs: 1, description: "Map to inner Observable, switch on new.",
     params: [{ name: "fn", type: "expr", default: "x => of(x, x * 2)", placeholder: "x => of(x, x * 2)" }] },
+  { op: "custom", category: "operator", inputs: 1, outputs: 1, description: "Custom transform: applies `fn` to every value.",
+    params: [
+      { name: "name", type: "string", default: "custom", placeholder: "label" },
+      { name: "fn", type: "expr", default: "x => x", placeholder: "x => x * 3" },
+    ] },
 
   // Terminals
   { op: "subscribe", category: "terminal", inputs: 1, outputs: 0, description: "Subscribe and log values.", params: [] },

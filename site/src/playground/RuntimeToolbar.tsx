@@ -10,19 +10,18 @@ interface RuntimeToolbarProps {
   /** Slow-motion value spacing in ms (0 = realtime). */
   readonly speedMs: number;
   readonly onSpeedChange: (ms: number) => void;
+  /** Currently selected preset id (for dropdown sync). */
+  readonly selectedPresetId: string | null;
   /** Share the current graph as a link with the graph encoded in the hash. */
   readonly onShare: () => void;
   readonly shareCopied: boolean;
   readonly canShare: boolean;
 }
 
-const SPEED_OPTIONS = [
-  { value: 0, label: "Realtime" },
-  { value: 200, label: "0.2s/value" },
-  { value: 500, label: "0.5s/value" },
-  { value: 1000, label: "1s/value" },
-  { value: 2000, label: "2s/value" },
-] as const;
+const SPEED_TICKS = [0, 200, 500, 1000, 2000] as const;
+const SPEED_MIN = 0;
+const SPEED_MAX = 2000;
+const SPEED_STEP = 100;
 
 export default function RuntimeToolbar({
   lifecycle,
@@ -35,6 +34,7 @@ export default function RuntimeToolbar({
   presets,
   speedMs,
   onSpeedChange,
+  selectedPresetId,
   onShare,
   shareCopied,
   canShare,
@@ -78,41 +78,52 @@ export default function RuntimeToolbar({
         <label className="pg-toolbar-label" htmlFor="pg-speed">
           Speed
         </label>
-        <select
+        <input
+          type="range"
           id="pg-speed"
-          className="pg-toolbar-select"
+          className="pg-toolbar-slider"
+          min={SPEED_MIN}
+          max={SPEED_MAX}
+          step={SPEED_STEP}
           value={speedMs}
           onChange={(e) => onSpeedChange(Number(e.target.value))}
-          title="Interval between values. Takes effect on next Run."
-        >
-          {SPEED_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+          title="Interval between values (ms). 0 = realtime. Takes effect on next Run."
+        />
+        <span className="pg-toolbar-speed-label">
+          {speedMs === 0 ? "Realtime" : `${speedMs}ms`}
+        </span>
         {speedMs > 0 && running && (
           <span className="pg-toolbar-hint">Takes effect on next Run</span>
         )}
       </div>
 
       <div className="pg-toolbar-group pg-toolbar-presets">
-        <span className="pg-toolbar-label">Examples:</span>
-        {presets.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            className="pg-toolbar-btn pg-toolbar-btn-preset"
-            onClick={() => onPreset(p.id)}
-            title={p.description}
-          >
-            {p.title}
-          </button>
-        ))}
+        <label className="pg-toolbar-label" htmlFor="pg-preset">
+          Examples
+        </label>
+        <select
+          id="pg-preset"
+          className="pg-toolbar-select"
+          value={selectedPresetId ?? ""}
+          onChange={(e) => {
+            const id = e.target.value;
+            if (id) onPreset(id);
+          }}
+        >
+          <option value="" disabled>
+            — Select an example —
+          </option>
+          {presets.map((p) => (
+            <option key={p.id} value={p.id} title={p.description}>
+              {p.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       {error && <p className="pg-toolbar-error">{error}</p>}
     </div>
   );
 }
+
 

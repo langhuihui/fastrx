@@ -4769,10 +4769,6 @@ progress.mock-stream-progress::-moz-progress-bar {
   border-color: var(--coral-dark);
 }
 
-.pg-toolbar-btn-preset {
-  font-size: 0.75rem;
-}
-
 .pg-toolbar-error {
   margin: 0;
   margin-left: auto;
@@ -4929,6 +4925,21 @@ progress.mock-stream-progress::-moz-progress-bar {
 .pg-toolbar-hint {
   font-size: 0.7rem;
   color: var(--coral);
+}
+
+.pg-toolbar-slider {
+  width: 100px;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  accent-color: var(--mint);
+  cursor: pointer;
+}
+
+.pg-toolbar-speed-label {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--mint);
+  min-width: 50px;
 }
 
 /* ── Share button ───────────────────────────────────────────────────────── */

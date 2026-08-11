@@ -8,7 +8,11 @@ interface EventFlowPanelProps {
   readonly lifecycle: string;
 }
 
-const DATA_KINDS = new Set(["next", "complete", "error", "subscribe", "defer"]);
+// Kinds shown in the marble timeline: data flow only (next + terminal complete).
+// Build events (create, pipe, subscribe, defer, addSource) are filtered out
+// because they only describe the build phase and would crowd the timeline
+// when running in slow motion.
+const DATA_KINDS = new Set(["next", "complete", "error"]);
 
 const NODE_COLORS = [
   "#5e9cff",
@@ -47,9 +51,6 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
   const [selectedSeq, setSelectedSeq] = useState<number | null>(null);
 
   const nodeOrder = useMemo(() => {
-    // Lane order derives from the Envelope nodeIds (e.g. "of#1", "map#2") by
-    // first appearance — NOT from canvas node ids ("n1"), which are unrelated
-    // to fastrx's runtime node identities.
     const seen = new Set<string>();
     const order: string[] = [];
     for (const e of events) {
@@ -61,22 +62,33 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
     return order;
   }, [events]);
 
-  const lanes = useMemo(
-    () =>
-      nodeOrder.map((nodeId, i) => ({
-        nodeId,
-        y: i * LANE_H,
-        color: NODE_COLORS[i % NODE_COLORS.length],
-        events: events.filter((e) => e.nodeId === nodeId && DATA_KINDS.has(e.kind)),
-      })),
-    [events, nodeOrder],
-  );
+  const lanes = useMemo(() => {
+    // Build a global display-sequence for all data events (across all lanes).
+    // This ensures marbles from different lanes are time-aligned: if take#2's
+    // first value arrives after interval#1's second value, its displaySeq will
+    // be later, preserving the true temporal ordering.
+    const dataEvents = events.filter((e) => DATA_KINDS.has(e.kind));
+    const globalDisplay = new Map<number, number>();
+    dataEvents.forEach((e, i) => globalDisplay.set(e.sequence, i));
 
-  const maxSeq = useMemo(
-    () => events.reduce((m, e) => Math.max(m, e.sequence || 0), 0),
+    return nodeOrder.map((nodeId, i) => ({
+      nodeId,
+      y: i * LANE_H,
+      color: NODE_COLORS[i % NODE_COLORS.length],
+      events: events
+        .filter((e) => e.nodeId === nodeId && DATA_KINDS.has(e.kind))
+        .map((e) => ({ ...e, displaySeq: globalDisplay.get(e.sequence)! })),
+    }));
+  }, [events, nodeOrder]);
+
+  const maxDisplaySeq = useMemo(
+    () => events.filter((e) => DATA_KINDS.has(e.kind)).length - 1,
     [events],
   );
-  const totalWidth = (maxSeq + 1) * COL_W;
+  // Extra half-column on the left so the first marble (which uses
+  // translate(-50%)) is fully visible instead of clipped by the lane edge.
+  const LEAD_PAD = COL_W / 2;
+  const totalWidth = (maxDisplaySeq + 1) * COL_W + LEAD_PAD * 2;
   const totalHeight = nodeOrder.length * LANE_H;
 
   const causalSet = useMemo(
@@ -87,6 +99,12 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
   const causalLines = useMemo(() => {
     if (selectedSeq == null) return [] as Array<{ x1: number; y1: number; x2: number; y2: number }>;
     const laneIndexOf = new Map(nodeOrder.map((id, i) => [id, i] as const));
+    // Build a (sequence → displaySeq) lookup so causal lines follow the
+    // compact per-lane timeline instead of the global sequence number.
+    const displaySeqOf = new Map<number, number>();
+    for (const lane of lanes) {
+      for (const e of lane.events) displaySeqOf.set(e.sequence, e.displaySeq);
+    }
     const lines: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
     for (const e of events) {
       if (!e.cause) continue;
@@ -94,15 +112,18 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
       const ci = laneIndexOf.get(e.cause.nodeId);
       const ei = laneIndexOf.get(e.nodeId);
       if (ci == null || ei == null) continue;
+      const cds = displaySeqOf.get(e.cause.sequence);
+      const eds = displaySeqOf.get(e.sequence);
+      if (cds == null || eds == null) continue;
       lines.push({
-        x1: e.cause.sequence * COL_W + COL_W / 2,
+        x1: cds * COL_W + LEAD_PAD + COL_W / 2,
         y1: ci * LANE_H + LANE_H / 2,
-        x2: e.sequence * COL_W + COL_W / 2,
+        x2: eds * COL_W + LEAD_PAD + COL_W / 2,
         y2: ei * LANE_H + LANE_H / 2,
       });
     }
     return lines;
-  }, [events, causalSet, selectedSeq, nodeOrder]);
+  }, [events, lanes, causalSet, selectedSeq, nodeOrder]);
 
   return (
     <section className="pg-monitor" aria-labelledby="monitor-title">
@@ -154,7 +175,7 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
                         causalSet.has(e.sequence) ? " pg-monitor-marble-cause" : ""
                       }${selectedSeq === e.sequence ? " pg-monitor-marble-selected" : ""}`}
                       style={{
-                        left: e.sequence * COL_W + "px",
+                        left: e.displaySeq * COL_W + LEAD_PAD + "px",
                         background: e.kind === "next" ? lane.color : undefined,
                       }}
                       onClick={() => setSelectedSeq(e.sequence)}
@@ -203,9 +224,13 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
           </div>
 
           <div className="pg-monitor-outputs">
-            <h3>Outputs ({events.length} events)</h3>
+            <h3>Outputs</h3>
             <ol className="pg-monitor-output-list">
-              {events.slice(-50).reverse().map((e) => (
+              {events
+                .filter((e) => DATA_KINDS.has(e.kind))
+                .slice(-50)
+                .reverse()
+                .map((e) => (
                 <li
                   key={e.sequence}
                   className={`pg-monitor-output-row pg-monitor-output-${e.kind}${
