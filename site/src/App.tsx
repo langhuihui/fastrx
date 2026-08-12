@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { NAVIGATION } from "./content.js";
+import { applyPageSeo } from "./seo.js";
 import HomePage from "./components/HomePage.js";
 import PlaygroundPage from "./playground/PlaygroundPage.js";
 
@@ -77,15 +78,10 @@ export default function App() {
 
   const isHome = path === "/";
   const isPlayground = path === "/playground";
-  const pageTitle = isHome
-    ? "fastrx"
-    : isPlayground
-      ? "fastrx Playground"
-      : "Page not found | fastrx";
 
   useEffect(() => {
-    document.title = pageTitle;
-  }, [pageTitle]);
+    applyPageSeo(path);
+  }, [path]);
 
   return (
     <div className="site-shell">

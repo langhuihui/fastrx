@@ -4,15 +4,96 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#111513" />
+    <meta name="color-scheme" content="dark" />
     <meta
       name="description"
-      content="fastrx — a lightweight push-based reactive library with devtools."
+      content="fastrx is a lightweight push-based reactive library where Observable&lt;T&gt; = (sink) =&gt; void. Ships with Chrome DevTools for marble diagrams, causal tracking, and time-travel replay."
     />
+    <meta
+      name="keywords"
+      content="fastrx, reactive,rxjs, observable, streams, typescript, javascript, marble diagram, devtools"
+    />
+    <meta name="author" content="langhuihui" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://rx.langhuihui.com/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="fastrx" />
+    <meta property="og:title" content="fastrx — Reactive Library" />
+    <meta
+      property="og:description"
+      content="Lightweight push-based reactive library with built-in Chrome DevTools: marble diagrams, causal tracking, and time-travel replay."
+    />
+    <meta property="og:url" content="https://rx.langhuihui.com/" />
+    <meta property="og:image" content="https://rx.langhuihui.com/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="fastrx — Reactive streams, plain functions." />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="fastrx — Reactive Library" />
+    <meta
+      name="twitter:description"
+      content="Lightweight push-based reactive library with built-in Chrome DevTools: marble diagrams, causal tracking, and time-travel replay."
+    />
+    <meta name="twitter:image" content="https://rx.langhuihui.com/og-image.jpg" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <title>fastrx — Reactive Library</title>
+
+    <script type="application/ld+json" id="fastrx-jsonld">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "name": "fastrx",
+            "url": "https://rx.langhuihui.com/",
+            "description": "A lightweight push-based reactive library with Chrome DevTools.",
+            "inLanguage": "en"
+          },
+          {
+            "@type": ["SoftwareApplication", "SoftwareSourceCode"],
+            "name": "fastrx",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any",
+            "url": "https://rx.langhuihui.com/",
+            "description": "A lightweight push-based reactive library where Observable&lt;T&gt; = (sink) =&gt; void.",
+            "downloadUrl": "https://www.npmjs.com/package/fastrx",
+            "codeRepository": "https://github.com/langhuihui/fastrx",
+            "programmingLanguage": ["TypeScript", "JavaScript"],
+            "license": "https://opensource.org/licenses/MIT",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width:40rem;margin:2rem auto;padding:0 1rem;font-family:system-ui,sans-serif;color:#e8ebe9;background:#111513">
+        <h1>fastrx</h1>
+        <p>
+          A lightweight push-based reactive library where Observable&lt;T&gt; =
+          (sink) =&gt; void. Ships with Chrome DevTools for marble diagrams,
+          causal tracking, and time-travel replay.
+        </p>
+        <p>
+          <a href="/playground">Playground</a>
+          ·
+          <a href="https://github.com/langhuihui/fastrx">GitHub</a>
+          ·
+          <a href="https://www.npmjs.com/package/fastrx">npm</a>
+        </p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

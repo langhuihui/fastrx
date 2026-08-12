@@ -35,6 +35,10 @@
   },
   "keywords": [
     "rxjs",
+    "reactive",
+    "observable",
+    "streams",
+    "typescript",
     "fast"
   ],
   "author": "langhuihui",
@@ -42,7 +46,7 @@
   "bugs": {
     "url": "https://github.com/langhuihui/fastrx/issues"
   },
-  "homepage": "https://github.com/langhuihui/fastrx#readme",
+  "homepage": "https://rx.langhuihui.com/",
   "devDependencies": {
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
