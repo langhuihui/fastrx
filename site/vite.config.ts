@@ -5,7 +5,7 @@ import { writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SITE_ORIGIN = 'https://rx.langhuihui.com';
-const SITE_PATHS = ['/', '/playground'] as const;
+const SITE_PATHS = ['/', '/devtools', '/playground'] as const;
 
 /** Emit robots.txt + sitemap.xml with absolute URLs, plus SPA 404 fallback. */
 function seoArtifacts(): Plugin {

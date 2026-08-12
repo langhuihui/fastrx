@@ -4105,6 +4105,22 @@ progress.mock-stream-progress::-moz-progress-bar {
   line-height: 1.5;
 }
 
+.home-feature-link {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.home-feature-link a {
+  color: var(--mint-dark);
+  text-decoration: none;
+}
+
+.home-feature-link a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
 .home-code-block {
   background: var(--ink);
   color: var(--dark-text);
@@ -5085,4 +5101,145 @@ progress.mock-stream-progress::-moz-progress-bar {
 
 .pg-subgraph-body {
   grid-template-columns: 180px 1fr 260px;
+}
+
+/* ── DevTools guide page ───────────────────────────────────────────────── */
+.dt-hero {
+  min-height: 0;
+}
+
+.dt-capability-list,
+.dt-steps,
+.dt-tip-list,
+.dt-trouble-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dt-capability-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block: 1px solid var(--line);
+}
+
+.dt-capability {
+  padding: 28px 24px 32px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.dt-capability:nth-child(2n) {
+  border-right: 0;
+}
+
+.dt-capability:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.dt-capability-index {
+  display: block;
+  margin-bottom: 1.5rem;
+  color: #7a827d;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+}
+
+.dt-capability-title,
+.dt-step-title,
+.dt-tip-title,
+.dt-trouble-title {
+  margin: 0 0 0.6rem;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.dt-capability-body,
+.dt-step-body,
+.dt-tip-body,
+.dt-trouble-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.55;
+  max-width: 54ch;
+}
+
+.dt-install-section {
+  background: var(--paper-2);
+}
+
+.dt-steps {
+  display: grid;
+  gap: 2rem;
+}
+
+.dt-step-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.dt-step-number {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--mint);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.dt-step .home-code-block {
+  margin-top: 1rem;
+}
+
+.dt-tip-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 2rem;
+}
+
+.dt-trouble-section {
+  border-top: 1px solid var(--line);
+}
+
+.dt-trouble-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.dt-trouble {
+  padding-left: 1rem;
+  border-left: 2px solid var(--coral);
+}
+
+.dt-cta {
+  min-height: 0;
+  padding-block: clamp(72px, 9vw, 120px);
+}
+
+@media (max-width: 900px) {
+  .dt-capability-list,
+  .dt-tip-list {
+    grid-template-columns: 1fr;
+  }
+
+  .dt-capability {
+    border-right: 0;
+  }
+
+  .dt-capability:nth-last-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .dt-capability:last-child {
+    border-bottom: 0;
+  }
 }

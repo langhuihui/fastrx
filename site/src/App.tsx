@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { NAVIGATION } from "./content.js";
 import { applyPageSeo } from "./seo.js";
 import HomePage from "./components/HomePage.js";
+import DevToolsPage from "./components/DevToolsPage.js";
 import PlaygroundPage from "./playground/PlaygroundPage.js";
 
 function currentPath(): string {
@@ -77,6 +78,7 @@ export default function App() {
   }, []);
 
   const isHome = path === "/";
+  const isDevTools = path === "/devtools";
   const isPlayground = path === "/playground";
 
   useEffect(() => {
@@ -119,6 +121,7 @@ export default function App() {
                 const playgroundLink = item.href === "/playground";
                 const active =
                   (item.href === "/" && isHome) ||
+                  (item.href === "/devtools" && isDevTools) ||
                   (playgroundLink && isPlayground);
 
                 return (
@@ -145,6 +148,8 @@ export default function App() {
       <main id="main-content" tabIndex={-1}>
         {isHome ? (
           <HomePage />
+        ) : isDevTools ? (
+          <DevToolsPage />
         ) : isPlayground ? (
           <PlaygroundPage />
         ) : (

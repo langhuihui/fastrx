@@ -36,11 +36,8 @@ export default function HomePage() {
                 Try the playground
                 <span aria-hidden="true">→</span>
               </a>
-              <a
-                className="site-button site-button-secondary"
-                href="https://github.com/langhuihui/fastrx"
-              >
-                View on GitHub
+              <a className="site-button site-button-secondary" href="/devtools">
+                Install DevTools
               </a>
             </div>
           </div>
@@ -78,6 +75,11 @@ export default function HomePage() {
               <li key={f.title} className="home-feature-card">
                 <h3 className="home-feature-title">{f.title}</h3>
                 <p className="home-feature-body">{f.body}</p>
+                {"href" in f && f.href ? (
+                  <p className="home-feature-link">
+                    <a href={f.href}>{f.linkLabel ?? "Learn more →"}</a>
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>

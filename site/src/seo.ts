@@ -17,6 +17,13 @@ export const HOME_SEO: PageSeo = {
   path: "/",
 };
 
+export const DEVTOOLS_SEO: PageSeo = {
+  title: "DevTools | fastrx",
+  description:
+    "Install the FastRx Chrome DevTools extension for marble diagrams, causal tracking, and time-travel replay. Load unpacked from the repository — no bundler plugin required.",
+  path: "/devtools",
+};
+
 export const PLAYGROUND_SEO: PageSeo = {
   title: "Playground | fastrx",
   description:
@@ -85,6 +92,7 @@ function upsertJsonLd(id: string, data: Record<string, unknown>): void {
 
 export function seoForPath(path: string): PageSeo {
   if (path === "/") return HOME_SEO;
+  if (path === "/devtools") return DEVTOOLS_SEO;
   if (path === "/playground") return PLAYGROUND_SEO;
   return NOT_FOUND_SEO;
 }
