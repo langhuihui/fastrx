@@ -15,7 +15,7 @@
 
 ## 面板空白 / "FastRx" 面板不存在
 
-1. `cd devtools/devtools/panel && npm run build` 确认 `dist/index.html` 存在。
+1. `npm run build:devtools` 确认 `devtools/devtools/panel/dist/index.html` 存在。
 2. `chrome://extensions` 重新加载扩展。
 3. 关闭并重开 DevTools。
 

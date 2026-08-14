@@ -154,17 +154,4 @@ export function useEnvelopeMonitor(): EnvelopeMonitorApi {
   return { events, creates, outputs, lifecycle, error, run, stop, reset };
 }
 
-/**
- * Compute the set of sequence numbers in the causal chain ending at `selectedSeq`.
- * Ported from devtools App.vue causeChainSet.
- */
-export function causeChainSet(events: Envelope[], selectedSeq: number | null): Set<number> {
-  if (selectedSeq == null) return new Set();
-  const set = new Set<number>([selectedSeq]);
-  let cur = events.find((e) => e.sequence === selectedSeq);
-  while (cur?.cause && !set.has(cur.cause.sequence)) {
-    set.add(cur.cause.sequence);
-    cur = events.find((e) => e.sequence === cur!.cause!.sequence);
-  }
-  return set;
-}
+export { causeChainSet } from "./envelope-chain.js";

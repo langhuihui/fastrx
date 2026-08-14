@@ -19,7 +19,7 @@ function handleHidden() {
 
 chrome.devtools.panels.create(
   "FastRx",
-  "/icons/Rx_Logo_S.png",
+  "/icons/favicon.png",
   "/devtools/panel/dist/index.html",
   (newPanel) => {
     newPanel.onShown.addListener(handleShown);

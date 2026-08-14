@@ -4646,6 +4646,24 @@ progress.mock-stream-progress::-moz-progress-bar {
   z-index: 4;
 }
 
+.pg-monitor-marble-future {
+  opacity: 0.28;
+}
+
+.pg-monitor-status-paused {
+  color: #f0a020;
+  background: rgba(240, 160, 32, 0.12);
+}
+
+.pg-monitor-status-connected {
+  color: var(--mint);
+  background: rgba(114, 245, 189, 0.12);
+}
+
+.pg-monitor-status-disconnected {
+  color: var(--dark-muted);
+}
+
 .pg-monitor-causal-overlay {
   position: absolute;
   top: 0;
@@ -4701,6 +4719,10 @@ progress.mock-stream-progress::-moz-progress-bar {
 .pg-monitor-output-selected {
   background: rgba(0, 191, 255, 0.15);
   outline: 1px solid #00bfff;
+}
+
+.pg-monitor-output-future {
+  opacity: 0.4;
 }
 
 .pg-monitor-output-seq {

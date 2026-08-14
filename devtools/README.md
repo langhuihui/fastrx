@@ -14,7 +14,7 @@ background service worker
   │ onConnectExternal → 按 tabId 配对
   │ onConnect         → 面板端口 (name='fastrx-panel:<tabId>')
   ▼
-devtools 面板 (Vue 3 + Naive UI)
+devtools 面板 (React + 官网 playground 样式)
 ```
 
 - 面板打开时，`devtools.js` 通过 `inspectedWindow.eval` 把扩展 ID 写入 `window.__fastrxExtId`。
@@ -25,10 +25,9 @@ devtools 面板 (Vue 3 + Naive UI)
 ## 安装
 
 ```bash
-# 1. 构建面板
-cd devtools/devtools/panel
+# 1. 构建面板（在仓库根目录）
 npm install
-npm run build
+npm run build:devtools
 
 # 2. 加载扩展
 # chrome://extensions → 开发者模式 → 加载已解压的扩展程序 → 选择 devtools/ 文件夹
@@ -47,8 +46,8 @@ devtools/
 ├── devtools/
 │   ├── devtools-page.html
 │   ├── devtools.js            # 面板注册 + 设置 __fastrxExtId
-│   └── panel/                 # Vue 3 面板
-│       ├── src/App.vue
+│   └── panel/                 # React 面板（复用官网 EventFlowPanel / styles）
+│       ├── src/App.tsx
 │       ├── dist/              # 构建输出
 │       └── package.json
 └── icons/
@@ -76,9 +75,7 @@ interface Envelope {
 ## 开发
 
 ```bash
-cd devtools/devtools/panel
-npm run dev    # Vite HMR
-npm run build  # 生产构建
+npm run build:devtools    # 生产构建（仓库根目录）
 ```
 
 修改 `manifest.json` 或 `background.js` 后需在 `chrome://extensions` 重新加载扩展。

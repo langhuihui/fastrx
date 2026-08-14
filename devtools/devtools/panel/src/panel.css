@@ -1,0 +1,52 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ink);
+  color: var(--dark-text);
+  overflow: hidden;
+}
+
+.dt-layout.pg-layout {
+  height: 100vh;
+}
+
+.dt-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dt-title-label {
+  color: var(--dark-muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dt-workspace {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  min-height: 0;
+  flex: 0 0 auto;
+  height: 340px;
+  border-bottom: 1px solid var(--dark-line);
+}
+
+.dt-workspace .pg-canvas {
+  height: 100%;
+  min-height: 0;
+}
+
+.dt-workspace .pg-inspector {
+  border-left: 1px solid var(--dark-line);
+}
+
+.dt-layout .pg-monitor {
+  flex: 1;
+}

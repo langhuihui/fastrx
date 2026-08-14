@@ -299,6 +299,8 @@ export function deliver<T, R, ARG extends any[]>(c: { new(sink: ISink<R>, ...arg
 let sequence = 0;
 let currentCause: { nodeId: string; sequence: number } | undefined;
 let port: any;
+/** Playground / tests subscribe here without replacing the Chrome DevTools port. */
+let localEmit: ((e: Envelope) => void) | undefined;
 const ring: Envelope[] = [];
 const RING_MAX = 500;
 
@@ -308,13 +310,19 @@ const latestByNode = new Map<string, string>();
 const streamCountByNode = new Map<string, number>();
 
 function dispatch(env: Envelope) {
-  if (port) {
-    try { port.postMessage(env); }
-    catch { port = undefined; ring.push(env); if (ring.length > RING_MAX) ring.shift(); }
-  } else {
-    ring.push(env);
-    if (ring.length > RING_MAX) ring.shift();
+  if (localEmit) {
+    try { localEmit(env); } catch { /* noop */ }
   }
+  if (port) {
+    try { port.postMessage(env); return; }
+    catch { port = undefined; }
+  }
+  // Buffer for Chrome DevTools only when it is not connected. A local
+  // subscriber (playground) must not fill the ring or later tests / panel
+  // attaches would see duplicate leftovers.
+  if (localEmit) return;
+  ring.push(env);
+  if (ring.length > RING_MAX) ring.shift();
 }
 
 /** Handle a panel command; returns a reply to post back (or undefined). */
@@ -386,9 +394,9 @@ if (typeof window !== 'undefined') {
   if (storedId) tryOpen();
 }
 
-/** @internal Test seam: install a mock backend that receives all emitted
- *  envelopes (drains the ring first) and can accept panel commands.
- *  Returns a disconnect function and a `sendCommand` helper for tests. */
+/** @internal Test / playground seam: receive all emitted envelopes (drains
+ *  the ring first) without replacing the Chrome DevTools port, so both can
+ *  listen at once. Returns a disconnect function and a `sendCommand` helper. */
 export function __testInstallBackend(emit: (e: Envelope) => void): () => void;
 export function __testInstallBackend(
   emit: (e: Envelope) => void,
@@ -402,14 +410,11 @@ export function __testInstallBackend(
     const reply = handlePanelCommand(msg);
     if (reply && onReply) onReply(reply);
   };
-  port = {
-    postMessage: emit,
-    onDisconnect: { addListener: () => {} } as any,
-    onMessage: { addListener: (cb: any) => { port._onMessage = cb; } } as any,
-    disconnect: () => {},
-  };
+  localEmit = emit;
   while (ring.length) emit(ring.shift()!);
-  const disconnect = () => { port = undefined; };
+  const disconnect = () => {
+    if (localEmit === emit) localEmit = undefined;
+  };
   return onReply
     ? { disconnect, sendCommand }
     : disconnect;

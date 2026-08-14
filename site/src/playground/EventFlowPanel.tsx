@@ -1,11 +1,18 @@
 import { useMemo, useState } from "react";
 import type { Envelope } from "fastrx";
 
-import { causeChainSet } from "./envelope-monitor.js";
+import { causeChainSet } from "./envelope-chain.js";
 
-interface EventFlowPanelProps {
+export interface EventFlowPanelProps {
   readonly events: Envelope[];
   readonly lifecycle: string;
+  readonly emptyMessage?: string;
+  readonly title?: string;
+  readonly selectedSeq?: number | null;
+  readonly onSelectSeq?: (seq: number | null) => void;
+  /** When set, marbles after this sequence are dimmed (time-travel replay). */
+  readonly maxVisibleSeq?: number | null;
+  readonly nodeLabels?: Readonly<Record<string, string>>;
 }
 
 // Kinds shown in the marble timeline: data flow only (next + terminal complete).
@@ -47,8 +54,19 @@ function marbleText(data: string | undefined): string {
   return data.length > 18 ? data.slice(0, 15) + "…" : data;
 }
 
-export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProps) {
-  const [selectedSeq, setSelectedSeq] = useState<number | null>(null);
+export default function EventFlowPanel({
+  events,
+  lifecycle,
+  emptyMessage = "No events yet. Click Run to execute the pipeline.",
+  title = "Event flow",
+  selectedSeq: selectedSeqProp,
+  onSelectSeq,
+  maxVisibleSeq = null,
+  nodeLabels,
+}: EventFlowPanelProps) {
+  const [internalSeq, setInternalSeq] = useState<number | null>(null);
+  const selectedSeq = selectedSeqProp !== undefined ? selectedSeqProp : internalSeq;
+  const setSelectedSeq = onSelectSeq ?? setInternalSeq;
 
   const nodeOrder = useMemo(() => {
     const seen = new Set<string>();
@@ -109,6 +127,7 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
     for (const e of events) {
       if (!e.cause) continue;
       if (!causalSet.has(e.sequence) || !causalSet.has(e.cause.sequence)) continue;
+      if (maxVisibleSeq != null && e.sequence > maxVisibleSeq) continue;
       const ci = laneIndexOf.get(e.cause.nodeId);
       const ei = laneIndexOf.get(e.nodeId);
       if (ci == null || ei == null) continue;
@@ -123,17 +142,19 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
       });
     }
     return lines;
-  }, [events, lanes, causalSet, selectedSeq, nodeOrder]);
+  }, [events, lanes, causalSet, selectedSeq, nodeOrder, maxVisibleSeq]);
+
+  const laneLabel = (nodeId: string) => nodeLabels?.[nodeId] ?? nodeId;
 
   return (
     <section className="pg-monitor" aria-labelledby="monitor-title">
       <header className="pg-monitor-header">
-        <h2 id="monitor-title">Event flow</h2>
+        <h2 id="monitor-title">{title}</h2>
         <span className={`pg-monitor-status pg-monitor-status-${lifecycle}`}>{lifecycle}</span>
       </header>
 
       {events.length === 0 ? (
-        <p className="pg-monitor-empty">No events yet. Click Run to execute the pipeline.</p>
+        <p className="pg-monitor-empty">{emptyMessage}</p>
       ) : (
         <div className="pg-monitor-body">
           <div className="pg-monitor-lanes-labels">
@@ -147,7 +168,7 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
                   borderBottom: `2px solid ${lane.color}33`,
                 }}
               >
-                <span>{lane.nodeId}</span>
+                <span>{laneLabel(lane.nodeId)}</span>
               </div>
             ))}
           </div>
@@ -173,7 +194,11 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
                       type="button"
                       className={`pg-monitor-marble pg-monitor-marble-${e.kind}${
                         causalSet.has(e.sequence) ? " pg-monitor-marble-cause" : ""
-                      }${selectedSeq === e.sequence ? " pg-monitor-marble-selected" : ""}`}
+                      }${selectedSeq === e.sequence ? " pg-monitor-marble-selected" : ""}${
+                        maxVisibleSeq != null && e.sequence > maxVisibleSeq
+                          ? " pg-monitor-marble-future"
+                          : ""
+                      }`}
                       style={{
                         left: e.displaySeq * COL_W + LEAD_PAD + "px",
                         background: e.kind === "next" ? lane.color : undefined,
@@ -235,11 +260,15 @@ export default function EventFlowPanel({ events, lifecycle }: EventFlowPanelProp
                   key={e.sequence}
                   className={`pg-monitor-output-row pg-monitor-output-${e.kind}${
                     causalSet.has(e.sequence) ? " pg-monitor-output-cause" : ""
-                  }${selectedSeq === e.sequence ? " pg-monitor-output-selected" : ""}`}
+                  }${selectedSeq === e.sequence ? " pg-monitor-output-selected" : ""}${
+                    maxVisibleSeq != null && e.sequence > maxVisibleSeq
+                      ? " pg-monitor-output-future"
+                      : ""
+                  }`}
                   onClick={() => setSelectedSeq(e.sequence)}
                 >
                   <span className="pg-monitor-output-seq">#{e.sequence}</span>
-                  <span className="pg-monitor-output-node">{e.nodeId}</span>
+                  <span className="pg-monitor-output-node">{laneLabel(e.nodeId)}</span>
                   <span className="pg-monitor-output-kind">{e.kind}</span>
                   <span className="pg-monitor-output-data">
                     {e.data ?? e.err ?? ""}

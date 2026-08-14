@@ -41,10 +41,9 @@ cd fastrx`,
   },
   {
     title: "Build the panel",
-    body: "The Vue panel must be built before Chrome can load the extension.",
-    code: `cd devtools/devtools/panel
-npm install
-npm run build`,
+    body: "The React panel must be built before Chrome can load the extension.",
+    code: `npm install
+npm run build:devtools`,
   },
   {
     title: "Load the unpacked extension",
@@ -84,7 +83,7 @@ export const DEVTOOLS_TIPS = [
 export const DEVTOOLS_TROUBLESHOOTING = [
   {
     title: "No FastRx tab",
-    body: "Rebuild the panel (npm run build in devtools/devtools/panel), reload the extension on chrome://extensions, then close and reopen DevTools.",
+    body: "Rebuild the panel (`npm run build:devtools` at the repo root), reload the extension on chrome://extensions, then close and reopen DevTools.",
   },
   {
     title: "Panel open but no events",

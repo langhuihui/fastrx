@@ -41,6 +41,8 @@ interface NodeCanvasProps {
   readonly nodeValues?: Record<string, string>;
   /** true while the pipeline is running (nodes get a breathing pulse). */
   readonly running?: boolean;
+  /** When false, the graph is inspect-only (no connect / delete). */
+  readonly editable?: boolean;
 }
 
 let nodeIdCounter = 1;
@@ -88,11 +90,16 @@ function OpNode({ id, data, selected }: NodeProps<Node<CanvasNodeData>>) {
     );
   }
   const spec = lookupSpec(data.op);
-  if (!spec) return null;
-  const color = CATEGORY_COLORS[spec.category as NodeCategory];
+  const category = (spec?.category ?? data.category) as NodeCategory;
+  const color = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.operator;
   const running = data.running === true;
   const value = typeof data.value === "string" ? data.value : undefined;
-  const paramSummary = spec.params.length
+  const inputs = spec ? spec.inputs : category === "source" ? 0 : 1;
+  const outputs = spec ? spec.outputs : category === "terminal" ? 0 : 1;
+  const title =
+    data.label ??
+    (data.op === "custom" && data.params.name ? data.params.name : data.op);
+  const paramSummary = spec?.params.length
     ? spec.params.map((p) => `${p.name}=${data.params[p.name] ?? p.default}`).join(" ")
     : "—";
   return (
@@ -103,7 +110,7 @@ function OpNode({ id, data, selected }: NodeProps<Node<CanvasNodeData>>) {
       style={{ borderColor: color }}
       data-selected={selected ? "" : undefined}
     >
-      {spec.inputs > 0 && (
+      {inputs > 0 && (
         <Handle
           type="target"
           position={Position.Left}
@@ -112,9 +119,7 @@ function OpNode({ id, data, selected }: NodeProps<Node<CanvasNodeData>>) {
         />
       )}
       <div className="pg-node-header" style={{ background: color }}>
-        <code>
-          {data.op === "custom" && data.params.name ? data.params.name : data.op}
-        </code>
+        <code>{title}</code>
       </div>
       <div className="pg-node-params">{paramSummary}</div>
       <div className="pg-node-live" key={value ?? "none"}>
@@ -124,7 +129,7 @@ function OpNode({ id, data, selected }: NodeProps<Node<CanvasNodeData>>) {
           <span className="pg-node-live-empty">waiting…</span>
         )}
       </div>
-      {spec.outputs > 0 && (
+      {outputs > 0 && (
         <Handle
           type="source"
           position={Position.Right}
@@ -209,6 +214,7 @@ export default function NodeCanvas({
   onSelectNode,
   nodeValues = {},
   running = false,
+  editable = true,
 }: NodeCanvasProps) {
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -269,8 +275,11 @@ export default function NodeCanvas({
         nodeTypes={NODE_TYPES}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        isValidConnection={isValidConnection}
+        onConnect={editable ? onConnect : undefined}
+        isValidConnection={editable ? isValidConnection : undefined}
+        nodesConnectable={editable}
+        edgesReconnectable={editable}
+        deleteKeyCode={editable ? "Backspace" : null}
         defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
         fitView
         proOptions={{ hideAttribution: true }}

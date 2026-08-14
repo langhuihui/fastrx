@@ -13,7 +13,7 @@ const requiredFiles = [
   'devtools/devtools-page.html',
   'devtools/devtools.js',
   'devtools/panel/dist/index.html',
-  'icons/Rx_Logo_S.png'
+  'icons/favicon.png'
 ];
 
 let allFilesExist = true;
@@ -83,9 +83,8 @@ if (fs.existsSync(packagePath)) {
   try {
     const package = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
     console.log(`  ✅ 项目名称: ${package.name}`);
-    console.log(`  ✅ Vue 版本: ${package.dependencies.vue}`);
+    console.log(`  ✅ React 版本: ${package.dependencies.react}`);
     console.log(`  ✅ Vite 版本: ${package.devDependencies.vite}`);
-    console.log(`  ✅ Naive UI 版本: ${package.dependencies['naive-ui']}`);
   } catch (error) {
     console.log(`  ❌ 无法解析 package.json: ${error.message}`);
   }

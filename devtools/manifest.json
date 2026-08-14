@@ -5,7 +5,7 @@
   "version": "1.0",
   "author": "dexter",
   "icons": {
-    "100": "icons/Rx_Logo_S.png"
+    "128": "icons/favicon.png"
   },
   "background": {
     "service_worker": "background_scripts/background.js",

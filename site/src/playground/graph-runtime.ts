@@ -42,7 +42,8 @@ export interface RunOptions {
 
 /**
  * Run a canvas graph as one or more fastrx pipe chains (one per terminal).
- * Captures all emitted Envelopes via `__testInstallBackend`.
+ * Captures all emitted Envelopes via `__testInstallBackend` (Chrome DevTools
+ * still receives the same stream if the panel is open).
  * Slow-motion is handled by the envelope-monitor (UI throttling), not by
  * pipeline injection — see envelope-monitor.ts.
  */
