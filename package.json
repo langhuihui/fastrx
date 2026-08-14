@@ -1,6 +1,6 @@
 {
   "name": "fastrx",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "A lightweight, high-performance reactive stream library",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

@@ -277,6 +277,8 @@ function deliver(c, name) {
 let sequence = 0;
 let currentCause;
 let port;
+/** Playground / tests subscribe here without replacing the Chrome DevTools port. */
+let localEmit;
 const ring = [];
 const RING_MAX = 500;
 // Reverse-channel state.
@@ -284,22 +286,29 @@ const breakpoints = new Set();
 const latestByNode = new Map();
 const streamCountByNode = new Map();
 function dispatch(env) {
+    if (localEmit) {
+        try {
+            localEmit(env);
+        }
+        catch { /* noop */ }
+    }
     if (port) {
         try {
             port.postMessage(env);
+            return;
         }
         catch {
             port = undefined;
-            ring.push(env);
-            if (ring.length > RING_MAX)
-                ring.shift();
         }
     }
-    else {
-        ring.push(env);
-        if (ring.length > RING_MAX)
-            ring.shift();
-    }
+    // Buffer for Chrome DevTools only when it is not connected. A local
+    // subscriber (playground) must not fill the ring or later tests / panel
+    // attaches would see duplicate leftovers.
+    if (localEmit)
+        return;
+    ring.push(env);
+    if (ring.length > RING_MAX)
+        ring.shift();
 }
 /** Handle a panel command; returns a reply to post back (or undefined). */
 function handlePanelCommand(msg) {
@@ -393,15 +402,13 @@ function __testInstallBackend(emit, onReply) {
         if (reply && onReply)
             onReply(reply);
     };
-    port = {
-        postMessage: emit,
-        onDisconnect: { addListener: () => { } },
-        onMessage: { addListener: (cb) => { port._onMessage = cb; } },
-        disconnect: () => { },
-    };
+    localEmit = emit;
     while (ring.length)
         emit(ring.shift());
-    const disconnect = () => { port = undefined; };
+    const disconnect = () => {
+        if (localEmit === emit)
+            localEmit = undefined;
+    };
     return onReply
         ? { disconnect, sendCommand }
         : disconnect;

@@ -113,9 +113,9 @@ export declare function deliver<T, R, ARG extends any[]>(c: {
 }, name: string): (...args: ARG) => (Operator<T, R>);
 /** Handle a panel command; returns a reply to post back (or undefined). */
 export declare function handlePanelCommand(msg: any): BackendReply | undefined;
-/** @internal Test seam: install a mock backend that receives all emitted
- *  envelopes (drains the ring first) and can accept panel commands.
- *  Returns a disconnect function and a `sendCommand` helper for tests. */
+/** @internal Test / playground seam: receive all emitted envelopes (drains
+ *  the ring first) without replacing the Chrome DevTools port, so both can
+ *  listen at once. Returns a disconnect function and a `sendCommand` helper. */
 export declare function __testInstallBackend(emit: (e: Envelope) => void): () => void;
 export declare function __testInstallBackend(emit: (e: Envelope) => void, onReply: (reply: BackendReply) => void): {
     disconnect: () => void;
