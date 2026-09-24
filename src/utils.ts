@@ -29,11 +29,23 @@ class Tap<T> extends Sink<T> {
   constructor(sink: ISink<T>, ob: ((d: T) => void) | Partial<Observer<T>>) {
     super(sink);
     if (ob instanceof Function) {
-      this.next = (data: T) => { ob(data); sink.next(data); };
+      this.next = (data: T) => {
+        try { ob(data); } catch (err) { sink.error(err); return; }
+        sink.next(data);
+      };
     } else {
-      if (ob.next) this.next = (data: T) => { ob.next!(data); sink.next(data); };
-      if (ob.complete) this.complete = () => { ob.complete!(); sink.complete(); };
-      if (ob.error) this.error = (err: any) => { ob.error!(err); sink.error(err); };
+      if (ob.next) this.next = (data: T) => {
+        try { ob.next!(data); } catch (err) { sink.error(err); return; }
+        sink.next(data);
+      };
+      if (ob.complete) this.complete = () => {
+        try { ob.complete!(); } catch (err) { sink.error(err); return; }
+        sink.complete();
+      };
+      if (ob.error) this.error = (err: any) => {
+        try { ob.error!(err); } catch (e) { err = e; }
+        sink.error(err);
+      };
     }
   }
 }
@@ -82,12 +94,12 @@ export const retry = (count: number = Infinity) => <T>(source: Observable<T>) =>
       const deliverSink = new Sink(observer);
       deliverSink.error = (err) => {
         if (remain-- > 0) {
-          source(deliverSink);
+          deliverSink.subscribe(source);
         } else {
           observer.error(err);
         }
       };
-      source(deliverSink);
+      deliverSink.subscribe(source);
     };
   }
 };

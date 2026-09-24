@@ -10,7 +10,15 @@ class Filter extends Sink {
         this.thisArg = thisArg;
     }
     next(data) {
-        if (this.filter.call(this.thisArg, data)) {
+        let pass;
+        try {
+            pass = this.filter.call(this.thisArg, data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (pass) {
             this.sink.next(data);
         }
     }
@@ -25,7 +33,14 @@ class Distinct extends Sink {
         this.keySelector = keySelector;
     }
     next(data) {
-        const key = this.keySelector(data);
+        let key;
+        try {
+            key = this.keySelector(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
         if (!this.hasPrevious || key !== this.previous) {
             this.hasPrevious = true;
             this.previous = key;
@@ -81,7 +96,15 @@ class TakeWhile extends Sink {
         this.f = f;
     }
     next(data) {
-        if (this.f(data)) {
+        let pass;
+        try {
+            pass = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (pass) {
             this.sink.next(data);
         }
         else {
@@ -131,7 +154,15 @@ class SkipWhile extends Sink {
         this.f = f;
     }
     next(data) {
-        if (!this.f(data)) {
+        let skipping;
+        try {
+            skipping = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (!skipping) {
             this.next = super.next;
             this.next(data);
         }
@@ -162,7 +193,15 @@ class _Throttle extends Sink {
     }
     throttle(data) {
         this.reset();
-        this.subscribe(this.durationSelector(data));
+        let duration;
+        try {
+            duration = this.durationSelector(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        this.subscribe(duration);
     }
     next() {
         this.complete();
@@ -227,7 +266,15 @@ class Debounce extends Sink {
         this._debounce.dispose();
         this._debounce.reset();
         this._debounce.last = data;
-        this._debounce.subscribe(this.durationSelector(data));
+        let duration;
+        try {
+            duration = this.durationSelector(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        this._debounce.subscribe(duration);
     }
     complete() {
         this._debounce.complete();
@@ -271,7 +318,15 @@ class FindIndex extends Sink {
         this.f = f;
     }
     next(data) {
-        if (this.f(data)) {
+        let found;
+        try {
+            found = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (found) {
             this.sink.next(this.i++);
             this.doDefer();
             this.complete();
@@ -292,7 +347,15 @@ class First extends Sink {
         this.defaultValue = defaultValue;
     }
     next(data) {
-        if (!this.f || this.f(data, this.index++)) {
+        let matched;
+        try {
+            matched = !this.f || this.f(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (matched) {
             this.defaultValue = data;
             this.doDefer();
             this.complete();
@@ -319,7 +382,15 @@ class Last extends Sink {
         this.defaultValue = defaultValue;
     }
     next(data) {
-        if (!this.f || this.f(data, this.index++)) {
+        let matched;
+        try {
+            matched = !this.f || this.f(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (matched) {
             this.defaultValue = data;
         }
     }
@@ -343,7 +414,15 @@ class Every extends Sink {
         this.predicate = predicate;
     }
     next(data) {
-        if (!this.predicate(data, this.index++)) {
+        let pass;
+        try {
+            pass = this.predicate(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (!pass) {
             this.result = false;
             this.doDefer();
             this.complete();

@@ -1,4 +1,4 @@
-import { subscribe, subject, delay, pipe, timeout, interval, nothing, throwError, of, switchMap, catchError } from '../src/index';
+import { subscribe, subject, delay, pipe, timeout, interval, nothing, throwError, of, switchMap, catchError, map, defer, ISink, share } from '../src/index';
 test('subject', () => {
     const ob = subject<number>();
     ob.next(4);
@@ -37,6 +37,44 @@ test('throwError', () => {
             resolve(true);
         }));
     });
+});
+test('sync throw in source function goes to error callback', () => {
+    const err = new Error('boom');
+    let received: any;
+    let disposed = false;
+    expect(() => {
+        pipe((sink: ISink<number>) => {
+            sink.defer(() => { disposed = true; });
+            throw err;
+        }, map((x: number) => x * 2), subscribe(nothing, e => { received = e; }));
+    }).not.toThrow();
+    expect(received).toBe(err);
+    expect(disposed).toBe(true);
+});
+test('sync throw in inspected source goes to error callback', () => {
+    const err = new Error('boom');
+    let received: any;
+    pipe(defer(() => { throw err; }), map((x: number) => x * 2), subscribe(nothing, e => { received = e; }));
+    expect(received).toBe(err);
+});
+test('sync throw after termination is rethrown', () => {
+    const err = new Error('late');
+    expect(() => {
+        pipe((sink: ISink<number>) => {
+            sink.complete();
+            throw err;
+        }, subscribe());
+    }).toThrow(err);
+});
+test('share propagates error after resubscribe', () => {
+    const err = new Error('late');
+    let current!: ISink<number>;
+    const shared = share<number>()((sink: ISink<number>) => { current = sink; });
+    subscribe()(shared).dispose();
+    let received: any;
+    subscribe(nothing, e => { received = e; })(shared);
+    current.error(err);
+    expect(received).toBe(err);
 });
 test('catchError', () => {
     return new Promise(resolve => {

@@ -65,7 +65,14 @@ class Inspect extends Function {
     subscribe(sink) {
         const ns = new NodeSink(sink, this, this.streamId++);
         Events.subscribe({ id: this.id }, { nodeId: ns.sourceId, streamId: ns.id });
-        this(ns);
+        try {
+            this(ns);
+        }
+        catch (err) {
+            if (ns.disposed)
+                throw err;
+            ns.error(err);
+        }
         return ns;
     }
 }
@@ -94,10 +101,18 @@ class LastSink {
         this.doDefer();
     }
     subscribe(source) {
-        if (source instanceof Inspect)
-            source.subscribe(this);
-        else
-            source(this);
+        try {
+            if (source instanceof Inspect)
+                source.subscribe(this);
+            else
+                source(this);
+        }
+        catch (err) {
+            // Rethrow when already terminated so the error is not silently swallowed.
+            if (this.disposed)
+                throw err;
+            this.error(err);
+        }
         return this;
     }
     get bindSubscribe() {
@@ -122,7 +137,7 @@ class LastSink {
         //@ts-ignore
         delete this.dispose;
         //@ts-ignore
-        delete this.next;
+        delete this.error;
         //@ts-ignore
         delete this.subscribe;
     }
@@ -1061,7 +1076,12 @@ class Reduce extends Sink {
         }
     }
     next(data) {
-        this.acc = this.f(this.acc, data);
+        try {
+            this.acc = this.f(this.acc, data);
+        }
+        catch (err) {
+            this.error(err);
+        }
     }
 }
 const reduce = deliver(Reduce, "reduce");
@@ -1079,7 +1099,15 @@ class Filter extends Sink {
         this.thisArg = thisArg;
     }
     next(data) {
-        if (this.filter.call(this.thisArg, data)) {
+        let pass;
+        try {
+            pass = this.filter.call(this.thisArg, data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (pass) {
             this.sink.next(data);
         }
     }
@@ -1094,7 +1122,14 @@ class Distinct extends Sink {
         this.keySelector = keySelector;
     }
     next(data) {
-        const key = this.keySelector(data);
+        let key;
+        try {
+            key = this.keySelector(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
         if (!this.hasPrevious || key !== this.previous) {
             this.hasPrevious = true;
             this.previous = key;
@@ -1150,7 +1185,15 @@ class TakeWhile extends Sink {
         this.f = f;
     }
     next(data) {
-        if (this.f(data)) {
+        let pass;
+        try {
+            pass = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (pass) {
             this.sink.next(data);
         }
         else {
@@ -1200,7 +1243,15 @@ class SkipWhile extends Sink {
         this.f = f;
     }
     next(data) {
-        if (!this.f(data)) {
+        let skipping;
+        try {
+            skipping = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (!skipping) {
             this.next = super.next;
             this.next(data);
         }
@@ -1231,7 +1282,15 @@ class _Throttle extends Sink {
     }
     throttle(data) {
         this.reset();
-        this.subscribe(this.durationSelector(data));
+        let duration;
+        try {
+            duration = this.durationSelector(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        this.subscribe(duration);
     }
     next() {
         this.complete();
@@ -1296,7 +1355,15 @@ class Debounce extends Sink {
         this._debounce.dispose();
         this._debounce.reset();
         this._debounce.last = data;
-        this._debounce.subscribe(this.durationSelector(data));
+        let duration;
+        try {
+            duration = this.durationSelector(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        this._debounce.subscribe(duration);
     }
     complete() {
         this._debounce.complete();
@@ -1340,7 +1407,15 @@ class FindIndex extends Sink {
         this.f = f;
     }
     next(data) {
-        if (this.f(data)) {
+        let found;
+        try {
+            found = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (found) {
             this.sink.next(this.i++);
             this.doDefer();
             this.complete();
@@ -1361,7 +1436,15 @@ class First extends Sink {
         this.defaultValue = defaultValue;
     }
     next(data) {
-        if (!this.f || this.f(data, this.index++)) {
+        let matched;
+        try {
+            matched = !this.f || this.f(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (matched) {
             this.defaultValue = data;
             this.doDefer();
             this.complete();
@@ -1388,7 +1471,15 @@ class Last extends Sink {
         this.defaultValue = defaultValue;
     }
     next(data) {
-        if (!this.f || this.f(data, this.index++)) {
+        let matched;
+        try {
+            matched = !this.f || this.f(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (matched) {
             this.defaultValue = data;
         }
     }
@@ -1412,7 +1503,15 @@ class Every extends Sink {
         this.predicate = predicate;
     }
     next(data) {
-        if (!this.predicate(data, this.index++)) {
+        let pass;
+        try {
+            pass = this.predicate(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        if (!pass) {
             this.result = false;
             this.doDefer();
             this.complete();
@@ -1451,7 +1550,14 @@ class Scan extends Sink {
         }
     }
     next(data) {
-        this.sink.next(this.acc = this.f(this.acc, data));
+        try {
+            this.acc = this.f(this.acc, data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        this.sink.next(this.acc);
     }
 }
 const scan = deliver(Scan, "scan");
@@ -1478,7 +1584,15 @@ class MapObserver extends Sink {
         this.thisArg = thisArg;
     }
     next(data) {
-        super.next(this.mapper.call(this.thisArg, data));
+        let result;
+        try {
+            result = this.mapper.call(this.thisArg, data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        super.next(result);
     }
 }
 const map = deliver(MapObserver, "map");
@@ -1494,7 +1608,15 @@ class InnerSink extends Sink {
     next(data) {
         const combineResults = this.context.combineResults;
         if (combineResults) {
-            this.sink.next(combineResults(this.data, data));
+            let result;
+            try {
+                result = combineResults(this.data, data);
+            }
+            catch (err) {
+                this.error(err);
+                return;
+            }
+            this.sink.next(result);
         }
         else {
             this.sink.next(data);
@@ -1523,7 +1645,15 @@ class Maps extends Sink {
             this.complete = this.tryComplete;
         }
         sink.complete = sink.tryComplete;
-        sink.subscribe(this.makeSource(data, this.index++));
+        let source;
+        try {
+            source = this.makeSource(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        sink.subscribe(source);
     }
     // Default complete method that can be overridden by subclasses
     complete() {
@@ -1637,7 +1767,14 @@ class GroupBy extends Sink {
         this.f = f;
     }
     next(data) {
-        const key = this.f(data);
+        let key;
+        try {
+            key = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
         let group = this.groups.get(key);
         if (typeof group === 'undefined') {
             group = subject();
@@ -1733,7 +1870,15 @@ class CatchError extends Sink {
     }
     error(err) {
         this.dispose();
-        this.selector(err)(this.sink);
+        let source;
+        try {
+            source = this.selector(err);
+        }
+        catch (e) {
+            this.sink.error(e);
+            return;
+        }
+        source(this.sink);
     }
 }
 const catchError = deliver(CatchError, "catchError");
@@ -1776,7 +1921,15 @@ class Expand extends Maps {
         // 先添加到 inners，再订阅，避免时序问题
         this.inners.add(innerSink);
         // 现在订阅 Observable
-        innerSink.subscribe(this.makeSource(data, this.index++));
+        let source;
+        try {
+            source = this.makeSource(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        innerSink.subscribe(source);
     }
     complete() {
         this.sourceCompleted = true;
@@ -1819,15 +1972,50 @@ class Tap extends Sink {
     constructor(sink, ob) {
         super(sink);
         if (ob instanceof Function) {
-            this.next = (data) => { ob(data); sink.next(data); };
+            this.next = (data) => {
+                try {
+                    ob(data);
+                }
+                catch (err) {
+                    sink.error(err);
+                    return;
+                }
+                sink.next(data);
+            };
         }
         else {
             if (ob.next)
-                this.next = (data) => { ob.next(data); sink.next(data); };
+                this.next = (data) => {
+                    try {
+                        ob.next(data);
+                    }
+                    catch (err) {
+                        sink.error(err);
+                        return;
+                    }
+                    sink.next(data);
+                };
             if (ob.complete)
-                this.complete = () => { ob.complete(); sink.complete(); };
+                this.complete = () => {
+                    try {
+                        ob.complete();
+                    }
+                    catch (err) {
+                        sink.error(err);
+                        return;
+                    }
+                    sink.complete();
+                };
             if (ob.error)
-                this.error = (err) => { ob.error(err); sink.error(err); };
+                this.error = (err) => {
+                    try {
+                        ob.error(err);
+                    }
+                    catch (e) {
+                        err = e;
+                    }
+                    sink.error(err);
+                };
         }
     }
 }
@@ -1877,13 +2065,13 @@ const retry = (count = Infinity) => (source) => {
             const deliverSink = new Sink(observer);
             deliverSink.error = (err) => {
                 if (remain-- > 0) {
-                    source(deliverSink);
+                    deliverSink.subscribe(source);
                 }
                 else {
                     observer.error(err);
                 }
             };
-            source(deliverSink);
+            deliverSink.subscribe(source);
         };
     }
 };

@@ -17,7 +17,8 @@ class Scan<T, R, ACC extends R | T> extends Sink<T, ACC> {
     }
   }
   next(data: T) {
-    this.sink.next(this.acc = this.f(this.acc, data));
+    try { this.acc = this.f(this.acc, data); } catch (err) { this.error(err); return; }
+    this.sink.next(this.acc);
   }
 }
 export const scan = deliver(Scan, "scan");
@@ -39,7 +40,9 @@ class MapObserver<T, R> extends Sink<T, R> {
     super(sink);
   }
   next(data: T) {
-    super.next(this.mapper.call(this.thisArg, data));
+    let result: R;
+    try { result = this.mapper.call(this.thisArg, data); } catch (err) { this.error(err); return; }
+    super.next(result);
   }
 }
 export const map = deliver(MapObserver, "map");
@@ -57,7 +60,9 @@ class InnerSink<T, U, R, C extends MapContext<T, U, R>> extends Sink<U | R> impl
   next(data: U) {
     const combineResults = this.context.combineResults;
     if (combineResults) {
-      this.sink.next(combineResults(this.data, data));
+      let result: R;
+      try { result = combineResults(this.data, data); } catch (err) { this.error(err); return; }
+      this.sink.next(result);
     } else {
       this.sink.next(data);
     }
@@ -83,7 +88,9 @@ class Maps<T, U, R, CS extends InnerSink<T, U, R, MapContext<T, U, R>>> extends 
       this.complete = this.tryComplete;
     }
     sink.complete = sink.tryComplete;
-    sink.subscribe(this.makeSource(data, this.index++));
+    let source: Observable<U>;
+    try { source = this.makeSource(data, this.index++); } catch (err) { this.error(err); return; }
+    sink.subscribe(source);
   }
   // Default complete method that can be overridden by subclasses
   complete() {
@@ -204,7 +211,8 @@ class GroupBy<T> extends Sink<T, Group> {
     super(sink);
   }
   next(data: T) {
-    const key = this.f(data);
+    let key: any;
+    try { key = this.f(data); } catch (err) { this.error(err); return; }
     let group = this.groups.get(key);
     if (typeof group === 'undefined') {
       group = subject() as Group;
@@ -301,7 +309,9 @@ class CatchError<T, R = T> extends Sink<T, R> {
   }
   error(err: any) {
     this.dispose();
-    this.selector(err)(this.sink);
+    let source: Observable<R>;
+    try { source = this.selector(err); } catch (e) { this.sink.error(e); return; }
+    source(this.sink);
   }
 }
 
@@ -350,7 +360,9 @@ class Expand<T> extends Maps<T, T, T, _Expand<T>> {
     this.inners.add(innerSink);
 
     // 现在订阅 Observable
-    innerSink.subscribe(this.makeSource(data, this.index++));
+    let source: Observable<T>;
+    try { source = this.makeSource(data, this.index++); } catch (err) { this.error(err); return; }
+    innerSink.subscribe(source);
   }
 
   complete() {

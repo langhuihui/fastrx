@@ -57,7 +57,12 @@ export class Inspect<T> extends Function {
   subscribe(sink: ISink<T>): ISink<T> {
     const ns = new NodeSink<T>(sink, this, this.streamId++);
     Events.subscribe({ id: this.id }, { nodeId: ns.sourceId, streamId: ns.id });
-    this(ns);
+    try {
+      this(ns);
+    } catch (err) {
+      if (ns.disposed) throw err;
+      ns.error(err);
+    }
     return ns;
   }
 }
@@ -92,10 +97,16 @@ export class LastSink<T> implements Observer<T> {
     this.doDefer();
   }
   subscribe(source: Observable<T>) {
-    if (source instanceof Inspect)
-      source.subscribe(this);
-    else
-      source(this);
+    try {
+      if (source instanceof Inspect)
+        source.subscribe(this);
+      else
+        source(this);
+    } catch (err) {
+      // Rethrow when already terminated so the error is not silently swallowed.
+      if (this.disposed) throw err;
+      this.error(err);
+    }
     return this;
   }
   get bindSubscribe() {
@@ -120,7 +131,7 @@ export class LastSink<T> implements Observer<T> {
     //@ts-ignore
     delete this.dispose;
     //@ts-ignore
-    delete this.next;
+    delete this.error;
     //@ts-ignore
     delete this.subscribe;
   }

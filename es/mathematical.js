@@ -22,7 +22,12 @@ class Reduce extends Sink {
         }
     }
     next(data) {
-        this.acc = this.f(this.acc, data);
+        try {
+            this.acc = this.f(this.acc, data);
+        }
+        catch (err) {
+            this.error(err);
+        }
     }
 }
 export const reduce = deliver(Reduce, "reduce");

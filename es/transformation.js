@@ -18,7 +18,14 @@ class Scan extends Sink {
         }
     }
     next(data) {
-        this.sink.next(this.acc = this.f(this.acc, data));
+        try {
+            this.acc = this.f(this.acc, data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        this.sink.next(this.acc);
     }
 }
 export const scan = deliver(Scan, "scan");
@@ -45,7 +52,15 @@ class MapObserver extends Sink {
         this.thisArg = thisArg;
     }
     next(data) {
-        super.next(this.mapper.call(this.thisArg, data));
+        let result;
+        try {
+            result = this.mapper.call(this.thisArg, data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        super.next(result);
     }
 }
 export const map = deliver(MapObserver, "map");
@@ -61,7 +76,15 @@ class InnerSink extends Sink {
     next(data) {
         const combineResults = this.context.combineResults;
         if (combineResults) {
-            this.sink.next(combineResults(this.data, data));
+            let result;
+            try {
+                result = combineResults(this.data, data);
+            }
+            catch (err) {
+                this.error(err);
+                return;
+            }
+            this.sink.next(result);
         }
         else {
             this.sink.next(data);
@@ -90,7 +113,15 @@ class Maps extends Sink {
             this.complete = this.tryComplete;
         }
         sink.complete = sink.tryComplete;
-        sink.subscribe(this.makeSource(data, this.index++));
+        let source;
+        try {
+            source = this.makeSource(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        sink.subscribe(source);
     }
     // Default complete method that can be overridden by subclasses
     complete() {
@@ -204,7 +235,14 @@ class GroupBy extends Sink {
         this.f = f;
     }
     next(data) {
-        const key = this.f(data);
+        let key;
+        try {
+            key = this.f(data);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
         let group = this.groups.get(key);
         if (typeof group === 'undefined') {
             group = subject();
@@ -300,7 +338,15 @@ class CatchError extends Sink {
     }
     error(err) {
         this.dispose();
-        this.selector(err)(this.sink);
+        let source;
+        try {
+            source = this.selector(err);
+        }
+        catch (e) {
+            this.sink.error(e);
+            return;
+        }
+        source(this.sink);
     }
 }
 export const catchError = deliver(CatchError, "catchError");
@@ -343,7 +389,15 @@ class Expand extends Maps {
         // 先添加到 inners，再订阅，避免时序问题
         this.inners.add(innerSink);
         // 现在订阅 Observable
-        innerSink.subscribe(this.makeSource(data, this.index++));
+        let source;
+        try {
+            source = this.makeSource(data, this.index++);
+        }
+        catch (err) {
+            this.error(err);
+            return;
+        }
+        innerSink.subscribe(source);
     }
     complete() {
         this.sourceCompleted = true;

@@ -21,15 +21,50 @@ class Tap extends Sink {
     constructor(sink, ob) {
         super(sink);
         if (ob instanceof Function) {
-            this.next = (data) => { ob(data); sink.next(data); };
+            this.next = (data) => {
+                try {
+                    ob(data);
+                }
+                catch (err) {
+                    sink.error(err);
+                    return;
+                }
+                sink.next(data);
+            };
         }
         else {
             if (ob.next)
-                this.next = (data) => { ob.next(data); sink.next(data); };
+                this.next = (data) => {
+                    try {
+                        ob.next(data);
+                    }
+                    catch (err) {
+                        sink.error(err);
+                        return;
+                    }
+                    sink.next(data);
+                };
             if (ob.complete)
-                this.complete = () => { ob.complete(); sink.complete(); };
+                this.complete = () => {
+                    try {
+                        ob.complete();
+                    }
+                    catch (err) {
+                        sink.error(err);
+                        return;
+                    }
+                    sink.complete();
+                };
             if (ob.error)
-                this.error = (err) => { ob.error(err); sink.error(err); };
+                this.error = (err) => {
+                    try {
+                        ob.error(err);
+                    }
+                    catch (e) {
+                        err = e;
+                    }
+                    sink.error(err);
+                };
         }
     }
 }
@@ -79,13 +114,13 @@ export const retry = (count = Infinity) => (source) => {
             const deliverSink = new Sink(observer);
             deliverSink.error = (err) => {
                 if (remain-- > 0) {
-                    source(deliverSink);
+                    deliverSink.subscribe(source);
                 }
                 else {
                     observer.error(err);
                 }
             };
-            source(deliverSink);
+            deliverSink.subscribe(source);
         };
     }
 };

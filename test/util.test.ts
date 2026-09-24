@@ -16,3 +16,13 @@ test('retry', () => {
     ));
   });
 });
+test('retry on sync throw', () => {
+  let attempts = 0;
+  let received: any;
+  pipe((sink: ISink<number>) => {
+    attempts++;
+    throw new Error('error');
+  }, retry(2), subscribe(nothing, err => { received = err; }));
+  expect(attempts).toBe(3);
+  expect(received).toBeInstanceOf(Error);
+});

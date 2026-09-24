@@ -6,7 +6,9 @@ class Filter<T> extends Sink<T> {
     super(sink);
   }
   next(data: T) {
-    if (this.filter.call(this.thisArg, data)) {
+    let pass: boolean;
+    try { pass = this.filter.call(this.thisArg, data); } catch (err) { this.error(err); return; }
+    if (pass) {
       this.sink.next(data);
     }
   }
@@ -22,7 +24,8 @@ class Distinct<T, K> extends Sink<T> {
   }
 
   next(data: T) {
-    const key = this.keySelector(data);
+    let key: K;
+    try { key = this.keySelector(data); } catch (err) { this.error(err); return; }
     if (!this.hasPrevious || key !== this.previous) {
       this.hasPrevious = true;
       this.previous = key;
@@ -79,7 +82,9 @@ class TakeWhile<T> extends Sink<T> {
     super(sink);
   }
   next(data: T) {
-    if (this.f(data)) {
+    let pass: boolean;
+    try { pass = this.f(data); } catch (err) { this.error(err); return; }
+    if (pass) {
       this.sink.next(data);
     } else {
       this.doDefer();
@@ -127,7 +132,9 @@ class SkipWhile<T> extends Sink<T> {
     super(sink);
   }
   next(data: T) {
-    if (!this.f(data)) {
+    let skipping: boolean;
+    try { skipping = this.f(data); } catch (err) { this.error(err); return; }
+    if (!skipping) {
       this.next = super.next;
       this.next(data);
     }
@@ -153,7 +160,9 @@ class _Throttle<T> extends Sink<T> {
   }
   throttle(data: T) {
     this.reset();
-    this.subscribe(this.durationSelector(data));
+    let duration: Observable<unknown>;
+    try { duration = this.durationSelector(data); } catch (err) { this.error(err); return; }
+    this.subscribe(duration);
   }
   next() {
     this.complete();
@@ -211,7 +220,9 @@ class Debounce<T> extends Sink<T> {
     this._debounce.dispose();
     this._debounce.reset();
     this._debounce.last = data;
-    this._debounce.subscribe(this.durationSelector(data));
+    let duration: Observable<unknown>;
+    try { duration = this.durationSelector(data); } catch (err) { this.error(err); return; }
+    this._debounce.subscribe(duration);
   }
   complete() {
     this._debounce.complete();
@@ -250,7 +261,9 @@ class FindIndex<T> extends Sink<T, number> {
     super(sink);
   }
   next(data: T) {
-    if (this.f(data)) {
+    let found: boolean;
+    try { found = this.f(data); } catch (err) { this.error(err); return; }
+    if (found) {
       this.sink.next(this.i++);
       this.doDefer();
       this.complete();
@@ -266,7 +279,9 @@ class First<T> extends Sink<T> {
     super(sink);
   }
   next(data: T) {
-    if (!this.f || this.f(data, this.index++)) {
+    let matched: boolean;
+    try { matched = !this.f || this.f(data, this.index++); } catch (err) { this.error(err); return; }
+    if (matched) {
       this.defaultValue = data;
       this.doDefer();
       this.complete();
@@ -288,7 +303,9 @@ class Last<T> extends Sink<T> {
     super(sink);
   }
   next(data: T) {
-    if (!this.f || this.f(data, this.index++)) {
+    let matched: boolean;
+    try { matched = !this.f || this.f(data, this.index++); } catch (err) { this.error(err); return; }
+    if (matched) {
       this.defaultValue = data;
     }
   }
@@ -310,7 +327,9 @@ class Every<T> extends Sink<T, boolean> {
     super(sink);
   }
   next(data: T) {
-    if (!this.predicate(data, this.index++)) {
+    let pass: boolean;
+    try { pass = this.predicate(data, this.index++); } catch (err) { this.error(err); return; }
+    if (!pass) {
       this.result = false;
       this.doDefer();
       this.complete();

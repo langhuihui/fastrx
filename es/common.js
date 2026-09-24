@@ -34,7 +34,14 @@ export class Inspect extends Function {
     subscribe(sink) {
         const ns = new NodeSink(sink, this, this.streamId++);
         Events.subscribe({ id: this.id }, { nodeId: ns.sourceId, streamId: ns.id });
-        this(ns);
+        try {
+            this(ns);
+        }
+        catch (err) {
+            if (ns.disposed)
+                throw err;
+            ns.error(err);
+        }
         return ns;
     }
 }
@@ -63,10 +70,18 @@ export class LastSink {
         this.doDefer();
     }
     subscribe(source) {
-        if (source instanceof Inspect)
-            source.subscribe(this);
-        else
-            source(this);
+        try {
+            if (source instanceof Inspect)
+                source.subscribe(this);
+            else
+                source(this);
+        }
+        catch (err) {
+            // Rethrow when already terminated so the error is not silently swallowed.
+            if (this.disposed)
+                throw err;
+            this.error(err);
+        }
         return this;
     }
     get bindSubscribe() {
@@ -91,7 +106,7 @@ export class LastSink {
         //@ts-ignore
         delete this.dispose;
         //@ts-ignore
-        delete this.next;
+        delete this.error;
         //@ts-ignore
         delete this.subscribe;
     }
